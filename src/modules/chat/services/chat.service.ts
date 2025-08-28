@@ -1,0 +1,483 @@
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../../../config/prisma.service';
+import { MusicUnfurlingService } from './music-unfurling.service';
+import { MentionsService } from './mentions.service';
+import { SafetyService } from './safety.service';
+import { AnalyticsService } from './analytics.service';
+import { SendMessageDto } from '../dto/send-message.dto';
+import { CreateRoomDto } from '../dto/create-room.dto';
+import { GetMessagesDto } from '../dto/get-messages.dto';
+import { ModerateUserDto, ModerationAction } from '../dto/moderate-user.dto';
+import { MessageEntity } from '../entities/message.entity';
+import { RoomEntity } from '../entities/room.entity';
+
+@Injectable()
+export class ChatService {
+  constructor(
+    private prisma: PrismaService,
+    private musicUnfurlingService: MusicUnfurlingService,
+    private mentionsService: MentionsService,
+    private safetyService: SafetyService,
+    private analyticsService: AnalyticsService,
+  ) {}
+
+  async createRoom(userId: string, createRoomDto: CreateRoomDto): Promise<RoomEntity> {
+    const room = await this.prisma.room.create({
+      data: {
+        ...createRoomDto,
+        createdBy: userId,
+        memberships: {
+          create: {
+            userId,
+            isMod: true,
+          },
+        },
+      },
+      include: {
+        memberships: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                artistProfile: {
+                  select: {
+                    artistName: true,
+                    verified: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return this.mapRoomToEntity(room);
+  }
+
+  async joinRoom(userId: string, roomId: string): Promise<void> {
+    const room = await this.prisma.room.findUnique({
+      where: { id: roomId },
+    });
+
+    if (!room) {
+      throw new NotFoundException('Room not found');
+    }
+
+    const existingMembership = await this.prisma.roomMembership.findUnique({
+      where: {
+        roomId_userId: {
+          roomId,
+          userId,
+        },
+      },
+    });
+
+    if (!existingMembership) {
+      await this.prisma.roomMembership.create({
+        data: {
+          roomId,
+          userId,
+        },
+      });
+
+      // Track analytics
+      await this.analyticsService.trackRoomJoined(userId, roomId);
+    }
+  }
+
+  async leaveRoom(userId: string, roomId: string): Promise<void> {
+    await this.prisma.roomMembership.delete({
+      where: {
+        roomId_userId: {
+          roomId,
+          userId,
+        },
+      },
+    });
+
+    // Track analytics
+    await this.analyticsService.trackRoomLeft(userId, roomId);
+  }
+
+  async sendMessage(userId: string, roomId: string, sendMessageDto: SendMessageDto): Promise<MessageEntity> {
+    await this.checkUserCanSendMessage(userId, roomId);
+
+    // Safety checks
+    if (this.safetyService.isMessageTooLong(sendMessageDto.text)) {
+      throw new BadRequestException('Message too long');
+    }
+
+    if (this.safetyService.containsExcessiveCapitals(sendMessageDto.text)) {
+      throw new BadRequestException('Please reduce the use of capital letters');
+    }
+
+    const safetyCheck = await this.safetyService.filterMessage(
+      sendMessageDto.text,
+      userId,
+      roomId,
+    );
+
+    if (!safetyCheck.allowed) {
+      throw new BadRequestException(safetyCheck.reason || 'Message not allowed');
+    }
+
+    let trackRef = sendMessageDto.trackRef;
+    let processedText = safetyCheck.filtered ? safetyCheck.filteredText! : sendMessageDto.text;
+
+    // Auto-detect and unfurl music links
+    if (!trackRef && sendMessageDto.text) {
+      const musicLinks = this.musicUnfurlingService.detectMusicLinks(sendMessageDto.text);
+      if (musicLinks.length > 0) {
+        trackRef = await this.musicUnfurlingService.unfurlMusicLink(musicLinks[0]) || undefined;
+      }
+    }
+
+    // Process mentions
+    let mentionedUserIds: string[] = [];
+    if (processedText) {
+      const mentions = this.mentionsService.extractMentions(processedText);
+      const resolvedMentions = await this.mentionsService.resolveMentions(mentions, roomId);
+      processedText = this.mentionsService.formatMessageWithMentions(processedText, resolvedMentions);
+      mentionedUserIds = resolvedMentions.map(m => m.userId);
+    }
+
+    const message = await this.prisma.message.create({
+      data: {
+        roomId,
+        userId,
+        type: trackRef ? 'TRACK_CARD' : sendMessageDto.type || 'TEXT',
+        text: processedText,
+        trackRef: trackRef ? JSON.stringify(trackRef) : undefined,
+        parentId: sendMessageDto.parentId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            artistProfile: {
+              select: {
+                artistName: true,
+                verified: true,
+              },
+            },
+          },
+        },
+        reactions: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                artistProfile: {
+                  select: {
+                    artistName: true,
+                    verified: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Create mention notifications
+    if (mentionedUserIds.length > 0) {
+      await this.mentionsService.createNotifications(
+        mentionedUserIds,
+        message.id,
+        userId,
+        roomId,
+      );
+
+      // Track mention analytics
+      for (const mentionedUserId of mentionedUserIds) {
+        await this.analyticsService.trackMentionDelivered(userId, roomId, message.id, mentionedUserId);
+      }
+    }
+
+    // Track analytics
+    await this.analyticsService.trackMessageSent(userId, roomId, message.id, {
+      hasTrackRef: !!trackRef,
+      hasParent: !!sendMessageDto.parentId,
+      textLength: processedText?.length || 0,
+    });
+
+    if (trackRef) {
+      await this.analyticsService.trackTrackUnfurled(userId, roomId, trackRef.provider, trackRef.url);
+    }
+
+    if (sendMessageDto.parentId) {
+      await this.analyticsService.trackReplyCreated(userId, roomId, message.id, sendMessageDto.parentId);
+    }
+
+    return this.mapMessageToEntity(message);
+  }
+
+  async getMessages(roomId: string, getMessagesDto: GetMessagesDto): Promise<MessageEntity[]> {
+    const messages = await this.prisma.message.findMany({
+      where: {
+        roomId,
+        parentId: getMessagesDto.parentId || null,
+        deletedAt: null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            artistProfile: {
+              select: {
+                artistName: true,
+                verified: true,
+              },
+            },
+          },
+        },
+        reactions: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                artistProfile: {
+                  select: {
+                    artistName: true,
+                    verified: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        replies: {
+          where: { deletedAt: null },
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                artistProfile: {
+                  select: {
+                    artistName: true,
+                    verified: true,
+                  },
+                },
+              },
+            },
+          },
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: getMessagesDto.limit,
+      cursor: getMessagesDto.cursor ? { id: getMessagesDto.cursor } : undefined,
+      skip: getMessagesDto.cursor ? 1 : 0,
+    });
+
+    return messages.map(message => this.mapMessageToEntity(message));
+  }
+
+  async addReaction(userId: string, messageId: string, emoji: string): Promise<void> {
+    const message = await this.prisma.message.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message || message.deletedAt) {
+      throw new NotFoundException('Message not found');
+    }
+
+    await this.checkUserCanAccessRoom(userId, message.roomId);
+
+    try {
+      await this.prisma.reaction.create({
+        data: {
+          messageId,
+          userId,
+          emoji,
+        },
+      });
+
+      // Track analytics
+      await this.analyticsService.trackReactionAdded(userId, message.roomId, messageId, emoji);
+    } catch (error) {
+      // Handle duplicate reaction (user already reacted with this emoji)
+      if (error.code === 'P2002') {
+        throw new BadRequestException('Already reacted with this emoji');
+      }
+      throw error;
+    }
+  }
+
+  async removeReaction(userId: string, messageId: string, emoji: string): Promise<void> {
+    const message = await this.prisma.message.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      throw new NotFoundException('Message not found');
+    }
+
+    await this.checkUserCanAccessRoom(userId, message.roomId);
+
+    await this.prisma.reaction.delete({
+      where: {
+        messageId_userId_emoji: {
+          messageId,
+          userId,
+          emoji,
+        },
+      },
+    });
+  }
+
+  async moderateUser(moderatorId: string, roomId: string, moderateUserDto: ModerateUserDto): Promise<void> {
+    await this.checkUserIsModerator(moderatorId, roomId);
+
+    switch (moderateUserDto.action) {
+      case ModerationAction.DELETE_MESSAGE:
+        await this.deleteMessage(moderateUserDto.targetId);
+        break;
+      case ModerationAction.MUTE_USER:
+        await this.muteUser(moderateUserDto.targetId, roomId);
+        break;
+      case ModerationAction.CLEAR_REACTIONS:
+        await this.clearMessageReactions(moderateUserDto.targetId);
+        break;
+    }
+
+    await this.prisma.moderationLog.create({
+      data: {
+        roomId,
+        moderatorId,
+        targetId: moderateUserDto.targetId,
+        action: moderateUserDto.action,
+        reason: moderateUserDto.reason,
+      },
+    });
+
+    // Track analytics
+    await this.analyticsService.trackModerationAction(
+      moderatorId, 
+      roomId, 
+      moderateUserDto.action, 
+      moderateUserDto.targetId
+    );
+  }
+
+  private async deleteMessage(messageId: string): Promise<void> {
+    await this.prisma.message.update({
+      where: { id: messageId },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  private async muteUser(userId: string, roomId: string): Promise<void> {
+    const mutedUntil = new Date();
+    mutedUntil.setHours(mutedUntil.getHours() + 24); // 24 hour mute
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { mutedUntil },
+    });
+  }
+
+  private async clearMessageReactions(messageId: string): Promise<void> {
+    await this.prisma.reaction.deleteMany({
+      where: { messageId },
+    });
+  }
+
+  private async checkUserCanSendMessage(userId: string, roomId: string): Promise<void> {
+    await this.checkUserCanAccessRoom(userId, roomId);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { mutedUntil: true },
+    });
+
+    if (user?.mutedUntil && user.mutedUntil > new Date()) {
+      throw new ForbiddenException('User is muted');
+    }
+  }
+
+  private async checkUserCanAccessRoom(userId: string, roomId: string): Promise<void> {
+    const membership = await this.prisma.roomMembership.findUnique({
+      where: {
+        roomId_userId: {
+          roomId,
+          userId,
+        },
+      },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException('User is not a member of this room');
+    }
+  }
+
+  private async checkUserIsModerator(userId: string, roomId: string): Promise<void> {
+    const membership = await this.prisma.roomMembership.findUnique({
+      where: {
+        roomId_userId: {
+          roomId,
+          userId,
+        },
+      },
+    });
+
+    if (!membership || !membership.isMod) {
+      throw new ForbiddenException('User is not a moderator of this room');
+    }
+  }
+
+  private mapMessageToEntity(message: any): MessageEntity {
+    return {
+      id: message.id,
+      roomId: message.roomId,
+      userId: message.userId,
+      type: message.type,
+      text: message.text,
+      trackRef: message.trackRef ? JSON.parse(message.trackRef) : undefined,
+      parentId: message.parentId,
+      createdAt: message.createdAt,
+      updatedAt: message.updatedAt,
+      deletedAt: message.deletedAt,
+      user: message.user,
+      reactions: message.reactions?.map((reaction: any) => ({
+        id: reaction.id,
+        messageId: reaction.messageId,
+        userId: reaction.userId,
+        emoji: reaction.emoji,
+        createdAt: reaction.createdAt,
+        user: reaction.user,
+      })),
+      replies: message.replies?.map((reply: any) => this.mapMessageToEntity(reply)),
+    };
+  }
+
+  private mapRoomToEntity(room: any): RoomEntity {
+    return {
+      id: room.id,
+      name: room.name,
+      description: room.description,
+      isPrivate: room.isPrivate,
+      createdBy: room.createdBy,
+      createdAt: room.createdAt,
+      updatedAt: room.updatedAt,
+      memberships: room.memberships?.map((membership: any) => ({
+        id: membership.id,
+        roomId: membership.roomId,
+        userId: membership.userId,
+        isMod: membership.isMod,
+        joinedAt: membership.joinedAt,
+        user: membership.user,
+      })),
+      memberCount: room.memberships?.length || 0,
+    };
+  }
+}

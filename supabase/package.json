@@ -1,0 +1,34 @@
+{
+  "name": "seda-fm-edge-functions",
+  "version": "1.0.0",
+  "description": "Supabase Edge Functions for Sedā.fm MVP",
+  "scripts": {
+    "start": "./start-local.sh",
+    "deploy:qa": "./deploy.sh qa",
+    "deploy:sandbox": "./deploy.sh sandbox",
+    "deploy:prod": "./deploy.sh production",
+    "deploy:health": "./deploy.sh qa health",
+    "deploy:flags": "./deploy.sh qa flags",
+    "deploy:metrics": "./deploy.sh qa metrics",
+    "deploy:dev": "./deploy.sh qa dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seda-fm/seda-auth-service.git"
+  },
+  "keywords": [
+    "supabase",
+    "edge-functions",
+    "deno",
+    "typescript",
+    "seda-fm"
+  ],
+  "author": "Sedā.fm Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

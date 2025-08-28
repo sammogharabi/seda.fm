@@ -1,7 +1,7 @@
 {
-  "name": "seda-fm-edge-functions",
+  "name": "seda-edge-functions",
   "version": "1.0.0",
-  "description": "Supabase Edge Functions for Sedā.fm MVP",
+  "description": "Supabase Edge Functions for SEDA platform",
   "scripts": {
     "start": "./start-local.sh",
     "deploy:qa": "./deploy.sh qa",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/seda-fm/seda-auth-service.git"
+    "url": "https://github.com/seda-fm/seda.git"
   },
   "keywords": [
     "supabase",

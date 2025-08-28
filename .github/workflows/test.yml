@@ -218,7 +218,7 @@ jobs:
       - name: Run dependency check
         uses: dependency-check/Dependency-Check_Action@main
         with:
-          project: 'seda-auth-service'
+          project: 'seda'
           path: '.'
           format: 'ALL'
           args: >

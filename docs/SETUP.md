@@ -42,7 +42,7 @@ If you need to set up a new local development environment:
 ```bash
 # Clone the project (if not already done)
 git clone [repository-url]
-cd seda-auth-service
+cd seda
 
 # Start local Supabase instance
 supabase start

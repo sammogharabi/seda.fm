@@ -1,7 +1,7 @@
 {
-  "name": "seda-auth-service",
+  "name": "seda",
   "version": "0.0.1",
-  "description": "Authentication and User Service for sedā.fm",
+  "description": "SEDA - Full service platform for sedā.fm",
   "author": "sedā.fm",
   "private": true,
   "license": "UNLICENSED",

@@ -66,7 +66,7 @@ User profiles, artist profiles, and social features.
 ## 🏗️ Project Structure
 
 ```
-seda-auth-service/
+seda/
 ├── src/modules/
 │   ├── chat/           # Chat system implementation
 │   ├── verification/   # Artist verification

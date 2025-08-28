@@ -1,6 +1,6 @@
-# Sedā Auth Service
+# SEDA
 
-Authentication and User Service for sedā.fm, handling artist verification and user management.
+Full service platform for sedā.fm, handling artist verification, user management, chat, and more.
 
 ## Features
 

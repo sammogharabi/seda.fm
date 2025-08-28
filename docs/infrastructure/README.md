@@ -120,7 +120,7 @@ Security configurations, authentication, and compliance.
 ```bash
 # Clone and setup
 git clone <repository>
-cd seda-auth-service
+cd seda
 
 # Install dependencies
 npm install

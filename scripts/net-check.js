@@ -81,6 +81,12 @@ function tcpCheck(host, port, label) {
 async function main() {
   log('Node version', process.version);
   log('NODE_ENV', process.env.NODE_ENV || '(unset)');
+  try {
+    dns.setServers(['1.1.1.1', '8.8.8.8']);
+    log('Using custom DNS servers', ['1.1.1.1', '8.8.8.8']);
+  } catch (e) {
+    log('Failed to set custom DNS servers', e.message);
+  }
   const info = sanitizeDbUrl(process.env.DATABASE_URL || '');
   if (!info) {
     log('DATABASE_URL is missing or invalid');
@@ -89,6 +95,9 @@ async function main() {
   }
 
   const targets = [];
+  // Generic DNS sanity checks
+  targets.push({ label: 'sanity-google-dns', host: 'google.com', port: 443 });
+  targets.push({ label: 'sanity-supabase-dns', host: 'supabase.co', port: 443 });
   if (info) {
     // Current configured host
     const curPort = Number(info.port && info.port !== '(default)') || (info.host.endsWith('.pooler.supabase.com') ? 6543 : 5432);
@@ -120,4 +129,3 @@ main().catch((e) => {
   log('Unexpected error', e);
   setInterval(() => {}, 1 << 30);
 });
-

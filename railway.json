@@ -7,7 +7,7 @@
   "deploy": {
     "runtime": "V2",
     "numReplicas": 1,
-    "startCommand": "node scripts/net-check.js",
+    "startCommand": "npm run start:prod",
     "sleepApplication": false,
     "useLegacyStacker": false,
     "multiRegionConfig": {

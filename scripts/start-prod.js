@@ -73,6 +73,17 @@ function tcpCheck(host, port, label) {
 async function preflight() {
   const url = process.env.DATABASE_URL || '';
   const cur = parseDb(url);
+  try {
+    const u = new URL(url);
+    const db = u.pathname && u.pathname !== '/' ? u.pathname.slice(1) : '';
+    log('Database (sanitized)', {
+      protocol: u.protocol,
+      host: u.hostname,
+      port: u.port || '(default)',
+      database: db || '(none)',
+      params: u.search || ''
+    });
+  } catch {}
   if (!cur) {
     log('DATABASE_URL missing/invalid — skipping checks');
     return;
@@ -116,4 +127,3 @@ main().catch((e) => {
   log('Fatal error', e);
   process.exit(1);
 });
-

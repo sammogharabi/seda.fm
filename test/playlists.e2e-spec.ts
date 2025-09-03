@@ -12,10 +12,13 @@ describe('Playlists E2E', () => {
   let configService: ConfigService;
   let authToken: string;
   let testUserId: string;
+  const testUserEmail = 'e2e-test@example.com';
+  const testSupabaseId = '22222222-2222-2222-2222-222222222222';
   let testPlaylistId: string;
 
   beforeAll(async () => {
-    testUserId = 'test-user-id';
+    // Use a valid UUID for Postgres uuid columns
+    testUserId = '00000000-0000-0000-0000-000000000001';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -36,6 +39,30 @@ describe('Playlists E2E', () => {
     
     await app.init();
 
+    // Seed required user and profile rows to satisfy FKs for playlists
+    try {
+      await prisma.user.create({
+        data: {
+          id: testUserId,
+          email: testUserEmail,
+          supabaseId: testSupabaseId,
+        },
+      });
+    } catch (e) {
+      // ignore if already exists
+    }
+    try {
+      await prisma.profile.create({
+        data: {
+          userId: testUserId,
+          username: 'owneruser',
+          displayName: 'Owner User',
+        },
+      });
+    } catch (e) {
+      // ignore if already exists
+    }
+
     // Fake auth token header (not used by mocked guard)
     authToken = 'Bearer test-token';
   });
@@ -48,20 +75,16 @@ describe('Playlists E2E', () => {
     await prisma.playlist.deleteMany({
       where: { ownerUserId: testUserId },
     });
-    await prisma.profile.deleteMany({
-      where: { userId: testUserId },
-    });
+    await prisma.profile.deleteMany({ where: { userId: testUserId } });
+    await prisma.user.deleteMany({ where: { id: testUserId } });
     await app.close();
   });
 
   describe('Feature Flag Enforcement', () => {
     it('should return 404 when FEATURE_PLAYLISTS is disabled', async () => {
-      // Mock feature flags
-      jest.spyOn(configService, 'get').mockImplementation((key: string) => {
-        if (key === 'FEATURE_PLAYLISTS') return 'false';
-        if (key === 'FEATURE_PROFILES') return 'true';
-        return 'default-value';
-      });
+      // Ensure feature flags for this test
+      process.env.FEATURE_PLAYLISTS = 'false';
+      process.env.FEATURE_PROFILES = 'true';
 
       const response = await request(app.getHttpServer())
         .post('/playlists')
@@ -76,19 +99,18 @@ describe('Playlists E2E', () => {
     });
 
     it('should allow access when FEATURE_PLAYLISTS is enabled', async () => {
-      // Mock feature flags as enabled
-      jest.spyOn(configService, 'get').mockImplementation((key: string) => {
-        if (key === 'FEATURE_PLAYLISTS') return 'true';
-        if (key === 'FEATURE_PROFILES') return 'true';
-        return 'default-value';
-      });
+      // Enable flags for this test
+      process.env.FEATURE_PLAYLISTS = 'true';
+      process.env.FEATURE_PROFILES = 'true';
 
-      // Should not return 404 for feature flag
       const response = await request(app.getHttpServer())
         .get('/playlists/non-existent')
         .set('Authorization', authToken);
 
-      expect(response.status).not.toBe(404); // May return other errors, but not feature flag 404
+      // If 404 occurs, ensure it's not due to FeatureGuard (which returns 'Resource not found')
+      if (response.status === 404) {
+        expect(response.body.message).not.toBe('Resource not found');
+      }
     });
   });
 

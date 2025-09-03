@@ -13,13 +13,16 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { FeatureGuard } from '../../common/guards/feature.guard';
+import { Feature } from '../../common/decorators/feature.decorator';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfilesService } from './profiles.service';
 
 @ApiTags('profiles')
 @Controller('profiles')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, FeatureGuard)
+@Feature('PROFILES')
 @ApiBearerAuth()
 export class ProfilesController {
   constructor(private readonly profilesService: ProfilesService) {}
@@ -40,7 +43,6 @@ export class ProfilesController {
     description: 'User already has a profile',
   })
   async createProfile(@Request() req: any, @Body() dto: CreateProfileDto) {
-    // #COMPLETION_DRIVE: Feature flag check needed
     const userId = req.user.id;
     return this.profilesService.createProfile(userId, dto);
   }
@@ -56,7 +58,6 @@ export class ProfilesController {
     description: 'Profile not found',
   })
   async getProfile(@Param('username') username: string) {
-    // #COMPLETION_DRIVE: Feature flag check needed
     const profile = await this.profilesService.getProfileByUsername(username);
     if (!profile) {
       throw new NotFoundException('Profile not found');
@@ -84,7 +85,6 @@ export class ProfilesController {
     @Param('username') username: string,
     @Body() dto: UpdateProfileDto,
   ) {
-    // #COMPLETION_DRIVE: Feature flag check needed
     const userId = req.user.id;
     return this.profilesService.updateProfile(userId, username, dto);
   }
@@ -100,7 +100,6 @@ export class ProfilesController {
     description: 'User has no profile',
   })
   async getMyProfile(@Request() req: any) {
-    // #COMPLETION_DRIVE: Feature flag check needed
     const userId = req.user.id;
     const profile = await this.profilesService.getProfileByUserId(userId);
     if (!profile) {

@@ -10,7 +10,7 @@ export class ProfilesService {
   async createProfile(userId: string, dto: CreateProfileDto) {
     // Check if user already has a profile
     const existingProfile = await this.prisma.profile.findFirst({
-      where: { user_id: userId },
+      where: { userId: userId },
     });
 
     if (existingProfile) {
@@ -31,11 +31,11 @@ export class ProfilesService {
 
     return this.prisma.profile.create({
       data: {
-        user_id: userId,
+        userId: userId,
         username: canonicalUsername,
-        display_name: dto.display_name,
+        displayName: dto.displayName,
         bio: dto.bio,
-        avatar_url: dto.avatar_url,
+        avatarUrl: dto.avatarUrl,
       },
     });
   }
@@ -60,7 +60,7 @@ export class ProfilesService {
 
   async getProfileByUserId(userId: string) {
     return this.prisma.profile.findFirst({
-      where: { user_id: userId },
+      where: { userId: userId },
     });
   }
 
@@ -77,7 +77,7 @@ export class ProfilesService {
       throw new NotFoundException('Profile not found');
     }
 
-    if (profile.user_id !== userId) {
+    if (profile.userId !== userId) {
       throw new ForbiddenException('Not authorized to update this profile');
     }
 
@@ -102,10 +102,10 @@ export class ProfilesService {
       where: { id: profile.id },
       data: {
         username: newCanonicalUsername || profile.username,
-        display_name: dto.display_name !== undefined ? dto.display_name : profile.display_name,
+        displayName: dto.displayName !== undefined ? dto.displayName : profile.displayName,
         bio: dto.bio !== undefined ? dto.bio : profile.bio,
-        avatar_url: dto.avatar_url !== undefined ? dto.avatar_url : profile.avatar_url,
-        updated_at: new Date(),
+        avatarUrl: dto.avatarUrl !== undefined ? dto.avatarUrl : profile.avatarUrl,
+        updatedAt: new Date(),
       },
     });
   }

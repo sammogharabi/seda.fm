@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/config/prisma.service';
+import { AuthGuard } from '../src/common/guards/auth.guard';
 
 describe('Playlists E2E', () => {
   let app: INestApplication;
@@ -14,9 +15,20 @@ describe('Playlists E2E', () => {
   let testPlaylistId: string;
 
   beforeAll(async () => {
+    testUserId = 'test-user-id';
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({
+        canActivate: (context: any) => {
+          const req = context.switchToHttp().getRequest();
+          req.user = { id: testUserId };
+          return true;
+        },
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     prisma = moduleFixture.get<PrismaService>(PrismaService);
@@ -24,21 +36,20 @@ describe('Playlists E2E', () => {
     
     await app.init();
 
-    // Create test user and auth token (mock for testing)
-    testUserId = 'test-user-id';
+    // Fake auth token header (not used by mocked guard)
     authToken = 'Bearer test-token';
   });
 
   afterAll(async () => {
     // Clean up test data
     await prisma.playlistItem.deleteMany({
-      where: { playlist: { owner_user_id: testUserId } },
+      where: { playlist: { ownerUserId: testUserId } },
     });
     await prisma.playlist.deleteMany({
-      where: { owner_user_id: testUserId },
+      where: { ownerUserId: testUserId },
     });
     await prisma.profile.deleteMany({
-      where: { user_id: testUserId },
+      where: { userId: testUserId },
     });
     await app.close();
   });
@@ -95,8 +106,8 @@ describe('Playlists E2E', () => {
       const playlistData = {
         title: 'E2E Test Playlist',
         description: 'Testing playlist creation',
-        is_public: true,
-        is_collaborative: false,
+        isPublic: true,
+        isCollaborative: false,
       };
 
       const response = await request(app.getHttpServer())
@@ -109,8 +120,8 @@ describe('Playlists E2E', () => {
         expect(response.body).toMatchObject({
           title: 'E2E Test Playlist',
           description: 'Testing playlist creation',
-          is_public: true,
-          is_collaborative: false,
+          isPublic: true,
+          isCollaborative: false,
         });
         expect(response.body.owner).toHaveProperty('username');
       }
@@ -165,7 +176,7 @@ describe('Playlists E2E', () => {
       const itemData = {
         position: 0,
         provider: 'spotify',
-        provider_track_id: '4uLU6hMCjMI75M1A2tKUQC',
+        providerTrackId: '4uLU6hMCjMI75M1A2tKUQC',
         title: 'Test Song',
         artist: 'Test Artist',
       };
@@ -179,7 +190,7 @@ describe('Playlists E2E', () => {
         expect(response.body).toMatchObject({
           position: 0,
           provider: 'spotify',
-          provider_track_id: '4uLU6hMCjMI75M1A2tKUQC',
+          providerTrackId: '4uLU6hMCjMI75M1A2tKUQC',
           title: 'Test Song',
           artist: 'Test Artist',
         });
@@ -192,9 +203,9 @@ describe('Playlists E2E', () => {
 
       // Add multiple items first
       const items = [
-        { position: 1, provider: 'spotify', provider_track_id: 'track1', title: 'Song 1' },
-        { position: 2, provider: 'spotify', provider_track_id: 'track2', title: 'Song 2' },
-        { position: 3, provider: 'spotify', provider_track_id: 'track3', title: 'Song 3' },
+        { position: 1, provider: 'spotify', providerTrackId: 'track1', title: 'Song 1' },
+        { position: 2, provider: 'spotify', providerTrackId: 'track2', title: 'Song 2' },
+        { position: 3, provider: 'spotify', providerTrackId: 'track3', title: 'Song 3' },
       ];
 
       for (const item of items) {
@@ -207,7 +218,7 @@ describe('Playlists E2E', () => {
       // Test pagination
       const response = await request(app.getHttpServer())
         .get(`/playlists/${testPlaylistId}/items`)
-        .query({ limit: 2, sort_field: 'position', sort_direction: 'asc' })
+        .query({ limit: 2, sortField: 'position', sortDirection: 'asc' })
         .set('Authorization', authToken);
 
       if (response.status === 200) {

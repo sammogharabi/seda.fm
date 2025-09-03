@@ -39,7 +39,7 @@ export class AddPlaylistItemDto {
     example: '4uLU6hMCjMI75M1A2tKUQC',
   })
   @IsString()
-  provider_track_id: string;
+  providerTrackId: string;
 
   @ApiProperty({
     description: 'Track title (optional denormalization)',
@@ -66,5 +66,5 @@ export class AddPlaylistItemDto {
   })
   @IsOptional()
   @IsUrl()
-  artwork_url?: string;
+  artworkUrl?: string;
 }

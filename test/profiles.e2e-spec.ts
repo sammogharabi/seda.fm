@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/config/prisma.service';
+import { AuthGuard } from '../src/common/guards/auth.guard';
 
 describe('Profiles E2E', () => {
   let app: INestApplication;
@@ -13,9 +14,20 @@ describe('Profiles E2E', () => {
   let testUserId: string;
 
   beforeAll(async () => {
+    testUserId = 'test-user-id';
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({
+        canActivate: (context: any) => {
+          const req = context.switchToHttp().getRequest();
+          req.user = { id: testUserId };
+          return true;
+        },
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     prisma = moduleFixture.get<PrismaService>(PrismaService);
@@ -23,15 +35,14 @@ describe('Profiles E2E', () => {
     
     await app.init();
 
-    // Create test user and auth token (mock for testing)
-    testUserId = 'test-user-id';
-    authToken = 'Bearer test-token'; // In real tests, use proper JWT
+    // Fake auth token header (not used by mocked guard)
+    authToken = 'Bearer test-token';
   });
 
   afterAll(async () => {
     // Clean up test data
     await prisma.profile.deleteMany({
-      where: { user_id: testUserId },
+      where: { userId: testUserId },
     });
     await app.close();
   });
@@ -49,7 +60,7 @@ describe('Profiles E2E', () => {
         .set('Authorization', authToken)
         .send({
           username: 'testuser',
-          display_name: 'Test User',
+          displayName: 'Test User',
         });
 
       expect(response.status).toBe(404);
@@ -88,7 +99,7 @@ describe('Profiles E2E', () => {
         .set('Authorization', authToken)
         .send({
           username: 'TestUser123',
-          display_name: 'Test User',
+          displayName: 'Test User',
         });
 
       if (response.status === 201) {
@@ -103,7 +114,7 @@ describe('Profiles E2E', () => {
         .set('Authorization', authToken)
         .send({
           username: 'testuser',
-          display_name: 'Test User',
+          displayName: 'Test User',
         });
 
       // Try to find with different case
@@ -129,7 +140,7 @@ describe('Profiles E2E', () => {
     it('should create profile successfully', async () => {
       const profileData = {
         username: 'e2euser',
-        display_name: 'E2E Test User',
+        displayName: 'E2E Test User',
         bio: 'Testing profile creation',
       };
 
@@ -141,7 +152,7 @@ describe('Profiles E2E', () => {
       if (response.status === 201) {
         expect(response.body).toMatchObject({
           username: 'e2euser',
-          display_name: 'E2E Test User',
+          displayName: 'E2E Test User',
           bio: 'Testing profile creation',
         });
       }
@@ -154,7 +165,7 @@ describe('Profiles E2E', () => {
         .set('Authorization', authToken)
         .send({
           username: 'duplicate',
-          display_name: 'First User',
+          displayName: 'First User',
         });
 
       // Attempt duplicate
@@ -163,7 +174,7 @@ describe('Profiles E2E', () => {
         .set('Authorization', authToken)
         .send({
           username: 'duplicate',
-          display_name: 'Second User',
+          displayName: 'Second User',
         });
 
       expect(response.status).toBe(409);

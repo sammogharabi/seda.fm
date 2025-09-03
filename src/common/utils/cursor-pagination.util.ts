@@ -67,7 +67,6 @@ export function buildCursorWhere(
   
   // Build cursor condition based on sort direction
   const operator = sortDirection === 'desc' ? 'lt' : 'gt';
-  const equalOperator = sortDirection === 'desc' ? 'lte' : 'gte';
 
   return {
     ...baseWhere,

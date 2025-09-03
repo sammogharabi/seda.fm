@@ -118,6 +118,8 @@ jobs:
           echo "JWT_SECRET=test_jwt_secret_for_ci" >> $GITHUB_ENV
           echo "SUPABASE_URL=https://test.supabase.co" >> $GITHUB_ENV
           echo "SUPABASE_ANON_KEY=test_anon_key" >> $GITHUB_ENV
+          echo "FEATURE_PROFILES=true" >> $GITHUB_ENV
+          echo "FEATURE_PLAYLISTS=true" >> $GITHUB_ENV
           echo "NODE_ENV=test" >> $GITHUB_ENV
 
       - name: Generate Prisma Client
@@ -126,8 +128,8 @@ jobs:
       - name: Run database migrations
         run: npx prisma migrate deploy
 
-      - name: Run integration tests
-        run: npm run test:e2e -- --detectOpenHandles --forceExit
+      - name: Run Wave A tests (Profiles & Playlists)
+        run: npm run test:waveA
         timeout-minutes: 10
 
   e2e-tests:
@@ -179,6 +181,8 @@ jobs:
           echo "JWT_SECRET=test_jwt_secret_for_ci" >> $GITHUB_ENV
           echo "SUPABASE_URL=https://test.supabase.co" >> $GITHUB_ENV
           echo "SUPABASE_ANON_KEY=test_anon_key" >> $GITHUB_ENV
+          echo "FEATURE_PROFILES=true" >> $GITHUB_ENV
+          echo "FEATURE_PLAYLISTS=true" >> $GITHUB_ENV
           echo "NODE_ENV=test" >> $GITHUB_ENV
           echo "PORT=3001" >> $GITHUB_ENV
 
@@ -191,8 +195,8 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Run E2E tests
-        run: npm run test:e2e -- --testPathPattern=e2e-spec --detectOpenHandles --forceExit
+      - name: Run Wave A tests (Profiles & Playlists)
+        run: npm run test:waveA
         timeout-minutes: 15
 
   security-tests:

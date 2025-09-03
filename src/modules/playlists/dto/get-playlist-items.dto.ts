@@ -29,15 +29,15 @@ export class GetPlaylistItemsDto {
 
   @ApiProperty({
     description: 'Field to sort by',
-    enum: ['position', 'added_at'],
+    enum: ['position', 'addedAt'],
     default: 'position',
     example: 'position',
     required: false,
   })
   @IsOptional()
   @IsString()
-  @IsIn(['position', 'added_at'])
-  sort_field?: string = 'position';
+  @IsIn(['position', 'addedAt'])
+  sortField?: string = 'position';
 
   @ApiProperty({
     description: 'Sort direction',
@@ -49,5 +49,5 @@ export class GetPlaylistItemsDto {
   @IsOptional()
   @IsString()
   @IsIn(['asc', 'desc'])
-  sort_direction?: 'asc' | 'desc' = 'asc';
+  sortDirection?: 'asc' | 'desc' = 'asc';
 }

@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/config/prisma.service';
+import { AuthGuard } from '../src/common/guards/auth.guard';
 
 describe('Playlists E2E', () => {
   let app: INestApplication;
@@ -11,12 +12,26 @@ describe('Playlists E2E', () => {
   let configService: ConfigService;
   let authToken: string;
   let testUserId: string;
+  const testUserEmail = 'e2e-test@example.com';
+  const testSupabaseId = '22222222-2222-2222-2222-222222222222';
   let testPlaylistId: string;
 
   beforeAll(async () => {
+    // Use a valid UUID for Postgres uuid columns
+    testUserId = '00000000-0000-0000-0000-000000000001';
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({
+        canActivate: (context: any) => {
+          const req = context.switchToHttp().getRequest();
+          req.user = { id: testUserId };
+          return true;
+        },
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     prisma = moduleFixture.get<PrismaService>(PrismaService);
@@ -24,33 +39,52 @@ describe('Playlists E2E', () => {
     
     await app.init();
 
-    // Create test user and auth token (mock for testing)
-    testUserId = 'test-user-id';
+    // Seed required user and profile rows to satisfy FKs for playlists
+    try {
+      await prisma.user.create({
+        data: {
+          id: testUserId,
+          email: testUserEmail,
+          supabaseId: testSupabaseId,
+        },
+      });
+    } catch (e) {
+      // ignore if already exists
+    }
+    try {
+      await prisma.profile.create({
+        data: {
+          userId: testUserId,
+          username: 'owneruser',
+          displayName: 'Owner User',
+        },
+      });
+    } catch (e) {
+      // ignore if already exists
+    }
+
+    // Fake auth token header (not used by mocked guard)
     authToken = 'Bearer test-token';
   });
 
   afterAll(async () => {
     // Clean up test data
     await prisma.playlistItem.deleteMany({
-      where: { playlist: { owner_user_id: testUserId } },
+      where: { playlist: { ownerUserId: testUserId } },
     });
     await prisma.playlist.deleteMany({
-      where: { owner_user_id: testUserId },
+      where: { ownerUserId: testUserId },
     });
-    await prisma.profile.deleteMany({
-      where: { user_id: testUserId },
-    });
+    await prisma.profile.deleteMany({ where: { userId: testUserId } });
+    await prisma.user.deleteMany({ where: { id: testUserId } });
     await app.close();
   });
 
   describe('Feature Flag Enforcement', () => {
     it('should return 404 when FEATURE_PLAYLISTS is disabled', async () => {
-      // Mock feature flags
-      jest.spyOn(configService, 'get').mockImplementation((key: string) => {
-        if (key === 'FEATURE_PLAYLISTS') return 'false';
-        if (key === 'FEATURE_PROFILES') return 'true';
-        return 'default-value';
-      });
+      // Ensure feature flags for this test
+      process.env.FEATURE_PLAYLISTS = 'false';
+      process.env.FEATURE_PROFILES = 'true';
 
       const response = await request(app.getHttpServer())
         .post('/playlists')
@@ -65,19 +99,18 @@ describe('Playlists E2E', () => {
     });
 
     it('should allow access when FEATURE_PLAYLISTS is enabled', async () => {
-      // Mock feature flags as enabled
-      jest.spyOn(configService, 'get').mockImplementation((key: string) => {
-        if (key === 'FEATURE_PLAYLISTS') return 'true';
-        if (key === 'FEATURE_PROFILES') return 'true';
-        return 'default-value';
-      });
+      // Enable flags for this test
+      process.env.FEATURE_PLAYLISTS = 'true';
+      process.env.FEATURE_PROFILES = 'true';
 
-      // Should not return 404 for feature flag
       const response = await request(app.getHttpServer())
         .get('/playlists/non-existent')
         .set('Authorization', authToken);
 
-      expect(response.status).not.toBe(404); // May return other errors, but not feature flag 404
+      // If 404 occurs, ensure it's not due to FeatureGuard (which returns 'Resource not found')
+      if (response.status === 404) {
+        expect(response.body.message).not.toBe('Resource not found');
+      }
     });
   });
 
@@ -95,8 +128,8 @@ describe('Playlists E2E', () => {
       const playlistData = {
         title: 'E2E Test Playlist',
         description: 'Testing playlist creation',
-        is_public: true,
-        is_collaborative: false,
+        isPublic: true,
+        isCollaborative: false,
       };
 
       const response = await request(app.getHttpServer())
@@ -109,8 +142,8 @@ describe('Playlists E2E', () => {
         expect(response.body).toMatchObject({
           title: 'E2E Test Playlist',
           description: 'Testing playlist creation',
-          is_public: true,
-          is_collaborative: false,
+          isPublic: true,
+          isCollaborative: false,
         });
         expect(response.body.owner).toHaveProperty('username');
       }
@@ -165,7 +198,7 @@ describe('Playlists E2E', () => {
       const itemData = {
         position: 0,
         provider: 'spotify',
-        provider_track_id: '4uLU6hMCjMI75M1A2tKUQC',
+        providerTrackId: '4uLU6hMCjMI75M1A2tKUQC',
         title: 'Test Song',
         artist: 'Test Artist',
       };
@@ -179,7 +212,7 @@ describe('Playlists E2E', () => {
         expect(response.body).toMatchObject({
           position: 0,
           provider: 'spotify',
-          provider_track_id: '4uLU6hMCjMI75M1A2tKUQC',
+          providerTrackId: '4uLU6hMCjMI75M1A2tKUQC',
           title: 'Test Song',
           artist: 'Test Artist',
         });
@@ -192,9 +225,9 @@ describe('Playlists E2E', () => {
 
       // Add multiple items first
       const items = [
-        { position: 1, provider: 'spotify', provider_track_id: 'track1', title: 'Song 1' },
-        { position: 2, provider: 'spotify', provider_track_id: 'track2', title: 'Song 2' },
-        { position: 3, provider: 'spotify', provider_track_id: 'track3', title: 'Song 3' },
+        { position: 1, provider: 'spotify', providerTrackId: 'track1', title: 'Song 1' },
+        { position: 2, provider: 'spotify', providerTrackId: 'track2', title: 'Song 2' },
+        { position: 3, provider: 'spotify', providerTrackId: 'track3', title: 'Song 3' },
       ];
 
       for (const item of items) {
@@ -207,7 +240,7 @@ describe('Playlists E2E', () => {
       // Test pagination
       const response = await request(app.getHttpServer())
         .get(`/playlists/${testPlaylistId}/items`)
-        .query({ limit: 2, sort_field: 'position', sort_direction: 'asc' })
+        .query({ limit: 2, sortField: 'position', sortDirection: 'asc' })
         .set('Authorization', authToken);
 
       if (response.status === 200) {

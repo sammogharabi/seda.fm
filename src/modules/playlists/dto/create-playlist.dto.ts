@@ -32,7 +32,7 @@ export class CreatePlaylistDto {
   })
   @IsOptional()
   @IsBoolean()
-  is_public?: boolean = true;
+  isPublic?: boolean = true;
 
   @ApiProperty({
     description: 'Whether others can add tracks to this playlist',
@@ -42,5 +42,5 @@ export class CreatePlaylistDto {
   })
   @IsOptional()
   @IsBoolean()
-  is_collaborative?: boolean = false;
+  isCollaborative?: boolean = false;
 }

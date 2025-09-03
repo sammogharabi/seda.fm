@@ -24,7 +24,7 @@ export class CreateProfileDto {
   @IsString()
   @MinLength(1)
   @MaxLength(80)
-  display_name?: string;
+  displayName?: string;
 
   @ApiProperty({
     description: 'Profile bio (max 280 chars)',
@@ -44,5 +44,5 @@ export class CreateProfileDto {
   })
   @IsOptional()
   @IsUrl()
-  avatar_url?: string;
+  avatarUrl?: string;
 }

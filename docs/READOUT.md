@@ -47,6 +47,7 @@ The seda-auth-service backend currently implements a **complete authentication a
   - `send_message`, `message_created`
   - `add_reaction`, `reaction_added`
   - `typing_start`, `typing_stop`, `user_typing`
+- **WebSocket Auth**: ⚠️ **PENDING** - Currently using placeholder auth. Supabase JWKS guard to be implemented.
 - **Files**:
   - `src/modules/chat/chat.controller.ts`
   - `src/modules/chat/chat.gateway.ts`

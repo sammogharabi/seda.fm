@@ -172,6 +172,54 @@ Response: {
 // #SUGGEST_VERIFY: Check if backend supports this pagination style
 ```
 
+### WebSocket Authentication
+
+#### Expected Headers & Auth Flow
+```typescript
+// WebSocket Connection with Bearer Token
+const socket = io('ws://localhost:3001/chat', {
+  auth: {
+    token: localStorage.getItem('supabase.auth.token')
+  },
+  // OR via headers
+  extraHeaders: {
+    Authorization: `Bearer ${supabaseSession.access_token}`
+  }
+})
+
+// Server-side Implementation Path
+// #COMPLETION_DRIVE: Implement Supabase JWKS guard in ChatGateway
+// Current: Placeholder auth returns 'user-id-placeholder'
+// Target: Validate JWT against Supabase JWKS endpoint
+// Implementation: 
+//   1. Extract Bearer token from socket.handshake.auth.token
+//   2. Verify JWT signature using Supabase public keys
+//   3. Extract user_id from JWT claims
+//   4. Store authenticated user in socket.data.user
+```
+
+#### Error Shapes
+```typescript
+// Authentication Errors
+{
+  event: 'error',
+  data: {
+    code: 'AUTH_INVALID_TOKEN' | 'AUTH_EXPIRED' | 'AUTH_MISSING',
+    message: string,
+    statusCode: 401
+  }
+}
+
+// Connection Errors  
+{
+  event: 'connect_error',
+  data: {
+    type: 'TransportError',
+    message: string
+  }
+}
+```
+
 ### WebSocket Events
 
 #### Connection

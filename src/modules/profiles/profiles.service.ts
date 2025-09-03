@@ -17,20 +17,22 @@ export class ProfilesService {
       throw new ConflictException('User already has a profile');
     }
 
-    // Check if username is already taken
+    // Canonicalize username: trim and lowercase
+    const canonicalUsername = dto.username.trim().toLowerCase();
+
+    // Check if username is already taken (case-insensitive)
     const existingUsername = await this.prisma.profile.findFirst({
-      where: { username: dto.username },
+      where: { username: canonicalUsername },
     });
 
     if (existingUsername) {
       throw new ConflictException('Username already taken');
     }
 
-    // #COMPLETION_DRIVE: Need to add Profile model to Prisma schema
     return this.prisma.profile.create({
       data: {
         user_id: userId,
-        username: dto.username,
+        username: canonicalUsername,
         display_name: dto.display_name,
         bio: dto.bio,
         avatar_url: dto.avatar_url,
@@ -39,9 +41,11 @@ export class ProfilesService {
   }
 
   async getProfileByUsername(username: string) {
-    // #COMPLETION_DRIVE: Need to add Profile model to Prisma schema
+    // Canonicalize username for lookup
+    const canonicalUsername = username.trim().toLowerCase();
+    
     return this.prisma.profile.findFirst({
-      where: { username },
+      where: { username: canonicalUsername },
       include: {
         user: {
           select: {
@@ -55,16 +59,18 @@ export class ProfilesService {
   }
 
   async getProfileByUserId(userId: string) {
-    // #COMPLETION_DRIVE: Need to add Profile model to Prisma schema
     return this.prisma.profile.findFirst({
       where: { user_id: userId },
     });
   }
 
   async updateProfile(userId: string, username: string, dto: UpdateProfileDto) {
+    // Canonicalize username for lookup
+    const canonicalUsername = username.trim().toLowerCase();
+    
     // Get the profile to check ownership
     const profile = await this.prisma.profile.findFirst({
-      where: { username },
+      where: { username: canonicalUsername },
     });
 
     if (!profile) {
@@ -76,24 +82,29 @@ export class ProfilesService {
     }
 
     // If updating username, check if it's available
-    if (dto.username && dto.username !== username) {
-      const existingUsername = await this.prisma.profile.findFirst({
-        where: { username: dto.username },
-      });
+    let newCanonicalUsername: string | undefined;
+    if (dto.username) {
+      newCanonicalUsername = dto.username.trim().toLowerCase();
+      
+      // Only check availability if username is actually changing
+      if (newCanonicalUsername !== canonicalUsername) {
+        const existingUsername = await this.prisma.profile.findFirst({
+          where: { username: newCanonicalUsername },
+        });
 
-      if (existingUsername) {
-        throw new ConflictException('Username already taken');
+        if (existingUsername) {
+          throw new ConflictException('Username already taken');
+        }
       }
     }
 
-    // #COMPLETION_DRIVE: Need to add Profile model to Prisma schema
     return this.prisma.profile.update({
       where: { id: profile.id },
       data: {
-        username: dto.username,
-        display_name: dto.display_name,
-        bio: dto.bio,
-        avatar_url: dto.avatar_url,
+        username: newCanonicalUsername || profile.username,
+        display_name: dto.display_name !== undefined ? dto.display_name : profile.display_name,
+        bio: dto.bio !== undefined ? dto.bio : profile.bio,
+        avatar_url: dto.avatar_url !== undefined ? dto.avatar_url : profile.avatar_url,
         updated_at: new Date(),
       },
     });

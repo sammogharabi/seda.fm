@@ -35,7 +35,7 @@
     "prisma:migrate:prod": "dotenv -e .env.production -- prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "generate:tests": "node scripts/generate-test-template.js",
-    "prepare": "husky install"
+    "prepare": "husky install || true"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -47,7 +47,7 @@
     "@nestjs/throttler": "^5.0.0",
     "@nestjs/websockets": "^10.0.0",
     "@prisma/client": "^5.11.0",
-    "@supabase/supabase-js": "^2.43.0",
+    "@supabase/supabase-js": "^2.57.4",
     "axios": "^1.6.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",

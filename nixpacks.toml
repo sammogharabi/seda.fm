@@ -11,8 +11,9 @@ cmd = "npm ci"
 cmd = "npm run build"
 
 [phases.start]
-cmd = "npm run start:prod"
+cmd = "npm run start:sandbox"
 
 [variables]
-NODE_ENV = "production"
+NODE_ENV = "sandbox"
+ENV_TAG = "sandbox"
 PORT = "3001"

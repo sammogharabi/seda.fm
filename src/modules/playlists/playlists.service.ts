@@ -29,7 +29,6 @@ export class PlaylistsService {
         ownerUserId: profile.userId,
         title: dto.title,
         description: dto.description,
-<<<<<<< HEAD
         isPublic: dto.isPublic ?? true,
         isCollaborative: dto.isCollaborative ?? false,
       },
@@ -109,7 +108,6 @@ export class PlaylistsService {
       data: {
         title: dto.title,
         description: dto.description,
-<<<<<<< HEAD
         isPublic: dto.isPublic,
         isCollaborative: dto.isCollaborative,
         updatedAt: new Date(),
@@ -168,7 +166,6 @@ export class PlaylistsService {
       const existingItem = await this.prisma.playlistItem.findFirst({
         where: {
           playlistId: playlistId,
-<<<<<<< HEAD
           position: dto.position,
         },
       });
@@ -181,7 +178,6 @@ export class PlaylistsService {
     return this.prisma.playlistItem.create({
       data: {
         playlistId: playlistId,
-<<<<<<< HEAD
         position: dto.position,
         provider: dto.provider,
         providerTrackId: dto.providerTrackId,

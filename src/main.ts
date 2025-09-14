@@ -49,8 +49,17 @@ async function bootstrap() {
     SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
   }
 
-  await app.listen(port, '0.0.0.0');
-  console.log(`🎵 Sedā Auth Service running on port ${port} in ${environment} mode`);
+  try {
+    await app.listen(port, '0.0.0.0');
+    console.log(`🎵 Sedā Auth Service running on port ${port} in ${environment} mode`);
+    console.log(`📋 Health endpoint available at: http://0.0.0.0:${port}/health`);
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('❌ Bootstrap failed:', error);
+  process.exit(1);
+});

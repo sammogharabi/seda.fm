@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { Request, Response } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -31,7 +32,7 @@ async function bootstrap() {
   });
 
   // Add simple health endpoint for Railway health checks
-  app.use('/health', (req, res) => {
+  app.use('/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'ok', service: 'seda-auth-service' });
   });
 

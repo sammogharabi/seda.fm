@@ -1,0 +1,18 @@
+[providers]
+node = "18"
+
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "npm"]
+
+[phases.install]
+cmd = "npm ci"
+
+[phases.build]
+cmd = "npm run build"
+
+[phases.start]
+cmd = "npm run start:sandbox"
+
+[variables]
+NODE_ENV = "sandbox"
+ENV_TAG = "sandbox"

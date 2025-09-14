@@ -87,6 +87,18 @@ export class AnalyticsService {
     });
   }
 
+  async trackReactionRemoved(userId: string, roomId: string, messageId: string, emoji: string): Promise<void> {
+    await this.trackEvent({
+      event: 'reaction_removed',
+      userId,
+      roomId,
+      messageId,
+      properties: {
+        emoji,
+      },
+    });
+  }
+
   async trackReplyCreated(userId: string, roomId: string, messageId: string, parentId: string): Promise<void> {
     await this.trackEvent({
       event: 'reply_created',

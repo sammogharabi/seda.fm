@@ -7,7 +7,7 @@
   "deploy": {
     "runtime": "V2",
     "numReplicas": 1,
-    "startCommand": "npm run start:prod",
+    "startCommand": "NODE_ENV=sandbox ENV_TAG=sandbox npm run start:prod",
     "sleepApplication": false,
     "useLegacyStacker": false,
     "multiRegionConfig": {

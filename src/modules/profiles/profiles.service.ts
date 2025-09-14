@@ -10,38 +10,43 @@ export class ProfilesService {
   async createProfile(userId: string, dto: CreateProfileDto) {
     // Check if user already has a profile
     const existingProfile = await this.prisma.profile.findFirst({
-      where: { user_id: userId },
+      where: { userId: userId },
     });
 
     if (existingProfile) {
       throw new ConflictException('User already has a profile');
     }
 
-    // Check if username is already taken
+    // Canonicalize username: trim and lowercase
+    const canonicalUsername = dto.username.trim().toLowerCase();
+
+    // Check if username is already taken (case-insensitive)
     const existingUsername = await this.prisma.profile.findFirst({
-      where: { username: dto.username },
+      where: { username: canonicalUsername },
     });
 
     if (existingUsername) {
       throw new ConflictException('Username already taken');
     }
 
-    // #COMPLETION_DRIVE: Need to add Profile model to Prisma schema
     return this.prisma.profile.create({
       data: {
-        user_id: userId,
-        username: dto.username,
-        display_name: dto.display_name,
+        userId: userId,
+        username: canonicalUsername,
+<<<<<<< HEAD
+        displayName: dto.displayName,
         bio: dto.bio,
-        avatar_url: dto.avatar_url,
+        avatarUrl: dto.avatarUrl,
       },
     });
   }
 
   async getProfileByUsername(username: string) {
-    // #COMPLETION_DRIVE: Need to add Profile model to Prisma schema
+    // Canonicalize username for lookup
+    const canonicalUsername = username.trim().toLowerCase();
+    
     return this.prisma.profile.findFirst({
-      where: { username },
+      where: { username: canonicalUsername },
       include: {
         user: {
           select: {
@@ -55,46 +60,54 @@ export class ProfilesService {
   }
 
   async getProfileByUserId(userId: string) {
-    // #COMPLETION_DRIVE: Need to add Profile model to Prisma schema
     return this.prisma.profile.findFirst({
-      where: { user_id: userId },
+      where: { userId: userId },
     });
   }
 
   async updateProfile(userId: string, username: string, dto: UpdateProfileDto) {
+    // Canonicalize username for lookup
+    const canonicalUsername = username.trim().toLowerCase();
+    
     // Get the profile to check ownership
     const profile = await this.prisma.profile.findFirst({
-      where: { username },
+      where: { username: canonicalUsername },
     });
 
     if (!profile) {
       throw new NotFoundException('Profile not found');
     }
 
-    if (profile.user_id !== userId) {
+    if (profile.userId !== userId) {
       throw new ForbiddenException('Not authorized to update this profile');
     }
 
     // If updating username, check if it's available
-    if (dto.username && dto.username !== username) {
-      const existingUsername = await this.prisma.profile.findFirst({
-        where: { username: dto.username },
-      });
+    let newCanonicalUsername: string | undefined;
+    if (dto.username) {
+      newCanonicalUsername = dto.username.trim().toLowerCase();
+      
+      // Only check availability if username is actually changing
+      if (newCanonicalUsername !== canonicalUsername) {
+        const existingUsername = await this.prisma.profile.findFirst({
+          where: { username: newCanonicalUsername },
+        });
 
-      if (existingUsername) {
-        throw new ConflictException('Username already taken');
+        if (existingUsername) {
+          throw new ConflictException('Username already taken');
+        }
       }
     }
 
-    // #COMPLETION_DRIVE: Need to add Profile model to Prisma schema
     return this.prisma.profile.update({
       where: { id: profile.id },
       data: {
-        username: dto.username,
-        display_name: dto.display_name,
-        bio: dto.bio,
-        avatar_url: dto.avatar_url,
-        updated_at: new Date(),
+        username: newCanonicalUsername || profile.username,
+<<<<<<< HEAD
+        displayName: dto.displayName !== undefined ? dto.displayName : profile.displayName,
+        bio: dto.bio !== undefined ? dto.bio : profile.bio,
+        avatarUrl: dto.avatarUrl !== undefined ? dto.avatarUrl : profile.avatarUrl,
+        updatedAt: new Date(),
       },
     });
   }

@@ -1,4 +1,7 @@
 # Use Node.js 18 (Debian-based for better Prisma compatibility)
+# IMPORTANT: DO NOT use node:18-alpine as it causes Prisma SSL library errors
+# Alpine Linux lacks libssl.so.1.1 required by Prisma's query engine
+# Debian-based image includes proper OpenSSL libraries
 FROM node:18
 
 # Install curl for healthcheck

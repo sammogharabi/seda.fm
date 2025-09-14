@@ -116,6 +116,56 @@ Deploy edge functions using: `cd supabase && ./deploy.sh [environment]`
 4. Use the start:prod script for production (includes network checks)
 5. Monitor Railway deployment logs for connectivity issues
 
+## Railway Deployment Guide
+
+### Docker Configuration
+
+**CRITICAL**: Use Debian-based Node.js image (`node:18`) NOT Alpine (`node:18-alpine`) for Prisma compatibility.
+
+Alpine Linux causes Prisma deployment failures due to missing `libssl.so.1.1` library. The error manifests as:
+```
+PrismaClientInitializationError: Unable to require(`/app/node_modules/.prisma/client/libquery_engine-linux-musl.so.node`)
+Error loading shared library libssl.so.1.1: No such file or directory
+```
+
+**Solution**: Use `FROM node:18` (Debian-based) which includes proper OpenSSL libraries.
+
+### Environment Configuration
+
+Ensure Railway environment settings match your configuration:
+
+1. **Railway Environment**: Set to `sandbox` (not production)
+2. **Environment Files**: Application will load `.env.sandbox` when `NODE_ENV=sandbox`
+3. **Start Command**: Use `NODE_ENV=sandbox node dist/main.js` or let Railway auto-detect via railway.toml
+
+### Railway Configuration Files
+
+The project uses `railway.toml` for deployment configuration:
+- **Builder**: Uses `dockerfile` (not nixpacks) for consistent builds
+- **Environment**: Set `NODE_ENV = "sandbox"` for sandbox deployments
+- **Healthcheck**: Disabled (`healthcheckPath = ""`, `healthcheckTimeout = 0`) to prevent premature container termination
+
+### Deployment Troubleshooting
+
+**Common Issues & Solutions:**
+
+1. **Prisma SSL Error** → Use Debian-based Node.js image (not Alpine)
+2. **Environment Mismatch** → Ensure Railway environment matches NODE_ENV setting
+3. **Healthcheck Failures** → Disable Railway healthchecks if app takes time to start
+4. **TypeScript Errors** → Ensure Express types are imported for health endpoints
+5. **Port Binding** → Railway sets PORT dynamically; use `process.env.PORT` with fallback
+
+**Successful Deployment Logs Should Show:**
+```
+Starting Seda Auth Service in sandbox mode...
+NODE_ENV: sandbox
+PORT: 3001
+[Nest] NestApplication Nest application successfully started
+prisma:info Starting a postgresql pool with X connections
+🎵 Sedā Auth Service running on port 3001 in sandbox mode
+📋 Health endpoint available at: http://0.0.0.0:3001/health
+```
+
 ## Code Style Guidelines
 
 When writing code, ALWAYS add tagged comments for ANY assumption:

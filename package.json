@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "./scripts/prisma-build.sh && nest build",
+    "build": "nest build",
     "postinstall": "echo 'Skipping Prisma generation during install'",
     "prisma:generate": "prisma generate",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

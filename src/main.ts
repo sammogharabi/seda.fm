@@ -30,6 +30,11 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Add simple health endpoint for Railway health checks
+  app.use('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', service: 'seda-auth-service' });
+  });
+
   const environment = configService.get<string>('NODE_ENV', 'development');
   if (environment !== 'production') {
     const config = new DocumentBuilder()

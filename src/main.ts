@@ -31,7 +31,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Add simple health endpoint for Railway health checks
+  // Add simple health endpoint for Railway health checks (TypeScript fixed)
   app.use('/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'ok', service: 'seda-auth-service' });
   });

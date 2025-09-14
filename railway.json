@@ -8,7 +8,7 @@
     "runtime": "V2",
     "numReplicas": 1,
     "startCommand": "NODE_ENV=sandbox ENV_TAG=sandbox npm run start:prod",
-    "healthcheckPath": "/api/v1/health",
+    "healthcheckPath": "/health",
     "sleepApplication": false,
     "useLegacyStacker": false,
     "multiRegionConfig": {

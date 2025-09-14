@@ -7,7 +7,7 @@
 
 const dns = require('node:dns');
 const net = require('node:net');
-const { spawnSync } = require('node:child_process');
+const { spawnSync, spawn } = require('node:child_process');
 
 function log(...args) {
   const ts = new Date().toISOString();
@@ -116,11 +116,26 @@ async function main() {
   }
 
   log('Starting application');
-  const app = spawnSync(process.execPath, ['dist/main.js'], {
+  const app = spawn(process.execPath, ['dist/main.js'], {
     stdio: 'inherit',
     env: { ...process.env, NODE_ENV: 'production' },
   });
-  process.exit(app.status || 0);
+
+  // Handle graceful shutdown
+  process.on('SIGTERM', () => {
+    log('Received SIGTERM, shutting down gracefully');
+    app.kill('SIGTERM');
+  });
+
+  process.on('SIGINT', () => {
+    log('Received SIGINT, shutting down gracefully');
+    app.kill('SIGINT');
+  });
+
+  app.on('exit', (code) => {
+    log('Application exited with code', code);
+    process.exit(code || 0);
+  });
 }
 
 main().catch((e) => {

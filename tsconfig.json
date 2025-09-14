@@ -23,5 +23,8 @@
       "@config/*": ["src/config/*"],
       "@common/*": ["src/common/*"]
     }
-  }
+  },
+  "exclude": [
+    "chat.disabled.backup/**/*"
+  ]
 }

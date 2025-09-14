@@ -32,5 +32,5 @@ EXPOSE 3001
 # HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 #   CMD curl -f http://localhost:${PORT:-3001}/health || exit 1
 
-# Start the application directly
-CMD ["node", "dist/main.js"]
+# Start the application using our startup script
+CMD ["./start.sh"]

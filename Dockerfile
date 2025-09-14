@@ -1,8 +1,8 @@
-# Use Node.js 18 LTS
-FROM node:18-alpine
+# Use Node.js 18 (Debian-based for better Prisma compatibility)
+FROM node:18
 
-# Install dependencies including OpenSSL 1.1 for Prisma compatibility
-RUN apk add --no-cache curl openssl1.1-compat
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y curl && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app

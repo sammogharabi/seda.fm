@@ -7,9 +7,11 @@
   "deploy": {
     "runtime": "V2",
     "numReplicas": 1,
-    "startCommand": "echo 'PORT is:' $PORT && echo 'NODE_ENV is:' $NODE_ENV && NODE_ENV=sandbox node dist/main.js",
+    "startCommand": "NODE_ENV=sandbox node dist/main.js",
     "sleepApplication": false,
     "useLegacyStacker": false,
+    "healthcheckTimeout": 300,
+    "healthcheckInterval": 0,
     "multiRegionConfig": {
       "us-west2": {
         "numReplicas": 1

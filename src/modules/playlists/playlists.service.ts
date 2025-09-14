@@ -29,6 +29,7 @@ export class PlaylistsService {
         ownerUserId: profile.userId,
         title: dto.title,
         description: dto.description,
+<<<<<<< HEAD
         isPublic: dto.isPublic ?? true,
         isCollaborative: dto.isCollaborative ?? false,
       },
@@ -82,7 +83,7 @@ export class PlaylistsService {
       });
 
       if (!isCollaborator) {
-        throw new NotFoundException('Playlist not found'); // Don't reveal private playlist existence
+        throw new ForbiddenException('Not authorized to view this playlist');
       }
     }
 
@@ -108,6 +109,7 @@ export class PlaylistsService {
       data: {
         title: dto.title,
         description: dto.description,
+<<<<<<< HEAD
         isPublic: dto.isPublic,
         isCollaborative: dto.isCollaborative,
         updatedAt: new Date(),
@@ -129,7 +131,6 @@ export class PlaylistsService {
   }
 
   async addPlaylistItem(playlistId: string, userId: string, dto: AddPlaylistItemDto) {
-    // Check if playlist exists and user can modify it
     const playlist = await this.prisma.playlist.findFirst({
       where: { id: playlistId },
     });
@@ -139,14 +140,14 @@ export class PlaylistsService {
     }
 
     // Check permissions
-    const canModify = playlist.ownerUserId === userId || 
+    const canModify = playlist.ownerUserId === userId ||
       (playlist.isCollaborative && await this.isCollaborator(playlistId, userId));
 
     if (!canModify) {
-      throw new ForbiddenException('Not authorized to add items to this playlist');
+      throw new ForbiddenException('Not authorized to modify this playlist');
     }
 
-    // Get user's profile for the addedBy relation
+    // Get user's profile for the added_by relationship
     const profile = await this.prisma.profile.findFirst({
       where: { userId: userId },
     });
@@ -155,33 +156,33 @@ export class PlaylistsService {
       throw new NotFoundException('User profile not found');
     }
 
-    // Determine position
-    let position = dto.position;
-    if (position === undefined) {
-      // Add to end of playlist
+    // Auto-increment position if not provided
+    if (dto.position === undefined) {
       const lastItem = await this.prisma.playlistItem.findFirst({
         where: { playlistId: playlistId },
         orderBy: { position: 'desc' },
       });
-      position = (lastItem?.position ?? -1) + 1;
+      dto.position = (lastItem?.position || 0) + 1;
     } else {
       // Check if position is already taken
       const existingItem = await this.prisma.playlistItem.findFirst({
         where: {
           playlistId: playlistId,
-          position: position,
+<<<<<<< HEAD
+          position: dto.position,
         },
       });
 
       if (existingItem) {
-        throw new ConflictException(`Position ${position} is already taken`);
+        throw new ConflictException('Position already taken');
       }
     }
 
     return this.prisma.playlistItem.create({
       data: {
         playlistId: playlistId,
-        position: position,
+<<<<<<< HEAD
+        position: dto.position,
         provider: dto.provider,
         providerTrackId: dto.providerTrackId,
         title: dto.title,
@@ -200,32 +201,25 @@ export class PlaylistsService {
     });
   }
 
-  async getPlaylistItems(playlistId: string, dto: GetPlaylistItemsDto, requestingUserId?: string) {
-    // Check if playlist exists and user can access it
+  async getPlaylistItems(
+    playlistId: string,
+    query: GetPlaylistItemsDto,
+    requestingUserId?: string,
+  ) {
+    // First verify access to the playlist
     await this.getPlaylist(playlistId, requestingUserId);
 
-    const sortField = dto.sortField === 'addedAt' ? 'addedAt' : 'position';
-    const options = validatePaginationOptions({
-      limit: dto.limit,
-      cursor: dto.cursor,
-      sortField: sortField,
-      sortDirection: dto.sortDirection,
-    });
+    // Validate pagination options
+    const validatedQuery = validatePaginationOptions(query);
 
-    const where = buildCursorWhere(
-      options.cursor,
-      options.sortField,
-      options.sortDirection,
-      { playlistId: playlistId },
-    );
+    // Build cursor-based where clause
+    const cursorWhere = buildCursorWhere(validatedQuery.cursor, validatedQuery.sortField, validatedQuery.sortDirection);
 
-    // Fetch one extra item to determine if there are more
     const items = await this.prisma.playlistItem.findMany({
-      where,
-      orderBy: {
-        [options.sortField]: options.sortDirection,
+      where: {
+        playlistId: playlistId,
+        ...cursorWhere,
       },
-      take: options.limit + 1,
       include: {
         addedBy: {
           select: {
@@ -234,9 +228,13 @@ export class PlaylistsService {
           },
         },
       },
+      orderBy: {
+        [validatedQuery.sortField]: validatedQuery.sortDirection,
+      },
+      take: validatedQuery.limit + 1, // Take one extra to check if there are more
     });
 
-    return createPaginatedResult(items, options.limit, options.sortField);
+    return createPaginatedResult(items, validatedQuery.limit);
   }
 
   private async isCollaborator(playlistId: string, userId: string): Promise<boolean> {

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Determine the repo top-level (this is for seda-auth-service)
+REPO_DIR=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
+if [ -z "$REPO_DIR" ]; then
+  echo "[pre-commit] Not a git repository; skipping." >&2
+  exit 0
+fi
+
+# Search upward for a project root that contains the Notion sync script
+SEARCH_DIR="$REPO_DIR"
+FOUND=""
+for i in 0 1 2 3; do
+  if [ -f "$SEARCH_DIR/scripts/notion-sync.mjs" ]; then
+    FOUND="$SEARCH_DIR"
+    break
+  fi
+  PARENT=$(dirname "$SEARCH_DIR")
+  if [ "$PARENT" = "$SEARCH_DIR" ]; then break; fi
+  SEARCH_DIR="$PARENT"
+done
+
+if [ -z "$FOUND" ]; then
+  echo "[pre-commit] Could not locate scripts/notion-sync.mjs above $REPO_DIR; skipping." >&2
+  exit 0
+fi
+
+echo "[pre-commit] Checking PRD status ..."
+if node "$FOUND/scripts/notion-status.mjs" --quiet --exit-nonzero; then
+  echo "[pre-commit] PRDs up-to-date; skipping sync."
+else
+  echo "[pre-commit] Syncing PRDs from Notion (changed-only) ..."
+  node "$FOUND/scripts/notion-sync.mjs" --changed-only || {
+    echo "[pre-commit] Notion sync failed; aborting commit." >&2
+    exit 1
+  }
+  if git -C "$FOUND" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git -C "$FOUND" add docs/prd || true
+  fi
+fi
+
+# If the located project is a git repo, stage docs/prd there.
+if git -C "$FOUND" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  git -C "$FOUND" add docs/prd || true
+fi
+
+exit 0

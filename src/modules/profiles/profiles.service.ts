@@ -33,6 +33,7 @@ export class ProfilesService {
       data: {
         userId: userId,
         username: canonicalUsername,
+<<<<<<< HEAD
         displayName: dto.displayName,
         bio: dto.bio,
         avatarUrl: dto.avatarUrl,
@@ -102,6 +103,7 @@ export class ProfilesService {
       where: { id: profile.id },
       data: {
         username: newCanonicalUsername || profile.username,
+<<<<<<< HEAD
         displayName: dto.displayName !== undefined ? dto.displayName : profile.displayName,
         bio: dto.bio !== undefined ? dto.bio : profile.bio,
         avatarUrl: dto.avatarUrl !== undefined ? dto.avatarUrl : profile.avatarUrl,

@@ -17,6 +17,7 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
 import { AddReactionDto } from './dto/add-reaction.dto';
+import { SendTrackCardDto } from './dto/send-track-card.dto';
 import { ModerateUserDto } from './dto/moderate-user.dto';
 import { MessageEntity } from './entities/message.entity';
 import { RoomEntity } from './entities/room.entity';
@@ -142,5 +143,28 @@ export class ChatController {
     }
     
     return { message: 'Moderation action completed' };
+  }
+
+  @Post('rooms/:roomId/track-card')
+  @ApiOperation({ summary: 'Share a track card in a room' })
+  @ApiResponse({ status: 201, description: 'Track card sent successfully', type: MessageEntity })
+  async sendTrackCard(
+    @Request() req: any,
+    @Param('roomId') roomId: string,
+    @Body() trackCardDto: SendTrackCardDto,
+  ): Promise<MessageEntity> {
+    const message = await this.chatService.sendTrackCard(req.user.id, roomId, trackCardDto);
+    
+    // Emit via WebSocket for real-time updates
+    this.chatGateway.server.to(roomId).emit('track_card_shared', message);
+    
+    return message;
+  }
+
+  @Get('messages/:messageId/reactions')
+  @ApiOperation({ summary: 'Get all reactions for a message' })
+  @ApiResponse({ status: 200, description: 'Reactions retrieved successfully' })
+  async getReactions(@Param('messageId') messageId: string): Promise<any[]> {
+    return this.chatService.getReactions(messageId);
   }
 }

@@ -43,7 +43,7 @@ async function bootstrap() {
     SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
   }
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`🎵 Sedā Auth Service running on port ${port} in ${environment} mode`);
 }
 

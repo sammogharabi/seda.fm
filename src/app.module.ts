@@ -7,7 +7,7 @@ import { VerificationModule } from './modules/verification/verification.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { CrawlerModule } from './modules/crawler/crawler.module';
 import { UserModule } from './modules/user/user.module';
-import { ChatModule } from './modules/chat/chat.module';
+// import { ChatModule } from './modules/chat/chat.module';
 import { ProfilesModule } from './modules/profiles/profiles.module';
 import { PlaylistsModule } from './modules/playlists/playlists.module';
 import { configuration } from './config/configuration';
@@ -32,7 +32,7 @@ import { HealthModule } from './modules/health/health.module';
     VerificationModule,
     CrawlerModule,
     AdminModule,
-    ChatModule,
+    // ChatModule,
     ProfilesModule,
     PlaylistsModule,
     HealthModule,

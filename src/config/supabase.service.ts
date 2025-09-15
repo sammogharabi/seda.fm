@@ -39,10 +39,34 @@ export class SupabaseService {
   }
 
   async verifyToken(token: string) {
-    const { data, error } = await this.supabaseAdmin.auth.getUser(token);
-    if (error) {
-      throw error;
+    try {
+      // Validate token format
+      if (!token || typeof token !== 'string' || token.length < 10) {
+        throw new Error('Invalid token format');
+      }
+
+      // Remove any potential extra whitespace
+      const cleanToken = token.trim();
+
+      // Verify token with Supabase
+      const { data, error } = await this.supabaseAdmin.auth.getUser(cleanToken);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data.user || !data.user.email) {
+        throw new Error('Invalid user data in token');
+      }
+
+      // Check if user account is confirmed (email verification)
+      if (!data.user.email_confirmed_at) {
+        throw new Error('User email not verified');
+      }
+
+      return data.user;
+    } catch (error) {
+      throw new Error(`Token verification failed: ${error.message}`);
     }
-    return data.user;
   }
 }

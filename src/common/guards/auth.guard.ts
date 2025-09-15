@@ -17,21 +17,6 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // Skip auth in development mode
-    const skipAuth = this.configService.get<string>('DEV_SKIP_AUTH') === 'true';
-    if (skipAuth) {
-      const request = context.switchToHttp().getRequest();
-      // Create a mock user for development
-      request.user = {
-        id: 'dev-user-123',
-        email: 'dev@seda.fm',
-        role: 'USER',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      return true;
-    }
-
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
 

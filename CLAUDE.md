@@ -190,6 +190,7 @@ The project uses `railway.toml` for deployment configuration:
 3. **Healthcheck Failures** → Disable Railway healthchecks if app takes time to start
 4. **TypeScript Errors** → Ensure Express types are imported for health endpoints
 5. **Port Binding** → Railway sets PORT dynamically; use `process.env.PORT` with fallback
+6. **Git Push Large File Errors** → See `../GIT_DEPLOYMENT_ISSUES.md` for comprehensive resolution guide
 
 **Successful Deployment Logs Should Show:**
 ```

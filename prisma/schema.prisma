@@ -243,6 +243,12 @@ model Profile {
   displayName String?  @map("display_name")
   bio         String?
   avatarUrl   String?  @map("avatar_url")
+
+  // Onboarding fields
+  genres              String[] @default([])
+  genresCompleted     Boolean  @default(false) @map("genres_completed")
+  genresCompletedAt   DateTime? @map("genres_completed_at")
+
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -252,6 +258,7 @@ model Profile {
   addedPlaylistItems  PlaylistItem[]
 
   @@index([username])
+  @@index([genresCompleted])
   @@map("profiles")
 }
 

@@ -17,6 +17,7 @@ import { FeatureGuard } from '../../common/guards/feature.guard';
 import { Feature } from '../../common/decorators/feature.decorator';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateGenresDto } from './dto/update-genres.dto';
 import { ProfilesService } from './profiles.service';
 
 @ApiTags('profiles')
@@ -106,5 +107,44 @@ export class ProfilesController {
       throw new NotFoundException('Profile not found');
     }
     return profile;
+  }
+
+  @Post('me/genres')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update user genres and mark onboarding complete' })
+  @ApiResponse({
+    status: 200,
+    description: 'Genres updated successfully (existing user)',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Genres set successfully (first time completion)',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid genres data',
+  })
+  async updateGenres(@Request() req: any, @Body() dto: UpdateGenresDto) {
+    const userId = req.user.id;
+    return this.profilesService.updateGenres(userId, dto.genres);
+  }
+
+  @Get('me/onboarding-status')
+  @ApiOperation({ summary: 'Check current user onboarding completion status' })
+  @ApiResponse({
+    status: 200,
+    description: 'Onboarding status retrieved',
+    schema: {
+      type: 'object',
+      properties: {
+        genresCompleted: { type: 'boolean' },
+        genresCompletedAt: { type: 'string', format: 'date-time', nullable: true },
+        shouldShowGenresStep: { type: 'boolean' },
+      },
+    },
+  })
+  async getOnboardingStatus(@Request() req: any) {
+    const userId = req.user.id;
+    return this.profilesService.getOnboardingStatus(userId);
   }
 }

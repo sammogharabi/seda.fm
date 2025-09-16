@@ -109,4 +109,73 @@ export class ProfilesService {
       },
     });
   }
+
+  async updateGenres(userId: string, genres: string[]) {
+    // #COMPLETION_DRIVE: Assuming user might not have a profile yet
+    // #SUGGEST_VERIFY: Check if we should auto-create profile or require explicit creation first
+
+    // Get or create profile for the user
+    let profile = await this.prisma.profile.findFirst({
+      where: { userId: userId },
+    });
+
+    const isFirstTimeCompletion = !profile || !profile.genresCompleted;
+
+    if (!profile) {
+      // Auto-create profile if user doesn't have one
+      // Use a temporary username based on user ID that they can change later
+      const tempUsername = `user_${userId.slice(-8)}`;
+      profile = await this.prisma.profile.create({
+        data: {
+          userId: userId,
+          username: tempUsername,
+          genres: genres,
+          genresCompleted: true,
+          genresCompletedAt: new Date(),
+        },
+      });
+    } else {
+      // Update existing profile
+      profile = await this.prisma.profile.update({
+        where: { id: profile.id },
+        data: {
+          genres: genres,
+          genresCompleted: true,
+          genresCompletedAt: profile.genresCompleted ? profile.genresCompletedAt : new Date(),
+          updatedAt: new Date(),
+        },
+      });
+    }
+
+    return {
+      profile,
+      isFirstTimeCompletion,
+      statusCode: isFirstTimeCompletion ? 201 : 200,
+    };
+  }
+
+  async getOnboardingStatus(userId: string) {
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId: userId },
+    });
+
+    const genresCompleted = profile?.genresCompleted || false;
+    const hasGenres = profile?.genres && profile.genres.length > 0;
+
+    return {
+      genresCompleted,
+      genresCompletedAt: profile?.genresCompletedAt || null,
+      shouldShowGenresStep: !genresCompleted && !hasGenres,
+    };
+  }
+
+  // Utility function to check if user should see genres step
+  async shouldShowGenresStep(userId: string): Promise<boolean> {
+    const profile = await this.prisma.profile.findFirst({
+      where: { userId: userId },
+    });
+
+    // Show genres step if user has no profile OR profile exists but genres not completed
+    return !profile?.genresCompleted && (!profile?.genres || profile.genres.length === 0);
+  }
 }

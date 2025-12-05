@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run Notion sync before commit and add updated docs.
+ROOT_DIR=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
+if [ -z "$ROOT_DIR" ]; then
+  echo "[pre-commit] Not a git repository; skipping Notion sync." >&2
+  exit 0
+fi
+
+cd "$ROOT_DIR"
+
+if [ -f scripts/notion-sync.mjs ]; then
+  # If last sync is recent (default 10 minutes), skip any network calls
+  MAX_AGE_MIN=${NOTION_SYNC_MAX_AGE_MIN:-10}
+  LAST_SYNC=""
+  if [ -f docs/prd/.last-sync.json ]; then
+    LAST_SYNC=$(node -e "try{const p=require('path');const fs=require('fs');const j=JSON.parse(fs.readFileSync('docs/prd/.last-sync.json','utf8'));console.log(j.lastSynced||'');}catch(e){console.log('')}")
+  fi
+  if [ -n "$LAST_SYNC" ]; then
+    NOW=$(date -u +%s)
+    THEN=$(date -u -j -f "%Y-%m-%dT%H:%M:%S%z" "${LAST_SYNC/Z/+0000}" +%s 2>/dev/null || date -u -d "$LAST_SYNC" +%s 2>/dev/null || echo 0)
+    if [ "$THEN" -gt 0 ]; then
+      AGE_MIN=$(( (NOW-THEN)/60 ))
+    else
+      AGE_MIN=$((MAX_AGE_MIN+1))
+    fi
+  else
+    AGE_MIN=$((MAX_AGE_MIN+1))
+  fi
+
+  if [ "$AGE_MIN" -le "$MAX_AGE_MIN" ]; then
+    echo "[pre-commit] Last sync ${AGE_MIN}min ago (<= ${MAX_AGE_MIN}); skipping."
+    exit 0
+  fi
+
+  echo "[pre-commit] Checking PRD status ..."
+  if node scripts/notion-status.mjs --quiet --exit-nonzero; then
+    echo "[pre-commit] PRDs up-to-date; skipping sync."
+    exit 0
+  fi
+
+  echo "[pre-commit] Syncing PRDs from Notion (changed-only) ..."
+  node scripts/notion-sync.mjs --changed-only || {
+    echo "[pre-commit] Notion sync failed; aborting commit." >&2
+    exit 1
+  }
+  if [ -d docs/prd ]; then
+    git add docs/prd
+  fi
+else
+  echo "[pre-commit] No Notion sync script found; skipping." >&2
+fi
+
+exit 0

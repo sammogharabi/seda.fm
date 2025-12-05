@@ -1,0 +1,76 @@
+/* Force About page styling to override Tailwind issues */
+
+.about-page {
+  min-height: 100vh !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  width: 100% !important;
+}
+
+.about-section {
+  margin-top: 160px !important;
+  padding-left: 32px !important;
+  padding-right: 32px !important;
+}
+
+.about-section-padding {
+  padding-top: 160px !important;
+  padding-bottom: 160px !important;
+}
+
+.about-container-6xl {
+  max-width: 1152px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.about-container-4xl {
+  max-width: 896px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.about-container-3xl {
+  max-width: 768px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.about-header {
+  text-align: center !important;
+  margin-bottom: 80px !important;
+}
+
+.about-title {
+  font-size: 36px !important;
+  font-weight: 500 !important;
+  color: #ffffff !important;
+  margin-bottom: 8px !important;
+}
+
+.about-subtitle {
+  font-size: 18px !important;
+  color: #a3a3a3 !important;
+  line-height: 1.6 !important;
+}
+
+.about-grid-3 {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 32px !important;
+}
+
+@media (max-width: 768px) {
+  .about-grid-3 {
+    grid-template-columns: repeat(1, 1fr) !important;
+  }
+
+  .about-title {
+    font-size: 28px !important;
+  }
+
+  .about-section {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}

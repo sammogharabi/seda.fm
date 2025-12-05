@@ -1,0 +1,42 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e7]
+        - heading "sedā.fm" [level=4] [ref=e11]
+      - paragraph [ref=e12]: Sign in to your account
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e16]: Email
+          - textbox "Email" [ref=e17]: test@example.com
+        - generic [ref=e18]:
+          - generic [ref=e19]: Password
+          - generic [ref=e20]:
+            - textbox "Password" [ref=e21]: wrongpassword
+            - button [ref=e22]:
+              - img
+        - button "Sign In" [ref=e23]
+      - link "Forgot your password?" [ref=e25] [cursor=pointer]:
+        - /url: /auth/forgot-password
+      - generic [ref=e26]:
+        - paragraph [ref=e27]: Or continue with
+        - generic [ref=e28]:
+          - button "🎵 Continue with Spotify" [ref=e29]:
+            - generic [ref=e30]: 🎵
+            - text: Continue with Spotify
+          - button "🔍 Continue with Google" [ref=e31]:
+            - generic [ref=e32]: 🔍
+            - text: Continue with Google
+          - button "🍎 Continue with Apple" [ref=e33]:
+            - generic [ref=e34]: 🍎
+            - text: Continue with Apple
+      - generic [ref=e36]:
+        - text: Don't have an account?
+        - link "Sign up" [ref=e37] [cursor=pointer]:
+          - /url: /auth/signup
+  - region "Notifications alt+T"
+```

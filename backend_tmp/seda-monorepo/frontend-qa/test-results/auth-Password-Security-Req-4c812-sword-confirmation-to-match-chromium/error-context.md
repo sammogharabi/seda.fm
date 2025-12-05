@@ -1,0 +1,55 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e7]
+        - heading "sedā.fm" [level=4] [ref=e11]
+      - paragraph [ref=e12]: Create your account
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e16]: Email
+          - textbox "Email" [ref=e17]: test@example.com
+        - generic [ref=e18]:
+          - generic [ref=e19]: Username
+          - textbox "Username" [ref=e20]
+          - generic [ref=e21]:
+            - img [ref=e22]
+            - text: Username is required
+        - generic [ref=e24]:
+          - generic [ref=e25]: Password
+          - generic [ref=e26]:
+            - textbox "Password" [ref=e27]: DifferentPassword123!
+            - button [ref=e28]:
+              - img
+        - generic [ref=e29]:
+          - generic [ref=e30]: Confirm Password
+          - generic [ref=e31]:
+            - textbox "Confirm Password" [ref=e32]
+            - button [ref=e33]:
+              - img
+          - generic [ref=e34]:
+            - img [ref=e35]
+            - text: Please confirm your password
+        - button "Create Account" [active] [ref=e37]
+      - generic [ref=e38]:
+        - paragraph [ref=e39]: Or continue with
+        - generic [ref=e40]:
+          - button "🎵 Continue with Spotify" [ref=e41]:
+            - generic [ref=e42]: 🎵
+            - text: Continue with Spotify
+          - button "🔍 Continue with Google" [ref=e43]:
+            - generic [ref=e44]: 🔍
+            - text: Continue with Google
+          - button "🍎 Continue with Apple" [ref=e45]:
+            - generic [ref=e46]: 🍎
+            - text: Continue with Apple
+      - generic [ref=e48]:
+        - text: Already have an account?
+        - link "Sign in" [ref=e49] [cursor=pointer]:
+          - /url: /auth/login
+  - region "Notifications alt+T"
+```

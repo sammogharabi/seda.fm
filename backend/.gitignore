@@ -1,0 +1,69 @@
+# compiled output
+/dist
+/node_modules
+/build
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+
+# Tests
+/coverage
+/.nyc_output
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.qa
+.env.sandbox
+.env.production
+!.env.example
+!.env.example.posthog
+
+# Supabase local env
+supabase/.env.local
+supabase/.env
+!supabase/.env.local.example
+
+# PostHog keys - NEVER commit these
+**/posthog.key
+**/*posthog*.env
+
+# Prisma
+prisma/migrations/dev/
+
+# Puppeteer
+.puppeteer_cache/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+# Deployment secrets - NEVER commit
+DEPLOYMENT_SECRETS.md
+.vercel

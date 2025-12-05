@@ -1,0 +1,1362 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+  --background: #fafafa;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  --primary: #0a0a0a;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #f5f5f5;
+  --accent-foreground: #0a0a0a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e5e5e5;
+  --input: transparent;
+  --input-background: #ffffff;
+  --switch-background: #e5e5e5;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --font-weight-semibold: 600;
+  --ring: #a3a3a3;
+  --chart-1: #0a0a0a;
+  --chart-2: #737373;
+  --chart-3: #a3a3a3;
+  --chart-4: #d4d4d4;
+  --chart-5: #e5e5e5;
+  --radius: 0.5rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #0a0a0a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #0a0a0a;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #a3a3a3;
+  
+  /* New accent colors inspired by your preferences */
+  --accent-coral: #ff8c8c;
+  --accent-blue: #8ed1fc;
+  --accent-mint: #7bdcb5;
+  --accent-yellow: #ffeb3b;
+  --accent-light-blue: #bbdefb;
+  
+  /* Typography scale inspired by Fast Company */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #1a1a1a;
+  --card-foreground: #fafafa;
+  --popover: #1a1a1a;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #0a0a0a;
+  --secondary: #262626;
+  --secondary-foreground: #fafafa;
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --accent: #262626;
+  --accent-foreground: #fafafa;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --border: #404040;
+  --input: transparent;
+  --input-background: #1a1a1a;
+  --switch-background: #404040;
+  --ring: #737373;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --font-weight-semibold: 600;
+  --chart-1: #fafafa;
+  --chart-2: #a3a3a3;
+  --chart-3: #737373;
+  --chart-4: #525252;
+  --chart-5: #404040;
+  --sidebar: #1a1a1a;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #fafafa;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #404040;
+  --sidebar-ring: #737373;
+  
+  /* Accent colors remain vibrant in dark mode */
+  --accent-coral: #ff8c8c;
+  --accent-blue: #8ed1fc;
+  --accent-mint: #7bdcb5;
+  --accent-yellow: #ffeb3b;
+  --accent-light-blue: #bbdefb;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* New accent colors */
+  --color-accent-coral: var(--accent-coral);
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-mint: var(--accent-mint);
+  --color-accent-yellow: var(--accent-yellow);
+  --color-accent-light-blue: var(--accent-light-blue);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/**
+ * Base typography inspired by Fast Company's editorial design
+ */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-size: var(--text-5xl);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    h2 {
+      font-size: var(--text-4xl);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    h3 {
+      font-size: var(--text-3xl);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.025em;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    h4 {
+      font-size: var(--text-2xl);
+      font-weight: 600;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    h5 {
+      font-size: var(--text-xl);
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: -0.015em;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    h6 {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      line-height: 1.35;
+      letter-spacing: -0.01em;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: 400;
+      line-height: 1.7;
+      letter-spacing: -0.005em;
+      color: var(--color-foreground);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .lead {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+      color: var(--color-foreground);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .small {
+      font-size: var(--text-sm);
+      font-weight: 400;
+      line-height: 1.5;
+      letter-spacing: 0;
+      color: var(--color-muted-foreground);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    label {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      line-height: 1.4;
+      letter-spacing: 0;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: 500;
+      line-height: 1.4;
+      letter-spacing: -0.005em;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    input, textarea {
+      font-size: var(--text-base);
+      font-weight: 400;
+      line-height: 1.5;
+      letter-spacing: -0.005em;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+  font-family: "Founders Grotesk", -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Load Fast Company inspired fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Fast Company inspired utility classes */
+.text-display {
+  font-size: var(--text-6xl);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.05em;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.text-headline {
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.text-subhead {
+  font-size: var(--text-xl);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--color-foreground);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.text-body {
+  font-size: var(--text-base);
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: -0.005em;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.text-caption {
+  font-size: var(--text-sm);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--color-muted-foreground);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.text-editorial {
+  font-size: var(--text-lg);
+  font-weight: 400;
+  line-height: 1.8;
+  letter-spacing: -0.01em;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Prevent auto-scrolling issues */
+html {
+  scroll-behavior: auto !important;
+}
+
+body {
+  scroll-behavior: auto !important;
+}
+
+/* Prevent layout shifts that cause unwanted scrolling */
+.sessions-container {
+  overflow-anchor: none;
+  contain: layout;
+  position: relative;
+  min-height: 100vh;
+}
+
+.sessions-container img {
+  min-height: 40px; /* Match the w-10 h-10 class */
+  background-color: var(--color-muted);
+}
+
+@media (min-width: 768px) {
+  .sessions-container img {
+    min-height: 48px; /* Match the md:w-12 md:h-12 class */
+  }
+}
+
+/* Lock scroll when sessions view is active */
+.sessions-scroll-lock {
+  overflow: hidden !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}
+
+.sessions-scroll-lock body {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Custom Mobile Sidebar Fix */
+.mobile-sidebar-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  z-index: 99998 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+}
+
+.mobile-sidebar-panel {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  width: 320px !important;
+  max-width: 85vw !important;
+  background: var(--color-background) !important;
+  border-right: 1px solid var(--color-border) !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+}
+
+/* PWA and Mobile Support */
+@media (max-width: 767px) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+    overflow-x: hidden;
+  }
+  
+  .mobile-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .mobile-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Mobile-specific overflow handling for main content */
+  main {
+    margin-bottom: 4rem; /* Space for bottom navigation */
+    padding-bottom: 2rem;
+  }
+  
+  /* Ensure all interactive elements on mobile are touchable */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Fix mobile navigation and header interactions */
+  header, nav, header *, nav * {
+    pointer-events: auto !important;
+  }
+  
+  /* Specific fixes for mobile navigation and header */
+  .mobile-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 60 !important;
+    pointer-events: auto !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  .mobile-navigation {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 50 !important;
+    pointer-events: auto !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  /* Prevent any overlays from blocking mobile nav */
+  .mobile-navigation * {
+    pointer-events: auto !important;
+  }
+  
+  .mobile-header * {
+    pointer-events: auto !important;
+  }
+  
+  /* Ensure Sheet content is interactive */
+  [role="dialog"] button,
+  [role="dialog"] [role="button"] {
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+  
+  /* Fix potential issues with main content blocking interactions */
+  main {
+    pointer-events: auto;
+  }
+  
+  /* Ensure the mobile Sheet sidebar is fully interactive */
+  [data-slot="sheet-content"] * {
+    pointer-events: auto !important;
+  }
+  
+
+  
+  /* Mobile Sheet overlay should be darker and cover full screen */
+  [data-slot="sheet-overlay"] {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 59 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+  
+  /* Mobile card content fixes */
+  .card-content-responsive {
+    padding: 1rem !important;
+  }
+  
+  .card-content-responsive .flex {
+    flex-wrap: wrap;
+    gap: 0.75rem !important;
+  }
+  
+  .card-content-responsive .flex > * {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+}
+
+/* AGGRESSIVE MOBILE SEARCH FULLSCREEN OVERRIDES */
+
+/* Step 1: Override the Sheet content itself */
+.mobile-search-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: none !important;
+  z-index: 9999 !important;
+  background: var(--color-background) !important;
+  overflow: hidden !important;
+  inset: 0 !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Step 2: Override any parent containers that might constrain the search */
+[data-radix-dialog-portal]:has(.mobile-search-fullscreen),
+[data-radix-dialog-portal]:has(.mobile-search-fullscreen) > * {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  transform: none !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Step 3: Specific Sheet component overrides */
+[data-radix-sheet-portal]:has(.mobile-search-fullscreen),
+[data-radix-sheet-portal]:has(.mobile-search-fullscreen) > *,
+[data-slot="sheet-content"]:has(.mobile-search-fullscreen) {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  transform: none !important;
+  animation: none !important;
+  transition: none !important;
+  z-index: 9999 !important;
+  background: var(--color-background) !important;
+}
+
+/* Step 4: Override any specific Sheet positioning */
+[data-state="open"][data-side]:has(.mobile-search-fullscreen),
+[data-state="open"][data-side="top"]:has(.mobile-search-fullscreen) {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+/* Step 5: Ensure viewport-based sizing works */
+@media (max-width: 767px) {
+  .mobile-search-fullscreen,
+  [data-slot="sheet-content"]:has(.mobile-search-fullscreen),
+  [data-radix-sheet-content]:has(.mobile-search-fullscreen) {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    transform: none !important;
+    z-index: 9999 !important;
+    background: var(--color-background) !important;
+    overflow: hidden !important;
+    inset: 0 !important;
+  }
+}
+
+/* Step 6: Override any animations that might interfere */
+.mobile-search-fullscreen *,
+[data-slot="sheet-content"]:has(.mobile-search-fullscreen) *,
+[data-radix-sheet-content]:has(.mobile-search-fullscreen) * {
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+}
+
+/* Step 7: Force any remaining Sheet overrides */
+[data-state="open"] .mobile-search-fullscreen,
+[data-state="open"][data-slot="sheet-content"]:has(.mobile-search-fullscreen) {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  transform: none !important;
+  animation: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Step 8: Mobile search wrapper - absolute positioning fallback */
+.mobile-search-wrapper {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  background: var(--color-background) !important;
+  z-index: 10000 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  transform: none !important;
+}
+
+/* Step 9: Ensure overlay doesn't interfere with fullscreen */
+[data-radix-sheet-overlay],
+[data-slot="sheet-overlay"] {
+  display: none !important;
+}
+
+/* Show overlay only when NOT mobile search */
+[data-radix-sheet-overlay]:not(:has(+ [data-radix-sheet-content] .mobile-search-fullscreen)),
+[data-slot="sheet-overlay"]:not(:has(+ [data-slot="sheet-content"] .mobile-search-fullscreen)) {
+  display: block !important;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  z-index: 9998 !important;
+}
+
+/* Step 10: Final mobile-specific overrides */
+@media (max-width: 767px) {
+  /* Force mobile search to cover EVERYTHING */
+  [data-radix-sheet-portal]:has(.mobile-search-fullscreen) {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 9999 !important;
+    background: var(--color-background) !important;
+  }
+  
+  /* Ensure no margins or padding on mobile search containers */
+  .mobile-search-fullscreen,
+  .mobile-search-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+  
+  /* Override any potential transform issues */
+  [data-state="open"] .mobile-search-fullscreen,
+  [data-state="open"] .mobile-search-wrapper {
+    transform: translateX(0) translateY(0) translateZ(0) !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Ensure mobile search takes precedence over everything */
+@media (max-width: 767px) {
+  .mobile-search-fullscreen {
+    z-index: 9999 !important;
+  }
+}
+
+/* User Type Switcher - Highest z-index for testing */
+.user-type-switcher {
+  z-index: 10000 !important;
+  position: fixed !important;
+  pointer-events: auto !important;
+}
+
+.user-type-switcher * {
+  pointer-events: auto !important;
+}
+
+/* Touch-friendly sizing for mobile */
+@media (max-width: 767px) {
+  button {
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  input {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+  
+  /* Ensure mobile navigation buttons are touchable */
+  nav button {
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+  
+  /* Fix any potential z-index issues with mobile navigation */
+  .fixed.bottom-0 {
+    z-index: 50 !important;
+  }
+  
+  /* Ensure mobile header is above other content */
+  .sticky.top-0 {
+    z-index: 60 !important;
+  }
+  
+  /* Debug: add visible borders to interactive elements on mobile */
+  .debug-mobile nav button {
+    border: 1px solid red !important;
+  }
+  
+  .debug-mobile header button {
+    border: 1px solid blue !important;
+  }
+  
+  /* Ensure mobile header buttons work */
+  header button {
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+  
+  /* Sheet content should allow interactions */
+  [data-slot="sheet-content"] {
+    pointer-events: auto !important;
+    padding: 0 !important;
+    background: var(--color-background) !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  [data-slot="sheet-content"] button {
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+  
+  /* Ensure all sidebar content in mobile sheet is interactive */
+  [data-slot="sheet-content"] * {
+    pointer-events: auto !important;
+  }
+  
+  /* Fix mobile sidebar layout issues */
+  [data-slot="sheet-content"] .w-full {
+    width: 100% !important;
+  }
+  
+  [data-slot="sheet-content"] .h-full {
+    height: 100% !important;
+  }
+  
+  /* Force mobile sidebar to use full available space */
+  [data-slot="sheet-content"] > div {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Ensure sidebar scrollable area works on mobile */
+  [data-slot="sheet-content"] [data-radix-scroll-area-root] {
+    height: 100% !important;
+    flex: 1 !important;
+  }
+  
+  [data-slot="sheet-content"] [data-radix-scroll-area-viewport] {
+    height: 100% !important;
+  }
+  
+  /* Mobile-specific Switch styling */
+  button[role="switch"] {
+    width: 44px !important;
+    height: 24px !important;
+    border-radius: 12px !important;
+    background-color: #9ca3af !important;
+    border: none !important;
+    padding: 2px !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    transition: background-color 0.2s ease !important;
+    min-height: 24px !important;
+  }
+  
+  button[role="switch"][data-state="checked"] {
+    background-color: #ff8c8c !important;
+  }
+  
+  button[role="switch"] span[data-state="unchecked"],
+  button[role="switch"] span[data-state="checked"] {
+    width: 20px !important;
+    height: 20px !important;
+    background-color: white !important;
+    border-radius: 50% !important;
+    display: block !important;
+    transition: transform 0.2s ease !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+    transform: translateX(0px) !important;
+  }
+  
+  button[role="switch"][data-state="checked"] span {
+    transform: translateX(20px) !important;
+  }
+  
+  /* Override any shadcn styles that might interfere */
+  button[role="switch"] * {
+    all: unset !important;
+    width: 20px !important;
+    height: 20px !important;
+    background-color: white !important;
+    border-radius: 50% !important;
+    display: block !important;
+    transition: transform 0.2s ease !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  }
+  
+  button[role="switch"][data-state="checked"] * {
+    transform: translateX(20px) !important;
+  }
+}
+
+/* Utility classes for safe areas */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.pl-safe {
+  padding-left: env(safe-area-inset-left);
+}
+
+.pr-safe {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Mobile navigation specific safe area support */
+@media (max-width: 767px) {
+  .mobile-navigation {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .mobile-header {
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Scrollbar utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar { 
+  display: none;  /* Safari and Chrome */
+}
+
+/* Line clamp utilities */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Accent color utilities */
+.bg-accent-coral { background-color: var(--color-accent-coral); }
+.bg-accent-blue { background-color: var(--color-accent-blue); }
+.bg-accent-mint { background-color: var(--color-accent-mint); }
+.bg-accent-yellow { background-color: var(--color-accent-yellow); }
+.bg-accent-light-blue { background-color: var(--color-accent-light-blue); }
+
+.text-accent-coral { color: var(--color-accent-coral); }
+.text-accent-blue { color: var(--color-accent-blue); }
+.text-accent-mint { color: var(--color-accent-mint); }
+.text-accent-yellow { color: var(--color-accent-yellow); }
+.text-accent-light-blue { color: var(--color-accent-light-blue); }
+
+.border-accent-coral { border-color: var(--color-accent-coral); }
+.border-accent-blue { border-color: var(--color-accent-blue); }
+.border-accent-mint { border-color: var(--color-accent-mint); }
+.border-accent-yellow { border-color: var(--color-accent-yellow); }
+.border-accent-light-blue { border-color: var(--color-accent-light-blue); }
+
+/* Hover states for accent colors */
+.hover\:bg-accent-coral:hover { background-color: var(--color-accent-coral); }
+.hover\:bg-accent-blue:hover { background-color: var(--color-accent-blue); }
+.hover\:bg-accent-mint:hover { background-color: var(--color-accent-mint); }
+.hover\:bg-accent-yellow:hover { background-color: var(--color-accent-yellow); }
+.hover\:bg-accent-light-blue:hover { background-color: var(--color-accent-light-blue); }
+
+/* Opacity variants for subtle accents */
+.bg-accent-coral\/10 { background-color: rgb(from var(--color-accent-coral) r g b / 0.1); }
+.bg-accent-blue\/10 { background-color: rgb(from var(--color-accent-blue) r g b / 0.1); }
+.bg-accent-mint\/10 { background-color: rgb(from var(--color-accent-mint) r g b / 0.1); }
+.bg-accent-yellow\/10 { background-color: rgb(from var(--color-accent-yellow) r g b / 0.1); }
+.bg-accent-light-blue\/10 { background-color: rgb(from var(--color-accent-light-blue) r g b / 0.1); }
+
+/* Global Search Modal Styling */
+.global-search-modal {
+  max-height: 85vh;
+  max-height: 85dvh; /* Dynamic viewport height for mobile */
+}
+
+/* Desktop Search Modal Specific Styling */
+@media (min-width: 768px) {
+  .desktop-search-modal {
+    width: 90vw !important;
+    max-width: 56rem !important; /* 896px - larger than max-w-2xl (672px) */
+    max-height: 85vh !important;
+    overflow: hidden !important;
+  }
+  
+  .desktop-search-modal [data-radix-dialog-content] {
+    width: 90vw !important;
+    max-width: 56rem !important;
+    max-height: 85vh !important;
+    overflow: hidden !important;
+  }
+  
+  /* Ensure proper content containment */
+  .desktop-search-modal .flex.flex-col.h-full {
+    max-height: 85vh !important;
+    overflow: hidden !important;
+  }
+  
+  /* Better scroll area sizing */
+  .desktop-search-modal [data-radix-scroll-area-root] {
+    max-height: calc(85vh - 200px) !important; /* Account for header and tabs */
+  }
+  
+  .desktop-search-modal [data-radix-scroll-area-viewport] {
+    max-height: calc(85vh - 200px) !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .global-search-modal {
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
+    width: calc(100vw - 2rem) !important;
+    margin: 1rem !important;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    transform: none !important;
+  }
+  
+  /* Aggressive mobile search full-screen overrides */
+  [data-radix-dialog-content]:has(.w-screen),
+  [data-slot="sheet-content"]:has(.w-screen) {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-width: none !important;
+    max-height: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: translateX(0) !important;
+    animation: none !important;
+    transition: none !important;
+    z-index: 999 !important;
+    background: var(--color-background) !important;
+    overflow: hidden !important;
+  }
+  
+  /* Ensure overlay covers full screen */
+  [data-radix-dialog-overlay]:has(~ [data-radix-dialog-content] .w-screen),
+  [data-slot="sheet-overlay"]:has(~ [data-slot="sheet-content"] .w-screen) {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 998 !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+  }
+  
+  /* Ensure dialog overlay covers full screen on mobile */
+  [data-radix-dialog-overlay] {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+  }
+  
+  /* Mobile-specific content adjustments */
+  .global-search-modal .px-4 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  .global-search-modal .md\:px-6 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  /* Mobile Search Sheet - full screen mobile search for any side */
+  [data-slot="sheet-content"][data-side="left"]:has(.mobile-search-fullscreen),
+  [data-slot="sheet-content"][data-side="top"]:has(.mobile-search-fullscreen),
+  [data-slot="sheet-content"]:has(.mobile-search-fullscreen) {
+    height: 100vh !important;
+    height: 100dvh !important;
+    width: 100vw !important;
+    max-width: none !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    transform: translateX(0) translateY(0) !important;
+    position: fixed !important;
+    z-index: 9999 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: var(--color-background) !important;
+    overflow: hidden !important;
+    inset: 0 !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  /* Ensure mobile search content fills entire screen */
+  [data-slot="sheet-content"][data-side="left"]:has(.mobile-search-fullscreen) > div,
+  [data-slot="sheet-content"][data-side="top"]:has(.mobile-search-fullscreen) > div,
+  [data-slot="sheet-content"]:has(.mobile-search-fullscreen) > div {
+    height: 100vh !important;
+    height: 100dvh !important;
+    width: 100vw !important;
+    background: var(--color-background) !important;
+    overflow: hidden !important;
+    position: relative !important;
+    inset: 0 !important;
+  }
+  
+  /* Force mobile search to override any sheet animations */
+  [data-slot="sheet-content"]:has(.mobile-search-fullscreen) {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  /* Ensure mobile search overlay is properly positioned */
+  [data-slot="sheet-overlay"]:has(+ [data-slot="sheet-content"] .mobile-search-fullscreen) {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 9998 !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+  }
+  
+  /* Apply safe area padding to the content inside the sheet */
+  [data-slot="sheet-content"][data-side="top"] > div {
+    padding-top: env(safe-area-inset-top) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+    padding-left: env(safe-area-inset-left) !important;
+    padding-right: env(safe-area-inset-right) !important;
+    height: 100% !important;
+  }
+  
+  /* Hide the automatic close button on mobile search */
+  [data-slot="sheet-content"][data-side="top"] > [data-slot="sheet-close"] {
+    display: none !important;
+  }
+  
+  /* Ensure mobile search overlay covers everything */
+  [data-slot="sheet-overlay"] {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 998 !important;
+  }
+}
+
+/* Compact search result items */
+.global-search-modal .space-y-2 > div {
+  padding: 0.5rem 0.75rem !important; /* py-2 px-3 - more compact */
+}
+
+.global-search-modal .space-y-4 > * {
+  margin-bottom: 0.75rem !important; /* Reduce space between sections */
+}
+
+.global-search-modal .space-y-4 > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Ensure content areas don't overflow */
+.global-search-modal .overflow-y-auto {
+  max-height: calc(100% - 1rem);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Limit visible items to prevent excessive scrolling */
+.global-search-modal .space-y-2 {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Mobile optimizations */
+@media (max-width: 767px) {
+  .global-search-modal .space-y-2 {
+    max-height: 200px;
+  }
+  
+  /* Better touch targets on mobile */
+  .global-search-modal button {
+    min-height: 40px;
+  }
+  
+  /* Ensure modal doesn't exceed screen boundaries */
+  .global-search-modal {
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100vh - 2rem) !important;
+    max-height: calc(100dvh - 2rem) !important;
+    min-height: auto !important;
+  }
+  
+  /* Prevent horizontal overflow */
+  .global-search-modal * {
+    max-width: 100%;
+  }
+  
+  /* Improve text readability on small screens */
+  .global-search-modal .truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  
+  /* Mobile search sheet overlay should be properly positioned */
+  [data-radix-dialog-overlay],
+  [data-slot="sheet-overlay"] {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 998 !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+  
+  /* Fix mobile search content layout */
+  [data-slot="sheet-content"][data-side="top"] .flex.flex-col.h-full {
+    height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+  }
+  
+  /* Ensure search results area uses available space properly */
+  [data-slot="sheet-content"][data-side="top"] .flex-1.min-h-0 {
+    min-height: 0 !important;
+    flex: 1 !important;
+    overflow: hidden !important;
+  }
+  
+  /* Make sure scroll areas work on mobile */
+  [data-slot="sheet-content"][data-side="top"] [data-radix-scroll-area-root] {
+    height: 100% !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] [data-radix-scroll-area-viewport] {
+    height: 100% !important;
+    padding-bottom: 1rem !important;
+  }
+  
+  /* Compact mobile search results */
+  [data-slot="sheet-content"][data-side="top"] .space-y-2 {
+    --space-y-reverse: 0;
+    margin-top: calc(0.25rem * calc(1 - var(--space-y-reverse))) !important;
+    margin-bottom: calc(0.25rem * var(--space-y-reverse)) !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] .space-y-2 > * + * {
+    --space-y-reverse: 0;
+    margin-top: calc(0.25rem * calc(1 - var(--space-y-reverse))) !important;
+    margin-bottom: calc(0.25rem * var(--space-y-reverse)) !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] .space-y-4 {
+    --space-y-reverse: 0;
+    margin-top: calc(0.5rem * calc(1 - var(--space-y-reverse))) !important;
+    margin-bottom: calc(0.5rem * var(--space-y-reverse)) !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] .space-y-4 > * + * {
+    --space-y-reverse: 0;
+    margin-top: calc(0.5rem * calc(1 - var(--space-y-reverse))) !important;
+    margin-bottom: calc(0.5rem * var(--space-y-reverse)) !important;
+  }
+  
+  /* Compact search result items */
+  [data-slot="sheet-content"][data-side="top"] .p-3 {
+    padding: 0.5rem !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] .py-3 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] .mb-3 {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* Smaller avatars on mobile search */
+  [data-slot="sheet-content"][data-side="top"] .w-10 {
+    width: 2rem !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] .h-10 {
+    height: 2rem !important;
+  }
+  
+  /* Smaller text on mobile search */
+  [data-slot="sheet-content"][data-side="top"] .text-sm {
+    font-size: 0.75rem !important;
+  }
+  
+  /* More compact button spacing */
+  [data-slot="sheet-content"][data-side="top"] .gap-3 {
+    gap: 0.5rem !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] .gap-2 {
+    gap: 0.375rem !important;
+  }
+  
+  /* Limit visible results sections on mobile to prevent overwhelming */
+  [data-slot="sheet-content"][data-side="top"] [data-radix-scroll-area-viewport] > div > div > div {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  
+  /* Better scroll behavior for mobile search results with visible scrollbars */
+  [data-slot="sheet-content"][data-side="top"] [data-radix-scroll-area-viewport] {
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+    width: 6px !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] [data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3) !important;
+    border-radius: 3px !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5) !important;
+  }
+  
+  /* Simple scroll visibility improvements for mobile search */
+  [data-slot="sheet-content"][data-side="top"] [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+    width: 8px !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+    background: rgba(255, 140, 140, 0.6) !important;
+    border-radius: 4px !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 140, 140, 0.8) !important;
+  }
+  
+  [data-slot="sheet-content"][data-side="top"] [data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1) !important;
+  }
+}

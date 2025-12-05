@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Welcome to sedā.fm Beta</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style>
+        /* Reset styles */
+        body, table, td, p, a, li, blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+        
+        /* Base styles */
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100% !important;
+            min-width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            line-height: 1.5;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #000000;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #111111 0%, #1a1a1a 100%);
+            padding: 40px 32px;
+            text-align: center;
+            border-bottom: 1px solid #333333;
+        }
+        
+        .logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #ffffff 0%, #a3a3a3 100%);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-size: 32px;
+            font-weight: 600;
+            color: #000000;
+        }
+        
+        .brand-name {
+            font-size: 28px;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+        
+        .content {
+            padding: 40px 32px;
+            background-color: #111111;
+        }
+        
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0 0 16px 0;
+            text-align: center;
+        }
+        
+        .welcome-subtitle {
+            font-size: 16px;
+            color: #a3a3a3;
+            margin: 0 0 32px 0;
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        .main-message {
+            font-size: 16px;
+            color: #ffffff;
+            margin: 0 0 24px 0;
+            line-height: 1.6;
+        }
+        
+        .features-section {
+            background-color: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+        
+        .features-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0 0 16px 0;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #a3a3a3;
+            line-height: 1.5;
+        }
+        
+        .feature-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .feature-icon {
+            width: 16px;
+            height: 16px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            margin-right: 12px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        
+        .next-steps {
+            background-color: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+        
+        .next-steps-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0 0 16px 0;
+        }
+        
+        .step-item {
+            font-size: 14px;
+            color: #a3a3a3;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .step-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .pbc-notice {
+            background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+            border: 1px solid #666666;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 32px 0;
+            text-align: center;
+        }
+        
+        .pbc-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0 0 8px 0;
+        }
+        
+        .pbc-text {
+            font-size: 13px;
+            color: #a3a3a3;
+            margin: 0;
+            line-height: 1.5;
+        }
+        
+        .footer {
+            padding: 32px;
+            text-align: center;
+            border-top: 1px solid #333333;
+            background-color: #0a0a0a;
+        }
+        
+        .footer-text {
+            font-size: 12px;
+            color: #666666;
+            margin: 0 0 8px 0;
+            line-height: 1.5;
+        }
+        
+        .footer-links {
+            font-size: 12px;
+            margin: 16px 0 0 0;
+        }
+        
+        .footer-link {
+            color: #a3a3a3;
+            text-decoration: none;
+            margin: 0 8px;
+        }
+        
+        .footer-link:hover {
+            color: #ffffff;
+        }
+        
+        /* Responsive */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+            }
+            
+            .header,
+            .content,
+            .footer {
+                padding: 24px 16px !important;
+            }
+            
+            .features-section,
+            .next-steps,
+            .pbc-notice {
+                margin: 24px 0 !important;
+                padding: 16px !important;
+            }
+            
+            .welcome-title {
+                font-size: 20px !important;
+            }
+            
+            .brand-name {
+                font-size: 24px !important;
+            }
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .email-container {
+                background-color: #000000 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">S</div>
+            <h1 class="brand-name">sedā.fm</h1>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="content">
+            <h2 class="welcome-title">Welcome to the sedā.fm Beta!</h2>
+            <p class="welcome-subtitle">You're now part of an exclusive community building the future of music discovery.</p>
+            
+            <p class="main-message">
+                Thank you for joining the sedā.fm beta! We're excited to have you as part of our early community of music lovers, DJs, and artists who are helping us create something truly special.
+            </p>
+            
+            <p class="main-message">
+                sedā.fm is more than just another music platform – we're a <strong>Public Benefit Company</strong> dedicated to putting community and privacy first. No tracking, no surveillance, just pure music discovery and connection.
+            </p>
+            
+            <!-- Features Preview -->
+            <div class="features-section">
+                <h3 class="features-title">What to Expect in Beta</h3>
+                <div class="feature-item">
+                    <div class="feature-icon"></div>
+                    <div><strong>Real-time DJ Sessions</strong> – Host and join turn-based DJ experiences with live crowd voting</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"></div>
+                    <div><strong>Community Discovery</strong> – Find new music through your community's recommendations</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"></div>
+                    <div><strong>Streaming-Agnostic</strong> – Connect your favorite music services seamlessly</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"></div>
+                    <div><strong>Privacy-First</strong> – No tracking, no ads, no data mining – just music</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"></div>
+                    <div><strong>Social Features</strong> – Follow artists, share discoveries, build playlists together</div>
+                </div>
+            </div>
+            
+            <!-- Next Steps -->
+            <div class="next-steps">
+                <h3 class="next-steps-title">What Happens Next?</h3>
+                <div class="step-item"><strong>1.</strong> We'll send you beta access instructions in the coming weeks</div>
+                <div class="step-item"><strong>2.</strong> You'll be among the first to test new features and provide feedback</div>
+                <div class="step-item"><strong>3.</strong> Help us shape the platform by sharing your experience with our team</div>
+                <div class="step-item"><strong>4.</strong> Get early access to Premium features and supporter benefits</div>
+            </div>
+            
+            <!-- PBC Notice -->
+            <div class="pbc-notice">
+                <h4 class="pbc-title">🎵 Built for Community, Not Profit</h4>
+                <p class="pbc-text">
+                    As a Public Benefit Company, we're legally committed to balancing profit with positive impact. Your music data stays yours, your privacy is protected, and your community comes first.
+                </p>
+            </div>
+            
+            <p class="main-message">
+                Questions or feedback? Simply reply to this email – we read every message and love hearing from our community.
+            </p>
+            
+            <p class="main-message">
+                Welcome to the future of music discovery.<br>
+                <strong>The sedā.fm Team</strong>
+            </p>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p class="footer-text">© 2024 sedā.fm PBC. All rights reserved.</p>
+            <p class="footer-text">Building the future of community-driven music discovery.</p>
+            
+            <div class="footer-links">
+                <a href="#" class="footer-link">Privacy Policy</a>
+                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link">About PBC</a>
+                <a href="#" class="footer-link">Unsubscribe</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+@theme {
+  --font-size: 14px;
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+  --color-card: #111111;
+  --color-card-foreground: #ffffff;
+  --color-popover: #111111;
+  --color-popover-foreground: #ffffff;
+  --color-primary: #ffffff;
+  --color-primary-foreground: #000000;
+  --color-secondary: #1a1a1a;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #1a1a1a;
+  --color-muted-foreground: #a3a3a3;
+  --color-accent: #1a1a1a;
+  --color-accent-foreground: #ffffff;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #333333;
+  --color-input: transparent;
+  --color-input-background: #1a1a1a;
+  --color-switch-background: #333333;
+  --font-weight-medium: 600;
+  --font-weight-normal: 500;
+  --color-ring: #666666;
+  --color-chart-1: #ffffff;
+  --color-chart-2: #a3a3a3;
+  --color-chart-3: #737373;
+  --color-chart-4: #525252;
+  --color-chart-5: #404040;
+  --radius: 0.75rem;
+  --color-sidebar: #0a0a0a;
+  --color-sidebar-foreground: #ffffff;
+  --color-sidebar-primary: #ffffff;
+  --color-sidebar-primary-foreground: #000000;
+  --color-sidebar-accent: #1a1a1a;
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: #333333;
+  --color-sidebar-ring: #666666;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+    outline-color: color-mix(in srgb, var(--color-ring) 50%, transparent);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+}
+
+/**
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}
+
+/* PWA and Mobile Support */
+@media (max-width: 767px) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobile-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .mobile-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Touch-friendly sizing for mobile */
+@media (max-width: 767px) {
+  button {
+    min-height: 44px;
+  }
+
+  input {
+    min-height: 44px;
+  }
+}
+
+/* Utility classes for safe areas */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* EMERGENCY OVERRIDE FOR ABOUT PAGE - FORCE ALL STYLING */
+.about-page {
+  min-height: 100vh !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  width: 100% !important;
+}
+
+.about-section {
+  margin-top: 32px !important;
+  padding-left: 32px !important;
+  padding-right: 32px !important;
+}
+
+.about-section-padding {
+  padding-top: 32px !important;
+  padding-bottom: 32px !important;
+}
+
+.about-container-6xl {
+  max-width: 1152px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.about-container-4xl {
+  max-width: 896px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.about-header {
+  text-align: center !important;
+  margin-bottom: 80px !important;
+}
+
+.about-title {
+  font-size: 36px !important;
+  font-weight: 500 !important;
+  color: #ffffff !important;
+  margin-bottom: 8px !important;
+}
+
+.about-subtitle {
+  font-size: 18px !important;
+  color: #a3a3a3 !important;
+  line-height: 1.6 !important;
+}
+
+/* Force specific elements in case classes don't work */
+[data-about-section="true"] {
+  margin-top: 32px !important;
+  padding-left: 32px !important;
+  padding-right: 32px !important;
+  padding-top: 32px !important;
+  padding-bottom: 32px !important;
+}
+
+[data-about-container="6xl"] {
+  max-width: 1152px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+[data-about-title="true"] {
+  font-size: 36px !important;
+  font-weight: 500 !important;
+  color: #ffffff !important;
+  margin-bottom: 8px !important;
+}

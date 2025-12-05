@@ -1,0 +1,256 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { Toaster } from './components/ui/sonner';
+import { Sidebar } from './components/Sidebar';
+import { AuthModal } from './components/AuthModal';
+import { ChannelView } from './components/ChannelView';
+import { UserProfile } from './components/UserProfile';
+import { Leaderboards } from './components/Leaderboards';
+import { Playlists } from './components/Playlists';
+import { DJMode } from './components/DJMode';
+import { NowPlaying } from './components/NowPlaying';
+import { authService } from './services/auth';
+import { audioEngine } from './services/audioEngine';
+import { SearchModal } from './components/SearchModal';
+import { SocialFeed } from './components/SocialFeed';
+import { ComposeButton } from './components/ComposeButton';
+import { CreatePostModal } from './components/CreatePostModal';
+import { DiscoverView } from './components/DiscoverView';
+import { FollowingView } from './components/FollowingView';
+import { ListeningView } from './components/ListeningView';
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [showAuth, setShowAuth] = useState(false);
+  const [currentView, setCurrentView] = useState('feed');
+  const [currentChannel, setCurrentChannel] = useState('#hiphop');
+  const [isDJMode, setIsDJMode] = useState(false);
+  const [nowPlaying, setNowPlaying] = useState(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
+
+  useEffect(() => {
+    // Apply dark theme to document
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.add('dark');
+    }
+    
+    // Initialize auth state and set up listener
+    const initializeAuth = async () => {
+      try {
+        // Check for existing session
+        const sessionUser = await authService.getSession();
+        if (sessionUser) {
+          setUser(sessionUser);
+        } else {
+          setShowAuth(true);
+        }
+      } catch (error) {
+        console.error('Error loading user session:', error);
+        setShowAuth(true);
+      }
+    };
+
+    initializeAuth();
+
+    // Set up auth state change listener
+    const { data: { subscription } } = authService.onAuthStateChange((user) => {
+      if (user) {
+        setUser(user);
+        setShowAuth(false);
+      } else {
+        setUser(null);
+        setShowAuth(true);
+      }
+    });
+
+    // Cleanup on unmount
+    return () => {
+      subscription.unsubscribe();
+      // Clean up audio engine on app unmount (only on full page reload/close)
+      if (typeof window !== 'undefined') {
+        window.addEventListener('beforeunload', () => {
+          audioEngine.destroy();
+        });
+      }
+    };
+  }, []);
+
+  const handleLogin = (userData) => {
+    try {
+      setUser(userData);
+      localStorage.setItem('seda_user', JSON.stringify(userData));
+      setShowAuth(false);
+    } catch (error) {
+      console.error('Error saving user data:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authService.signOut();
+      // Stop audio playback and clear state
+      audioEngine.stop();
+      setUser(null);
+      setShowAuth(true);
+      setCurrentView('feed');
+      setCurrentChannel('#hiphop');
+      setIsDJMode(false);
+      setNowPlaying(null);
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
+
+  const handleChannelSelect = (channel) => {
+    setCurrentChannel(channel);
+    setCurrentView('channel');
+    // Exit DJ mode when switching channels
+    if (isDJMode) {
+      setIsDJMode(false);
+    }
+  };
+
+  const handleViewChange = (view) => {
+    setCurrentView(view);
+    // Exit DJ mode when switching views
+    if (isDJMode && view !== 'channel') {
+      setIsDJMode(false);
+    }
+  };
+
+  const handleStartDJ = () => {
+    setIsDJMode(true);
+  };
+
+  const handleToggleDJ = () => {
+    setIsDJMode(!isDJMode);
+  };
+
+  const handleExitDJ = () => {
+    setIsDJMode(false);
+  };
+
+  const handleNowPlaying = useCallback((track) => {
+    setNowPlaying(track);
+  }, []);
+
+  const renderMainContent = () => {
+    if (isDJMode) {
+      return (
+        <DJMode 
+          user={user}
+          channel={currentChannel}
+          onExit={handleExitDJ}
+          onNowPlaying={handleNowPlaying}
+        />
+      );
+    }
+
+    switch (currentView) {
+      case 'channel':
+        return (
+          <ChannelView 
+            channel={currentChannel}
+            user={user}
+            onStartDJ={handleStartDJ}
+            onNowPlaying={handleNowPlaying}
+          />
+        );
+      case 'feed':
+        return <SocialFeed user={user} onOpenSearch={() => setSearchOpen(true)} />;
+      case 'profile':
+        return <UserProfile user={user} />;
+      case 'leaderboards':
+        return <Leaderboards user={user} />;
+      case 'playlists':
+        return <Playlists user={user} />;
+      default:
+        return <SocialFeed user={user} />;
+    }
+  };
+
+  // Show auth modal if no user
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background dark">
+        <AuthModal isOpen={showAuth} onLogin={handleLogin} />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-gradient-to-r from-[#00ff88] to-[#00ccff] rounded-lg flex items-center justify-center">
+                <span className="text-black font-bold">S</span>
+              </div>
+              <h1 className="text-2xl bg-gradient-to-r from-[#00ff88] to-[#00ccff] bg-clip-text text-transparent">
+                sedā.fm
+              </h1>
+            </div>
+            <p className="text-muted-foreground">Welcome to the music community</p>
+          </div>
+        </div>
+        <Toaster theme="dark" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background dark flex flex-col">
+      {/* Top bar removed: sidebar + bottom nav only */}
+      {/* Global keyboard shortcut for search: Cmd/Ctrl+K */}
+      {(() => {
+        if (typeof window !== 'undefined') {
+          window.onkeydown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+              e.preventDefault();
+              setSearchOpen(true);
+            }
+          };
+        }
+        return null;
+      })()}
+      {/* Main App Layout */}
+      <div className="flex-1 flex">
+        <Sidebar 
+          user={user}
+          currentChannel={currentChannel}
+          currentView={currentView}
+          onChannelSelect={handleChannelSelect}
+          onViewChange={handleViewChange}
+          onLogout={handleLogout}
+          isDJMode={isDJMode}
+        />
+        
+        <main className="flex-1 flex flex-col min-w-0 pb-[160px] md:pb-[96px]">
+          {renderMainContent()}
+        </main>
+      </div>
+
+      {/* Persistent Now Playing Bar */}
+      {nowPlaying && (
+        <div className="fixed bottom-0 left-0 right-0 z-50">
+          <NowPlaying 
+            track={nowPlaying}
+            onToggleDJ={handleToggleDJ}
+          />
+        </div>
+      )}
+
+      <Toaster theme="dark" />
+
+      {/* Sidebar nav only; no bottom nav */}
+      <ComposeButton onClick={() => setComposeOpen(true)} />
+
+      {/* Global Search */}
+      <SearchModal
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onPlay={(t) => setNowPlaying(t)}
+        onAddToQueue={() => setIsDJMode(true)}
+      />
+      <CreatePostModal
+        open={composeOpen}
+        onOpenChange={setComposeOpen}
+        onCreate={() => {}}
+      />
+    </div>
+  );
+}

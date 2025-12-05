@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+@theme {
+  --font-size: 14px;
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #111111;
+  --card-foreground: #ffffff;
+  --popover: #111111;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #ffffff;
+  --muted: #1a1a1a;
+  --muted-foreground: #a3a3a3;
+  --accent: #1a1a1a;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #333333;
+  --input: transparent;
+  --input-background: #1a1a1a;
+  --switch-background: #333333;
+  --font-weight-medium: 600;
+  --font-weight-normal: 500;
+  --ring: #666666;
+  --chart-1: #ffffff;
+  --chart-2: #a3a3a3;
+  --chart-3: #737373;
+  --chart-4: #525252;
+  --chart-5: #404040;
+  --radius: 0.75rem;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #1a1a1a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #333333;
+  --sidebar-ring: #666666;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/**
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}
+
+/* PWA and Mobile Support */
+@media (max-width: 767px) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobile-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .mobile-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Touch-friendly sizing for mobile */
+@media (max-width: 767px) {
+  button {
+    min-height: 44px;
+  }
+
+  input {
+    min-height: 44px;
+  }
+}
+
+/* Utility classes for safe areas */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* EMERGENCY OVERRIDE FOR ABOUT PAGE - FORCE ALL STYLING */
+.about-page {
+  min-height: 100vh !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  width: 100% !important;
+}
+
+.about-section {
+  margin-top: 160px !important;
+  padding-left: 32px !important;
+  padding-right: 32px !important;
+}
+
+.about-section-padding {
+  padding-top: 160px !important;
+  padding-bottom: 160px !important;
+}
+
+.about-container-6xl {
+  max-width: 1152px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.about-container-4xl {
+  max-width: 896px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.about-header {
+  text-align: center !important;
+  margin-bottom: 80px !important;
+}
+
+.about-title {
+  font-size: 36px !important;
+  font-weight: 500 !important;
+  color: #ffffff !important;
+  margin-bottom: 8px !important;
+}
+
+.about-subtitle {
+  font-size: 18px !important;
+  color: #a3a3a3 !important;
+  line-height: 1.6 !important;
+}
+
+/* Force specific elements in case classes don't work */
+[data-about-section="true"] {
+  margin-top: 160px !important;
+  padding-left: 32px !important;
+  padding-right: 32px !important;
+  padding-top: 160px !important;
+  padding-bottom: 160px !important;
+}
+
+[data-about-container="6xl"] {
+  max-width: 1152px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+[data-about-title="true"] {
+  font-size: 36px !important;
+  font-weight: 500 !important;
+  color: #ffffff !important;
+  margin-bottom: 8px !important;
+}

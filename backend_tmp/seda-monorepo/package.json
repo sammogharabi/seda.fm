@@ -1,0 +1,13 @@
+{
+  "name": "seda-root",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "sync:prd": "node scripts/notion-sync.mjs",
+    "sync:prd:changed": "node scripts/notion-sync.mjs --changed-only",
+    "sync:prd:search": "node scripts/notion-sync.mjs --search PRDs",
+    "sync:status": "node scripts/notion-status.mjs",
+    "sync:status:md": "node scripts/notion-status.mjs --write-md",
+    "sync:diff": "node scripts/notion-diff.mjs"
+  }
+}

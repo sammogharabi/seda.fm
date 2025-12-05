@@ -1,0 +1,12 @@
+{
+  "outputDir": "docs/prd",
+  "pages": [
+    "2550d66a3cf280b1a871c06619ece7e8"
+  ],
+  "databases": [],
+  "recurseChildPages": true,
+  "assets": {
+    "download": true
+  },
+  "changedOnly": true
+}

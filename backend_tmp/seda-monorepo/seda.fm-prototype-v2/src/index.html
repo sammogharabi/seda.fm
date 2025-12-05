@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="sedā.fm" />
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="sedā.fm - Real-time music community where artists keep 90% of sales and 100% ownership. DJ together, discover music, and support artists directly." />
+    <meta name="keywords" content="music, streaming, DJ, social, artists, royalties, community, real-time" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://seda.fm/" />
+    <meta property="og:title" content="sedā.fm - Music Community for Artists & Fans" />
+    <meta property="og:description" content="Real-time music community where artists keep 90% of sales and 100% ownership. DJ together, discover music, and support artists directly." />
+    <meta property="og:image" content="https://seda.fm/og-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://seda.fm/" />
+    <meta property="twitter:title" content="sedā.fm - Music Community for Artists & Fans" />
+    <meta property="twitter:description" content="Real-time music community where artists keep 90% of sales and 100% ownership. DJ together, discover music, and support artists directly." />
+    <meta property="twitter:image" content="https://seda.fm/og-image.png" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <title>sedā.fm - Music Community for Artists & Fans</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    
+    <!-- GitHub Pages client-side routing support -->
+    <script>
+      // Single Page Apps for GitHub Pages
+      // https://github.com/rafgraph/spa-github-pages
+      // This script checks to see if a redirect is present in the query string,
+      // converts it back into the correct url and adds it to the
+      // browser's history using window.history.replaceState
+      
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+    
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

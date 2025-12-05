@@ -1,0 +1,44 @@
+import { Controller, Get, Query, Request, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '../../common/guards/auth.guard';
+import { FeatureGuard } from '../../common/guards/feature.guard';
+import { Feature } from '../../common/decorators/feature.decorator';
+import { DiscoverService } from './discover.service';
+
+@ApiTags('discover')
+@Controller('discover')
+@UseGuards(AuthGuard, FeatureGuard)
+@Feature('DISCOVER')
+@ApiBearerAuth()
+export class DiscoverController {
+  constructor(private readonly discoverService: DiscoverService) {}
+
+  @Get('trending')
+  @ApiOperation({ summary: 'Get trending crates' })
+  @ApiResponse({ status: 200, description: 'Trending crates retrieved successfully' })
+  async getTrending(@Query('limit') limit: number = 20) {
+    return this.discoverService.getTrendingCrates(limit);
+  }
+
+  @Get('new-releases')
+  @ApiOperation({ summary: 'Get new releases' })
+  @ApiResponse({ status: 200, description: 'New releases retrieved successfully' })
+  async getNewReleases(@Query('limit') limit: number = 20) {
+    return this.discoverService.getNewCrates(limit);
+  }
+
+  @Get('for-you')
+  @ApiOperation({ summary: 'Get personalized recommendations' })
+  @ApiResponse({ status: 200, description: 'Personalized recommendations retrieved successfully' })
+  async getForYou(@Request() req: any, @Query('limit') limit: number = 20) {
+    const userId = req.user.id;
+    return this.discoverService.getPersonalized(userId, limit);
+  }
+
+  @Get('genre/:genre')
+  @ApiOperation({ summary: 'Get crates by genre' })
+  @ApiResponse({ status: 200, description: 'Genre crates retrieved successfully' })
+  async getByGenre(@Param('genre') genre: string, @Query('limit') limit: number = 20) {
+    return this.discoverService.getByGenre(genre, limit);
+  }
+}

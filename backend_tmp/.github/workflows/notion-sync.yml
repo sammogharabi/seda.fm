@@ -1,0 +1,45 @@
+name: Notion PRDs Sync
+
+on:
+  schedule:
+    - cron: '8 6 * * *' # daily at 06:08 UTC
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install (no deps needed)
+        run: echo "No install step required"
+
+      - name: Run Notion sync (changed-only)
+        env:
+          NOTION_API_TOKEN: ${{ secrets.NOTION_API_TOKEN }}
+        run: node scripts/notion-sync.mjs --changed-only
+
+      - name: Generate status report
+        env:
+          NOTION_API_TOKEN: ${{ secrets.NOTION_API_TOKEN }}
+        run: node scripts/notion-status.mjs --write-md
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(docs): daily PRD sync"
+          title: "chore(docs): daily PRD sync"
+          body: |
+            This PR updates PRDs from Notion and refreshes the status report.
+          branch: chore/notion-prd-sync
+          delete-branch: true
+

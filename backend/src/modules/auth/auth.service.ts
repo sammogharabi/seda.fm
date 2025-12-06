@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, Logger, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../config/prisma.service';
 import { SendGridService } from '../../config/sendgrid.service';
@@ -8,6 +8,7 @@ import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private jwtSecret: string;
 
   constructor(
@@ -188,11 +189,11 @@ export class AuthService {
 
     // Generate a session for the user using Supabase Admin API
     let session = null;
-    console.log('🔑 Attempting to generate session for user:', user.email, 'supabaseId:', user.supabaseId);
+    this.logger.log(`Attempting to generate session for user: ${user.email}`);
 
     if (user.supabaseId) {
       try {
-        console.log('🔐 Creating Supabase session via Admin API...');
+        this.logger.log('Creating Supabase session via Admin API...');
 
         // Use the admin client to generate a magic link and then verify it
         // This creates a real Supabase session
@@ -202,9 +203,9 @@ export class AuthService {
         });
 
         if (linkError) {
-          console.error('❌ Failed to generate magic link:', linkError);
+          this.logger.error('Failed to generate magic link', { error: linkError.message });
         } else if (linkData?.properties?.hashed_token) {
-          console.log('✅ Magic link generated, verifying OTP...');
+          this.logger.log('Magic link generated, verifying OTP...');
 
           // Extract the token from the magic link and verify it
           const { data: sessionData, error: verifyError } = await this.supabase.getAdminClient().auth.verifyOtp({
@@ -213,25 +214,25 @@ export class AuthService {
           });
 
           if (verifyError) {
-            console.error('❌ Failed to verify OTP:', verifyError);
+            this.logger.error('Failed to verify OTP', { error: verifyError.message });
           } else if (sessionData?.session) {
-            console.log('✅ Session created successfully!');
+            this.logger.log('Session created successfully');
             session = {
               access_token: sessionData.session.access_token,
               refresh_token: sessionData.session.refresh_token,
               expires_in: sessionData.session.expires_in,
               expires_at: sessionData.session.expires_at,
             };
-            console.log('🔑 Access token length:', session.access_token.length);
           } else {
-            console.log('⚠️ No session returned from verifyOtp');
+            this.logger.warn('No session returned from verifyOtp');
           }
         }
       } catch (err) {
-        console.error('❌ Failed to create session:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        this.logger.error('Failed to create session', { error: errorMessage });
       }
     } else {
-      console.log('⚠️ No supabaseId found for user, skipping session generation');
+      this.logger.warn('No supabaseId found for user, skipping session generation');
     }
 
     return {
@@ -259,19 +260,22 @@ export class AuthService {
   }
 
   async signup(email: string, password: string, username?: string, userType?: string) {
+    const normalizedEmail = email.toLowerCase().trim();
+
     try {
       // Check if user already exists in our database first
       const existingUser = await this.prisma.user.findFirst({
-        where: { email: email.toLowerCase() },
+        where: { email: normalizedEmail },
       });
 
       if (existingUser) {
-        throw new BadRequestException('An account with this email already exists');
+        this.logger.warn(`Signup attempt with existing email: ${normalizedEmail}`);
+        throw new ConflictException('An account with this email already exists');
       }
 
       // Create user in Supabase Auth
       const { data, error } = await this.supabase.getAdminClient().auth.admin.createUser({
-        email,
+        email: normalizedEmail,
         password,
         email_confirm: true, // Auto-confirm email for development
         user_metadata: {
@@ -284,13 +288,16 @@ export class AuthService {
         // Check for duplicate email error from Supabase
         const errorMessage = error.message?.toLowerCase() || '';
         if (errorMessage.includes('already') || errorMessage.includes('exists') || errorMessage.includes('duplicate')) {
-          throw new BadRequestException('An account with this email already exists');
+          this.logger.warn(`Supabase duplicate email error: ${normalizedEmail}`);
+          throw new ConflictException('An account with this email already exists');
         }
+        this.logger.error('Supabase user creation failed', { error: error.message, email: normalizedEmail });
         throw new BadRequestException(error.message);
       }
 
       if (!data.user) {
-        throw new BadRequestException('Failed to create user');
+        this.logger.error('Supabase returned no user data', { email: normalizedEmail });
+        throw new InternalServerErrorException('Failed to create user account');
       }
 
       // Create User record in our database
@@ -370,24 +377,31 @@ export class AuthService {
         requiresVerification: true,
       };
     } catch (error) {
-      if (error instanceof BadRequestException) {
+      // Re-throw known HTTP exceptions
+      if (error instanceof BadRequestException || error instanceof ConflictException || error instanceof InternalServerErrorException) {
         throw error;
       }
-      throw new BadRequestException('Failed to create account: ' + error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error('Signup failed unexpectedly', { error: errorMessage, email: normalizedEmail });
+      throw new InternalServerErrorException('Failed to create account. Please try again.');
     }
   }
 
   async login(email: string, password: string) {
+    const normalizedEmail = email.toLowerCase().trim();
+
     try {
       const { data, error } = await this.supabase.getClient().auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password,
       });
 
       if (error) {
+        this.logger.warn(`Login failed for ${normalizedEmail}: ${error.message}`);
         throw new UnauthorizedException('Invalid email or password');
       }
 
+      this.logger.log(`User logged in: ${normalizedEmail}`);
       return {
         user: data.user,
         session: data.session,
@@ -396,16 +410,21 @@ export class AuthService {
       if (error instanceof UnauthorizedException) {
         throw error;
       }
-      throw new UnauthorizedException('Login failed: ' + error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error('Login failed unexpectedly', { error: errorMessage, email: normalizedEmail });
+      throw new UnauthorizedException('Login failed. Please try again.');
     }
   }
 
   async logout(accessToken: string) {
     try {
       await this.supabase.getClient().auth.admin.signOut(accessToken);
+      this.logger.log('User logged out successfully');
       return { message: 'Logged out successfully' };
     } catch (error) {
-      throw new BadRequestException('Logout failed: ' + error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error('Logout failed', { error: errorMessage });
+      throw new BadRequestException('Logout failed. Please try again.');
     }
   }
 }

@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Request, Response } from 'express';
@@ -8,7 +8,56 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { PrismaService } from './config/prisma.service';
 
+// Validate required environment variables at startup
+function validateEnvironment(): void {
+  const logger = new Logger('Bootstrap');
+  const required: string[] = [
+    'DATABASE_URL',
+    'SUPABASE_URL',
+    'SUPABASE_SERVICE_ROLE_KEY',
+  ];
+
+  const recommended: string[] = [
+    'SENDGRID_API_KEY',
+    'SENDGRID_FROM_EMAIL',
+    'STRIPE_SECRET_KEY',
+    'STRIPE_WEBHOOK_SECRET',
+    'JWT_SECRET',
+    'CORS_ORIGINS',
+    'APP_URL',
+  ];
+
+  const missing: string[] = [];
+  const missingRecommended: string[] = [];
+
+  for (const envVar of required) {
+    if (!process.env[envVar]) {
+      missing.push(envVar);
+    }
+  }
+
+  for (const envVar of recommended) {
+    if (!process.env[envVar]) {
+      missingRecommended.push(envVar);
+    }
+  }
+
+  if (missing.length > 0) {
+    logger.error(`Missing required environment variables: ${missing.join(', ')}`);
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+
+  if (missingRecommended.length > 0) {
+    logger.warn(`Missing recommended environment variables: ${missingRecommended.join(', ')}`);
+  }
+
+  logger.log('Environment validation passed');
+}
+
 async function bootstrap() {
+  // Validate environment before starting
+  validateEnvironment();
+
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 

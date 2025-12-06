@@ -64,7 +64,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     }
 
-    // Create error response
+    // Create error response with request ID for debugging
     const errorResponse = {
       statusCode: status,
       message,
@@ -72,6 +72,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
+      requestId: request.requestId,
     };
 
     // Add stack trace in non-production environments
@@ -87,6 +88,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       userAgent: request.get('User-Agent'),
       ip: request.ip,
       userId: (request as any).user?.id,
+      requestId: request.requestId,
     };
 
     if (status >= 500) {

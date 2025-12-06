@@ -9,7 +9,7 @@ import {
   IsUrl,
   IsObject,
 } from 'class-validator';
-import { ProductType } from '@prisma/client';
+import { ProductType, Prisma } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateProductDto {
@@ -43,7 +43,7 @@ export class CreateProductDto {
   @ApiProperty({ description: 'Track reference object', required: false })
   @IsOptional()
   @IsObject({ message: 'Track reference must be an object' })
-  trackRef?: Record<string, unknown>;
+  trackRef?: Prisma.InputJsonValue;
 
   @ApiProperty({ description: 'File download URL', required: false })
   @IsString()
@@ -73,5 +73,5 @@ export class CreateProductDto {
   @ApiProperty({ description: 'Pack contents for bundle products', required: false })
   @IsOptional()
   @IsObject({ message: 'Pack contents must be an object' })
-  packContents?: Record<string, unknown>;
+  packContents?: Prisma.InputJsonValue;
 }

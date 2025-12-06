@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import helmet from 'helmet';
+import compression from 'compression';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { PrismaService } from './config/prisma.service';
@@ -71,6 +72,9 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter(configService));
 
   app.setGlobalPrefix(apiPrefix);
+
+  // Gzip compression for responses (60-70% size reduction)
+  app.use(compression());
 
   // Security headers
   app.use(

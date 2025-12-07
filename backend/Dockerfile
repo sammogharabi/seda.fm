@@ -25,8 +25,8 @@ RUN npx prisma generate
 # Build the application
 RUN npm run build
 
-# Clean up dev dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Clean up dev dependencies (use --omit=dev for npm 7+)
+RUN npm ci --omit=dev && npm cache clean --force
 
 # Railway sets PORT dynamically - don't hardcode EXPOSE
 

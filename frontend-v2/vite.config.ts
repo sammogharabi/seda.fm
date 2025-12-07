@@ -52,6 +52,50 @@
     build: {
       target: 'esnext',
       outDir: 'build',
+      // Enable code splitting for better caching
+      rollupOptions: {
+        output: {
+          // Function-based manual chunk splitting for vendor libraries
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              // React core
+              if (id.includes('react-dom') || id.includes('react-router')) {
+                return 'vendor-react';
+              }
+              // React itself
+              if (id.includes('/react/') && !id.includes('react-')) {
+                return 'vendor-react';
+              }
+              // Radix UI components
+              if (id.includes('@radix-ui')) {
+                return 'vendor-ui';
+              }
+              // Lucide icons
+              if (id.includes('lucide-react')) {
+                return 'vendor-ui';
+              }
+              // Charts
+              if (id.includes('recharts') || id.includes('d3-')) {
+                return 'vendor-charts';
+              }
+              // Supabase
+              if (id.includes('@supabase')) {
+                return 'vendor-supabase';
+              }
+              // Form handling
+              if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) {
+                return 'vendor-forms';
+              }
+            }
+          },
+        },
+      },
+      // Increase chunk size warning limit slightly (default is 500KB)
+      chunkSizeWarningLimit: 600,
+      // Enable minification
+      minify: 'esbuild',
+      // Enable source maps for production debugging
+      sourcemap: false,
     },
     server: {
       port: 3000,

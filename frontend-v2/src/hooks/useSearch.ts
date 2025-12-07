@@ -1,13 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { searchApi } from '../lib/api/search';
-
-export interface SearchResults {
-  users?: any[];
-  tracks?: any[];
-  artists?: any[];
-  crates?: any[];
-  rooms?: any[];
-}
+import type { SearchResults, SearchType } from '../types';
 
 export function useSearch(query: string, activeTab: string) {
   const [results, setResults] = useState<SearchResults>({});
@@ -51,20 +44,21 @@ export function useSearch(query: string, activeTab: string) {
 
       const data = await searchApi.search({
         q: trimmedQuery,
-        type: searchType as any,
+        type: searchType as SearchType,
         limit: 20,
       });
 
       setResults(data);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Ignore abort errors
-      if (err.name === 'AbortError') {
+      if (err instanceof Error && err.name === 'AbortError') {
         return;
       }
 
       console.error('Search error:', err);
-      setError(err.message || 'Failed to search. Please try again.');
+      const message = err instanceof Error ? err.message : 'Failed to search. Please try again.';
+      setError(message);
       setResults({});
     } finally {
       setIsLoading(false);

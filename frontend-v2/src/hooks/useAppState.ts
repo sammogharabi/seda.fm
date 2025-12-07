@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import type { Track, DJSession, Room, Post, Crate, UserProfile, ArtistProfile, FanProfile } from '../types';
 
 export interface AppStateHook {
   // UI State
@@ -16,39 +17,39 @@ export interface AppStateHook {
   setIsMobile: (mobile: boolean) => void;
   showGlobalSearch: boolean;
   setShowGlobalSearch: (show: boolean) => void;
-  
+
   // Music State
-  nowPlaying: any;
-  setNowPlaying: (track: any) => void;
-  djSession: any;
-  setDJSession: (session: any) => void;
-  djQueue: any[];
-  setDJQueue: (queue: any[]) => void;
+  nowPlaying: Track | null;
+  setNowPlaying: (track: Track | null) => void;
+  djSession: DJSession | null;
+  setDJSession: (session: DJSession | null) => void;
+  djQueue: Track[];
+  setDJQueue: (queue: Track[]) => void;
   isDJMinimized: boolean;
   setIsDJMinimized: (minimized: boolean) => void;
-  activeSession: any;
-  setActiveSession: (session: any) => void;
-  
+  activeSession: DJSession | null;
+  setActiveSession: (session: DJSession | null) => void;
+
   // Data State
-  posts: any[];
-  setPosts: (posts: any[]) => void;
-  followingList: any[];
-  setFollowingList: (following: any[]) => void;
-  userRooms: any[];  // Rooms the user owns/created
-  setUserRooms: (rooms: any[]) => void;
-  joinedRooms: any[];  // Rooms the user has joined as a member
-  setJoinedRooms: (rooms: any[]) => void;
-  userCrates: any[];
-  setUserCrates: (crates: any[]) => void;
-  
+  posts: Post[];
+  setPosts: (posts: Post[]) => void;
+  followingList: UserProfile[];
+  setFollowingList: (following: UserProfile[]) => void;
+  userRooms: Room[];  // Rooms the user owns/created
+  setUserRooms: (rooms: Room[]) => void;
+  joinedRooms: Room[];  // Rooms the user has joined as a member
+  setJoinedRooms: (rooms: Room[]) => void;
+  userCrates: Crate[];
+  setUserCrates: (crates: Crate[]) => void;
+
   // Profile State
-  selectedArtist: any;
-  setSelectedArtist: (artist: any) => void;
-  selectedArtistForMarketplace: any;
-  setSelectedArtistForMarketplace: (artist: any) => void;
-  selectedFan: any;
-  setSelectedFan: (fan: any) => void;
-  
+  selectedArtist: ArtistProfile | null;
+  setSelectedArtist: (artist: ArtistProfile | null) => void;
+  selectedArtistForMarketplace: ArtistProfile | null;
+  setSelectedArtistForMarketplace: (artist: ArtistProfile | null) => void;
+  selectedFan: FanProfile | null;
+  setSelectedFan: (fan: FanProfile | null) => void;
+
   // Utility functions
   handleViewChange: (view: string) => void;
   handleRoomSelect: (room: string) => void;

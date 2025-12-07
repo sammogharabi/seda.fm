@@ -59,11 +59,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Don't sign in immediately - let the LoginPage handle onboarding first
       // The LoginPage will call signIn after onboarding is complete
       return { user: response.user, error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Convert ApiException to AuthError format
+      const errorObj = error as { message?: string; statusCode?: number };
       const authError: AuthError = {
-        message: error.message || 'Signup failed',
-        status: error.statusCode,
+        message: errorObj.message || 'Signup failed',
+        status: errorObj.statusCode,
       };
       return { user: null, error: authError };
     }

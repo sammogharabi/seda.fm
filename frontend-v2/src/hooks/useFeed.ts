@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import feedService, { GetFeedParams } from '../services/feedService';
 import { toast } from 'sonner';
+import type { Post } from '../types';
+
+// Extended post type with counts for API responses
+interface FeedPost extends Post {
+  _count?: {
+    likes?: number;
+    comments?: number;
+    shares?: number;
+  };
+}
 
 export interface UseFeedOptions {
   mode?: 'personalized' | 'global';
@@ -10,7 +20,7 @@ export interface UseFeedOptions {
 export const useFeed = (options: UseFeedOptions = {}) => {
   const { mode = 'global', autoFetch = true } = options;
 
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<FeedPost[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [hasMore, setHasMore] = useState(true);
@@ -49,11 +59,12 @@ export const useFeed = (options: UseFeedOptions = {}) => {
       }
 
       return data;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch feed:', err);
-      setError(err);
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      setError(error);
       toast.error('Failed to load feed. Please try again.');
-      throw err;
+      throw error;
     } finally {
       setIsLoading(false);
     }

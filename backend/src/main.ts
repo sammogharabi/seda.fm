@@ -15,8 +15,13 @@ function validateEnvironment(): void {
   const required: string[] = [
     'DATABASE_URL',
     'SUPABASE_URL',
-    'SUPABASE_SERVICE_ROLE_KEY',
   ];
+
+  // Check for either SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_KEY
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.SUPABASE_SERVICE_KEY) {
+    logger.error('Missing required environment variable: SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_KEY');
+    throw new Error('Missing required environment variables: SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_KEY');
+  }
 
   const recommended: string[] = [
     'SENDGRID_API_KEY',

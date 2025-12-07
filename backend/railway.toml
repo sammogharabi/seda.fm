@@ -1,10 +1,9 @@
 [build]
 builder = "dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "node dist/main.js"
-# healthcheckPath = "/health"
-# healthcheckTimeout = 100
+startCommand = "./start.sh"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 

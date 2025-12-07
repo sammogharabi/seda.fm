@@ -2,6 +2,7 @@ import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { LoggingMiddleware } from './common/middleware/logging.middleware';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './config/prisma.module';
 import { SupabaseModule } from './config/supabase.module';
@@ -89,6 +90,8 @@ import { NotificationModule } from './modules/notification/notification.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestIdMiddleware).forRoutes('*');
+    consumer
+      .apply(RequestIdMiddleware, LoggingMiddleware)
+      .forRoutes('*');
   }
 }

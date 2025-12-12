@@ -29,6 +29,7 @@ import { HealthModule } from './modules/health/health.module';
 import { GatewayModule } from './modules/gateway/gateway.module';
 import { DirectMessagesModule } from './modules/direct-messages/direct-messages.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { NotificationModule } from './modules/notification/notification.module';
     GatewayModule,
     DirectMessagesModule,
     NotificationModule,
+    AdminAuthModule,
   ],
   controllers: [],
   providers: [

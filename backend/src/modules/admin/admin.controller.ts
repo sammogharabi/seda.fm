@@ -10,17 +10,17 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiSecurity, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
-import { AdminGuard } from '../../common/guards/admin.guard';
+import { AdminJwtGuard } from '../../common/guards/admin-jwt.guard';
 import { ApproveVerificationDto } from './dto/approve-verification.dto';
 import { DenyVerificationDto } from './dto/deny-verification.dto';
 import { VerificationStatus } from '@prisma/client';
 
 @ApiTags('admin')
 @Controller('admin/verification')
-@UseGuards(AdminGuard)
-@ApiSecurity('admin-key')
+@UseGuards(AdminJwtGuard)
+@ApiBearerAuth()
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
@@ -71,7 +71,7 @@ export class AdminController {
     @Body() dto: ApproveVerificationDto,
     @Request() req: any,
   ) {
-    return this.adminService.approveVerification(id, req.admin.id, dto.notes);
+    return this.adminService.approveVerification(id, req.adminUser.sub, dto.notes);
   }
 
   @Patch(':id/deny')
@@ -90,7 +90,7 @@ export class AdminController {
     @Body() dto: DenyVerificationDto,
     @Request() req: any,
   ) {
-    return this.adminService.denyVerification(id, req.admin.id, dto.reason);
+    return this.adminService.denyVerification(id, req.adminUser.sub, dto.reason);
   }
 
   @Get('stats/overview')

@@ -10,4 +10,4 @@ echo "Using NODE_ENV: $NODE_ENV"
 echo "Starting application..."
 
 # Start the application
-exec node dist/main.js
+exec node dist/src/main.js

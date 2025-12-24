@@ -476,7 +476,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Check DJ authorization: user must be either:
       // 1. Room creator/owner
-      // 2. Room moderator or admin
+      // 2. Room admin
       // 3. Current DJ in an active session for this room
       const room = await this.prisma.room.findUnique({
         where: { id: roomId },
@@ -484,7 +484,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
 
       const isRoomOwner = room?.createdBy === userId;
-      const isModeratorOrAdmin = membership.role === 'MODERATOR' || membership.role === 'ADMIN';
+      const isAdmin = membership.role === 'ADMIN';
 
       // Check if user is the current DJ in an active session
       const activeDJSession = await this.prisma.dJSession.findFirst({
@@ -497,8 +497,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const isCurrentDJ = !!activeDJSession;
 
-      if (!isRoomOwner && !isModeratorOrAdmin && !isCurrentDJ) {
-        return { error: 'You must be the DJ, room owner, or moderator to control playback' };
+      if (!isRoomOwner && !isAdmin && !isCurrentDJ) {
+        return { error: 'You must be the DJ, room owner, or admin to control playback' };
       }
 
       // Get user info

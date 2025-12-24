@@ -12,7 +12,7 @@ export class PostsService {
         userId,
         type: dto.type,
         content: dto.content,
-        trackRef: dto.trackRef,
+        trackRef: dto.trackRef as object | undefined,
         crateId: dto.crateId,
         mediaUrls: dto.mediaUrls || [],
       },

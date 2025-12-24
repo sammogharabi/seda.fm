@@ -15,6 +15,7 @@ function validateEnvironment(): void {
   const required: string[] = [
     'DATABASE_URL',
     'SUPABASE_URL',
+    'JWT_SECRET',
   ];
 
   // Check for either SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_KEY
@@ -28,7 +29,6 @@ function validateEnvironment(): void {
     'SENDGRID_FROM_EMAIL',
     'STRIPE_SECRET_KEY',
     'STRIPE_WEBHOOK_SECRET',
-    'JWT_SECRET',
     'CORS_ORIGINS',
     'APP_URL',
   ];

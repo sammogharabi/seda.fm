@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -9,7 +10,10 @@ describe('AppController (e2e)', () => {
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true }) // Disable rate limiting for tests
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
@@ -21,12 +25,12 @@ describe('AppController (e2e)', () => {
   });
 
   describe('Verification Flow', () => {
-    it('/api/v1/artist/verification/request (POST) - should require authentication', () => {
-      return request(app.getHttpServer()).post('/api/v1/artist/verification/request').expect(401);
+    it('/artist/verification/request (POST) - should require authentication', () => {
+      return request(app.getHttpServer()).post('/artist/verification/request').expect(401);
     });
 
-    it('/api/v1/admin/verification/pending (GET) - should require admin key', () => {
-      return request(app.getHttpServer()).get('/api/v1/admin/verification/pending').expect(401);
+    it('/admin/verification/pending (GET) - should require admin key', () => {
+      return request(app.getHttpServer()).get('/admin/verification/pending').expect(401);
     });
   });
 });

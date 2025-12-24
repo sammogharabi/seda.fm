@@ -30,10 +30,15 @@ export class AdminAuthService {
     private prisma: PrismaService,
     private configService: ConfigService,
   ) {
-    this.jwtSecret =
+    const secret =
       this.configService.get<string>('ADMIN_JWT_SECRET') ||
-      this.configService.get<string>('JWT_SECRET') ||
-      'admin-secret-key-change-in-production';
+      this.configService.get<string>('JWT_SECRET');
+
+    if (!secret) {
+      throw new Error('CRITICAL: JWT_SECRET or ADMIN_JWT_SECRET must be configured');
+    }
+
+    this.jwtSecret = secret;
     this.jwtExpiresIn = this.configService.get<string>('ADMIN_JWT_EXPIRES_IN') || '8h';
   }
 

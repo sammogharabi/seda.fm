@@ -358,4 +358,74 @@ export class DirectMessagesService {
 
     return { unreadCount: count };
   }
+
+  async deleteConversation(conversationId: string, userId: string) {
+    // Verify user is a participant
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    if (!conversation.participantIds.includes(userId)) {
+      throw new ForbiddenException('You are not a participant in this conversation');
+    }
+
+    // Delete all messages in the conversation first
+    await this.prisma.directMessage.deleteMany({
+      where: { conversationId },
+    });
+
+    // Delete the conversation
+    await this.prisma.conversation.delete({
+      where: { id: conversationId },
+    });
+
+    return { success: true };
+  }
+
+  async deleteMessage(
+    conversationId: string,
+    messageId: string,
+    userId: string,
+  ) {
+    // Verify user is a participant
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    if (!conversation.participantIds.includes(userId)) {
+      throw new ForbiddenException('You are not a participant in this conversation');
+    }
+
+    // Verify message exists and user is the sender
+    const message = await this.prisma.directMessage.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      throw new NotFoundException('Message not found');
+    }
+
+    if (message.conversationId !== conversationId) {
+      throw new BadRequestException('Message does not belong to this conversation');
+    }
+
+    // Only allow sender to delete their own messages
+    if (message.senderId !== userId) {
+      throw new ForbiddenException('You can only delete your own messages');
+    }
+
+    await this.prisma.directMessage.delete({
+      where: { id: messageId },
+    });
+
+    return { success: true };
+  }
 }

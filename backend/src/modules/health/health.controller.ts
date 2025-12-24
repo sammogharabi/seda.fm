@@ -1,5 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
+import { AdminJwtGuard } from '../../common/guards/admin-jwt.guard';
 
 @Controller('health')
 export class HealthController {
@@ -23,7 +24,12 @@ export class HealthController {
     };
   }
 
+  /**
+   * Debug endpoint - protected by admin auth
+   * Returns database schema information for debugging
+   */
   @Get('debug-schema')
+  @UseGuards(AdminJwtGuard)
   async debugSchema() {
     try {
       const columns = await this.prisma.$queryRawUnsafe<

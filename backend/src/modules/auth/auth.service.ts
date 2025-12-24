@@ -17,7 +17,11 @@ export class AuthService {
     private supabase: SupabaseService,
     private configService: ConfigService,
   ) {
-    this.jwtSecret = this.configService.get<string>('JWT_SECRET') || 'super-secret-jwt-token-with-at-least-32-characters-long';
+    const secret = this.configService.get<string>('JWT_SECRET');
+    if (!secret) {
+      throw new Error('CRITICAL: JWT_SECRET must be configured');
+    }
+    this.jwtSecret = secret;
   }
 
   /**

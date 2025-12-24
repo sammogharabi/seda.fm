@@ -30,6 +30,7 @@ import { GatewayModule } from './modules/gateway/gateway.module';
 import { DirectMessagesModule } from './modules/direct-messages/direct-messages.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
+import { StreamingModule } from './modules/streaming/streaming.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
     DirectMessagesModule,
     NotificationModule,
     AdminAuthModule,
+    StreamingModule,
   ],
   controllers: [],
   providers: [

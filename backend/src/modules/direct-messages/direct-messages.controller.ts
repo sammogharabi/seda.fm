@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -76,5 +77,22 @@ export class DirectMessagesController {
   @Get('unread-count')
   async getUnreadCount(@Req() req: AuthRequest) {
     return this.dmService.getUnreadCount(req.user.id);
+  }
+
+  @Delete('conversations/:id')
+  async deleteConversation(
+    @Param('id') id: string,
+    @Req() req: AuthRequest,
+  ) {
+    return this.dmService.deleteConversation(id, req.user.id);
+  }
+
+  @Delete('conversations/:conversationId/messages/:messageId')
+  async deleteMessage(
+    @Param('conversationId') conversationId: string,
+    @Param('messageId') messageId: string,
+    @Req() req: AuthRequest,
+  ) {
+    return this.dmService.deleteMessage(conversationId, messageId, req.user.id);
   }
 }

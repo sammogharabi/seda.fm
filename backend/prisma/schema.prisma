@@ -82,6 +82,9 @@ model User {
   fans                 FanEngagement[]      @relation("ArtistFans")
   fanEngagements       FanEngagement[]      @relation("FanEngagements")
 
+  // Streaming service connections
+  streamingConnections StreamingConnection[]
+
   @@map("users")
 }
 
@@ -971,4 +974,50 @@ model AdminUser {
   @@index([email])
   @@index([isActive])
   @@map("admin_users")
+}
+
+// Streaming Service Connections (Spotify, Apple Music, etc.)
+
+enum StreamingProvider {
+  SPOTIFY
+  APPLE_MUSIC
+  TIDAL
+}
+
+model StreamingConnection {
+  id          String            @id @default(uuid())
+  userId      String            @map("user_id")
+  provider    StreamingProvider
+
+  // OAuth tokens (encrypted in practice)
+  accessToken     String        @map("access_token")
+  refreshToken    String?       @map("refresh_token")
+  tokenExpiresAt  DateTime?     @map("token_expires_at")
+
+  // Provider-specific user info
+  providerUserId  String?       @map("provider_user_id")
+  providerEmail   String?       @map("provider_email")
+  displayName     String?       @map("display_name")
+  profileImageUrl String?       @map("profile_image_url")
+  country         String?       // User's country code
+  productType     String?       @map("product_type") // e.g., "premium", "free"
+
+  // Connection status
+  isActive        Boolean       @default(true) @map("is_active")
+  lastUsedAt      DateTime?     @map("last_used_at")
+  lastRefreshedAt DateTime?     @map("last_refreshed_at")
+
+  // Scopes granted
+  scopes          String[]      @default([])
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
+  @@index([isActive])
+  @@map("streaming_connections")
 }

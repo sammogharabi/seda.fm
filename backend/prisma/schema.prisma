@@ -85,6 +85,8 @@ model User {
   // Streaming service connections
   streamingConnections StreamingConnection[]
 
+  @@index([emailVerified])
+  @@index([createdAt])
   @@map("users")
 }
 

@@ -45,13 +45,19 @@ interface ReactionPayload {
 
 @WebSocketGateway({
   cors: {
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'https://seda.fm',
-      'https://www.seda.fm',
-      process.env.FRONTEND_URL,
-    ].filter(Boolean),
+    origin: process.env.NODE_ENV === 'production'
+      ? [
+          'https://seda.fm',
+          'https://www.seda.fm',
+          process.env.FRONTEND_URL,
+        ].filter(Boolean)
+      : [
+          'http://localhost:3000',
+          'http://localhost:5173',
+          'https://seda.fm',
+          'https://www.seda.fm',
+          process.env.FRONTEND_URL,
+        ].filter(Boolean),
     credentials: true,
   },
   namespace: '/chat',
@@ -468,8 +474,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return { error: 'You must be a member to control DJ session' };
       }
 
-      // TODO: Check if user is currently the DJ
-      // For now, allow all members to control
+      // Check DJ authorization: user must be either:
+      // 1. Room creator/owner
+      // 2. Room moderator or admin
+      // 3. Current DJ in an active session for this room
+      const room = await this.prisma.room.findUnique({
+        where: { id: roomId },
+        select: { createdBy: true },
+      });
+
+      const isRoomOwner = room?.createdBy === userId;
+      const isModeratorOrAdmin = membership.role === 'MODERATOR' || membership.role === 'ADMIN';
+
+      // Check if user is the current DJ in an active session
+      const activeDJSession = await this.prisma.dJSession.findFirst({
+        where: {
+          roomId,
+          status: 'ACTIVE',
+          currentDJId: userId,
+        },
+      });
+
+      const isCurrentDJ = !!activeDJSession;
+
+      if (!isRoomOwner && !isModeratorOrAdmin && !isCurrentDJ) {
+        return { error: 'You must be the DJ, room owner, or moderator to control playback' };
+      }
 
       // Get user info
       const user = await this.prisma.user.findUnique({

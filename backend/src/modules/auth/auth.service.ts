@@ -278,10 +278,12 @@ export class AuthService {
       }
 
       // Create user in Supabase Auth
+      // In production, require email verification; in development, auto-confirm for convenience
+      const isProduction = process.env.NODE_ENV === 'production';
       const { data, error } = await this.supabase.getAdminClient().auth.admin.createUser({
         email: normalizedEmail,
         password,
-        email_confirm: true, // Auto-confirm email for development
+        email_confirm: !isProduction, // Auto-confirm only in development
         user_metadata: {
           username,
           userType: userType || 'fan',

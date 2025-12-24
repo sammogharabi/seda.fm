@@ -24,7 +24,7 @@ export class SendGridService {
   ): Promise<boolean> {
     try {
       const fromEmail = this.configService.get<string>('SENDGRID_FROM_EMAIL') || 'noreply@seda.fm';
-      const appUrl = this.configService.get<string>('APP_URL') || 'http://localhost:3000';
+      const appUrl = this.configService.get<string>('APP_URL') || (process.env.NODE_ENV === 'production' ? 'https://seda.fm' : 'http://localhost:3000');
       const verificationUrl = `${appUrl}/verify-email?token=${verificationToken}&type=${userType}`;
 
       const msg = {

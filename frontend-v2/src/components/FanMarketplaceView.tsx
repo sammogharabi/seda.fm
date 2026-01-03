@@ -1,21 +1,27 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { 
-  ShoppingBag, 
-  Ticket, 
-  Music, 
-  ExternalLink, 
+import {
+  ShoppingBag,
+  Ticket,
+  Music,
+  ExternalLink,
   DollarSign,
   Shield,
   Calendar,
   MapPin,
   Clock,
-  ArrowLeft
+  ArrowLeft,
+  Zap,
+  Timer
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'sonner@2.0.3';
 import { TrackPurchaseModal } from './TrackPurchaseModal';
+import { dropsApi, Drop } from '../lib/api/drops';
+import { DropCard } from './DropCard';
+import { DropDetailView } from './DropDetailView';
+import { marketplaceApi } from '../lib/api/marketplace';
 
 // Mock data - same as artist view but from fan perspective
 const MOCK_ARTIST_ITEMS = {
@@ -120,6 +126,54 @@ export function FanMarketplaceView({ artist, currentUser, onBack, onNowPlaying }
   const [activeSection, setActiveSection] = useState('all');
   const [selectedTrack, setSelectedTrack] = useState(null);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [drops, setDrops] = useState<Drop[]>([]);
+  const [loadingDrops, setLoadingDrops] = useState(false);
+  const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
+  const [fullDropData, setFullDropData] = useState<Drop | null>(null);
+  const [selectedDropProduct, setSelectedDropProduct] = useState<{product: any; customPrice?: number} | null>(null);
+  const [showDropPurchaseModal, setShowDropPurchaseModal] = useState(false);
+
+  // Fetch drops for this artist
+  useEffect(() => {
+    const fetchDrops = async () => {
+      if (!artist?.id) return;
+
+      try {
+        setLoadingDrops(true);
+        const artistDrops = await dropsApi.getArtistDrops(artist.id);
+        // Only show live drops that are set to show on artist page
+        const visibleDrops = artistDrops.filter(
+          (drop) => drop.status === 'LIVE' && drop.showOnArtistPage
+        );
+        setDrops(visibleDrops);
+      } catch (error) {
+        console.error('Failed to load drops:', error);
+      } finally {
+        setLoadingDrops(false);
+      }
+    };
+
+    fetchDrops();
+  }, [artist?.id]);
+
+  // Fetch full drop data when a drop is selected
+  useEffect(() => {
+    const fetchFullDrop = async () => {
+      if (!selectedDropId) {
+        setFullDropData(null);
+        return;
+      }
+
+      try {
+        const dropData = await dropsApi.getDrop(selectedDropId);
+        setFullDropData(dropData);
+      } catch (error) {
+        console.error('Failed to load full drop data:', error);
+      }
+    };
+
+    fetchFullDrop();
+  }, [selectedDropId]);
 
   const handlePurchaseTrack = useCallback((track: any) => {
     setSelectedTrack(track);
@@ -140,6 +194,41 @@ export function FanMarketplaceView({ artist, currentUser, onBack, onNowPlaying }
     toast.success(`Opening ${platform}...`);
   }, []);
 
+  // Handle purchase from drop detail view
+  const handleDropPurchase = useCallback(async (productId: string) => {
+    if (!fullDropData) return;
+
+    // Find the item in the drop that matches this product
+    const dropItem = fullDropData.items?.find((item: any) => item.product?.id === productId);
+
+    if (dropItem?.product) {
+      setSelectedDropProduct({
+        product: dropItem.product,
+        customPrice: dropItem.customPrice,
+      });
+      setShowDropPurchaseModal(true);
+    } else {
+      // If product not found in cached drop, fetch it
+      try {
+        const product = await marketplaceApi.getProduct(productId);
+        setSelectedDropProduct({ product });
+        setShowDropPurchaseModal(true);
+      } catch (error) {
+        console.error('Failed to load product:', error);
+        toast.error('Failed to load product details');
+      }
+    }
+  }, [fullDropData]);
+
+  const handleDropPurchaseComplete = useCallback((purchaseData: any) => {
+    toast.success('Purchase successful!', {
+      description: `"${purchaseData.trackTitle}" is now in your library`,
+      duration: 4000
+    });
+    setShowDropPurchaseModal(false);
+    setSelectedDropProduct(null);
+  }, []);
+
   const handlePlayTrack = useCallback((track: any) => {
     if (onNowPlaying) {
       const trackData = {
@@ -154,6 +243,28 @@ export function FanMarketplaceView({ artist, currentUser, onBack, onNowPlaying }
 
   const renderAllItems = () => (
     <div className="space-y-8">
+      {/* Active Drops */}
+      {drops.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Zap className="w-5 h-5 text-accent-coral" />
+            <h3 className="text-lg font-medium">Limited Drops</h3>
+            <Badge className="bg-accent-coral/20 text-accent-coral border-accent-coral/30">
+              {drops.length} Active
+            </Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {drops.map((drop) => (
+              <DropCard
+                key={drop.id}
+                drop={drop}
+                onView={() => setSelectedDropId(drop.id)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Upcoming Concerts */}
       {MOCK_ARTIST_ITEMS.concerts.length > 0 && (
         <div>
@@ -354,6 +465,44 @@ export function FanMarketplaceView({ artist, currentUser, onBack, onNowPlaying }
           </div>
         </div>
       </div>
+    );
+  }
+
+  // Show drop detail view if a drop is selected
+  if (selectedDropId) {
+    return (
+      <>
+        <DropDetailView
+          dropId={selectedDropId}
+          user={currentUser}
+          onBack={() => {
+            setSelectedDropId(null);
+            setFullDropData(null);
+          }}
+          onPurchase={handleDropPurchase}
+        />
+        {/* Drop Product Purchase Modal */}
+        {selectedDropProduct && (
+          <TrackPurchaseModal
+            isOpen={showDropPurchaseModal}
+            onClose={() => {
+              setShowDropPurchaseModal(false);
+              setSelectedDropProduct(null);
+            }}
+            track={{
+              id: selectedDropProduct.product.id,
+              title: selectedDropProduct.product.title,
+              artwork: selectedDropProduct.product.coverImage || selectedDropProduct.product.images?.[0],
+              fixedPrice: (selectedDropProduct.customPrice ?? selectedDropProduct.product.price)?.toFixed(2),
+              formats: ['MP3 320kbps', 'WAV', 'FLAC'],
+              pricingType: 'fixed',
+            }}
+            artist={artist}
+            onPurchaseComplete={handleDropPurchaseComplete}
+            currentUser={currentUser}
+          />
+        )}
+      </>
     );
   }
 

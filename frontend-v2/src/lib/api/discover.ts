@@ -6,7 +6,30 @@
 import { http } from './http';
 import type { Playlist } from './types';
 
+export interface DiscoverArtist {
+  id: string;
+  artistProfileId: string;
+  displayName: string;
+  username: string;
+  avatarUrl?: string;
+  verified: boolean;
+  bio?: string;
+  genres: string[];
+  followers: number;
+  websiteUrl?: string;
+  spotifyUrl?: string;
+  bandcampUrl?: string;
+  soundcloudUrl?: string;
+}
+
 export const discoverApi = {
+  /**
+   * Get verified artists for discovery (public endpoint - no auth required)
+   */
+  async getArtists(limit: number = 20): Promise<DiscoverArtist[]> {
+    return http.get<DiscoverArtist[]>(`/discover/artists?limit=${limit}`, { auth: false });
+  },
+
   /**
    * Get trending crates (most played in last 7 days)
    */

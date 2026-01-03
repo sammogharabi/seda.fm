@@ -28,6 +28,7 @@ enum MessageType {
   TRACK_CARD
   SYSTEM
   REPLY
+  PRODUCT_CARD
 }
 
 enum RoomMemberRole {
@@ -84,6 +85,15 @@ model User {
 
   // Streaming service connections
   streamingConnections StreamingConnection[]
+
+  // Payout relations
+  payouts              ArtistPayout[]       @relation("ArtistPayouts")
+
+  // Shopify connection
+  shopifyConnection    ShopifyConnection?
+
+  // Merch drops
+  drops                MerchDrop[]
 
   @@index([emailVerified])
   @@index([createdAt])
@@ -231,21 +241,24 @@ model Message {
   type      MessageType @default(TEXT)
   text      String?
   trackRef  Json?       @map("track_ref")
+  productId String?     @map("product_id") // For PRODUCT_CARD messages
   parentId  String?     @map("parent_id")
   createdAt DateTime    @default(now()) @map("created_at")
   updatedAt DateTime    @updatedAt @map("updated_at")
   deletedAt DateTime?   @map("deleted_at")
-  
+
   room      Room        @relation(fields: [roomId], references: [id], onDelete: Cascade)
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   parent    Message?    @relation("MessageReplies", fields: [parentId], references: [id])
   replies   Message[]   @relation("MessageReplies")
   reactions Reaction[]
+  product   MarketplaceProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@index([roomId, createdAt])
   @@index([userId])
   @@index([parentId])
   @@index([deletedAt])
+  @@index([productId])
   @@map("messages")
 }
 
@@ -426,6 +439,7 @@ enum PostType {
   TRACK
   CRATE
   MEDIA
+  PRODUCT
 }
 
 model Post {
@@ -436,6 +450,7 @@ model Post {
   trackRef  Json?    @map("track_ref") // Track metadata if type=TRACK
   crateId   String?  @map("crate_id")  // If type=CRATE
   mediaUrls String[] @map("media_urls") // If type=MEDIA
+  productId String?  @map("product_id") // If type=PRODUCT
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -443,6 +458,7 @@ model Post {
 
   user      Profile  @relation("UserPosts", fields: [userId], references: [userId], onDelete: Cascade)
   crate     Playlist? @relation("CratePosts", fields: [crateId], references: [id], onDelete: SetNull)
+  product   MarketplaceProduct? @relation("ProductPosts", fields: [productId], references: [id], onDelete: SetNull)
   comments  Comment[]
   likes     Like[]
   reposts   Repost[]
@@ -450,6 +466,7 @@ model Post {
   @@index([userId, createdAt])
   @@index([type])
   @@index([deletedAt])
+  @@index([productId])
   @@map("posts")
 }
 
@@ -799,6 +816,15 @@ enum PurchaseStatus {
   FAILED
 }
 
+// Order fulfillment status for physical products (merch, concert tickets)
+enum OrderStatus {
+  PENDING_FULFILLMENT  // Payment complete, awaiting processing
+  PROCESSING           // Order being prepared
+  SHIPPED              // Order shipped (tracking info available)
+  DELIVERED            // Order delivered
+  CANCELLED            // Order cancelled
+}
+
 model MarketplaceProduct {
   id          String        @id @default(uuid())
   artistId    String        @map("artist_id")
@@ -833,6 +859,8 @@ model MarketplaceProduct {
 
   artist      User          @relation("ArtistProducts", fields: [artistId], references: [id], onDelete: Cascade)
   purchases   Purchase[]
+  posts       Post[]        @relation("ProductPosts")
+  messages    Message[]
 
   @@index([artistId, status])
   @@index([type, status])
@@ -856,6 +884,27 @@ model Purchase {
   downloadCount   Int        @default(0) @map("download_count")
   lastDownloadAt  DateTime?  @map("last_download_at")
 
+  // Shipping info for physical products (merch, concert tickets)
+  orderStatus       OrderStatus?  @map("order_status")
+  shippingName      String?       @map("shipping_name")
+  shippingAddress1  String?       @map("shipping_address_1")
+  shippingAddress2  String?       @map("shipping_address_2")
+  shippingCity      String?       @map("shipping_city")
+  shippingState     String?       @map("shipping_state")
+  shippingZip       String?       @map("shipping_zip")
+  shippingCountry   String?       @map("shipping_country")
+  shippingPhone     String?       @map("shipping_phone")
+
+  // Order fulfillment tracking
+  trackingNumber    String?       @map("tracking_number")
+  trackingCarrier   String?       @map("tracking_carrier") // e.g., "USPS", "UPS", "FedEx"
+  shippedAt         DateTime?     @map("shipped_at")
+  deliveredAt       DateTime?     @map("delivered_at")
+
+  // Buyer notes (e.g., special instructions, size selection)
+  buyerNotes        String?       @map("buyer_notes")
+  productVariant    String?       @map("product_variant") // e.g., "Size: L, Color: Black"
+
   createdAt   DateTime       @default(now()) @map("created_at")
   updatedAt   DateTime       @updatedAt @map("updated_at")
   completedAt DateTime?      @map("completed_at")
@@ -866,6 +915,7 @@ model Purchase {
   @@index([productId])
   @@index([buyerId, createdAt])
   @@index([status])
+  @@index([orderStatus])
   @@map("purchases")
 }
 
@@ -978,6 +1028,44 @@ model AdminUser {
   @@map("admin_users")
 }
 
+// Artist Payout History
+
+enum PayoutStatus {
+  PENDING
+  IN_TRANSIT
+  PAID
+  FAILED
+  CANCELED
+}
+
+model ArtistPayout {
+  id          String       @id @default(uuid())
+  artistId    String       @map("artist_id")
+
+  // Stripe payout info
+  stripePayoutId   String   @unique @map("stripe_payout_id")
+  amount           Float    // Amount in dollars
+  currency         String   @default("usd")
+  status           PayoutStatus @default(PENDING)
+
+  // Timing
+  initiatedAt      DateTime @default(now()) @map("initiated_at")
+  arrivalDate      DateTime? @map("arrival_date")
+  completedAt      DateTime? @map("completed_at")
+
+  // Failure info
+  failureMessage   String?  @map("failure_message")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  artist      User     @relation("ArtistPayouts", fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@index([artistId, createdAt])
+  @@index([status])
+  @@map("artist_payouts")
+}
+
 // Streaming Service Connections (Spotify, Apple Music, etc.)
 
 enum StreamingProvider {
@@ -1022,4 +1110,197 @@ model StreamingConnection {
   @@index([provider])
   @@index([isActive])
   @@map("streaming_connections")
+}
+
+// Shopify Store Connection for Artists
+
+enum ShopifyConnectionStatus {
+  PENDING      // OAuth started but not completed
+  CONNECTED    // Active connection
+  DISCONNECTED // Manually disconnected
+  EXPIRED      // Token expired
+}
+
+model ShopifyConnection {
+  id          String                  @id @default(uuid())
+  artistId    String                  @unique @map("artist_id")
+
+  // Store info
+  shopDomain  String                  @map("shop_domain") // e.g., "mystore.myshopify.com"
+  shopName    String?                 @map("shop_name")
+
+  // OAuth tokens (encrypted at rest)
+  accessToken String                  @map("access_token")
+  scopes      String[]                @default([])
+
+  // OAuth state for CSRF protection (cleared after callback)
+  oauthState  String?                 @map("oauth_state")
+
+  // Connection status
+  status      ShopifyConnectionStatus @default(PENDING)
+  connectedAt DateTime?               @map("connected_at")
+
+  // Sync tracking
+  lastSyncedAt    DateTime?           @map("last_synced_at")
+  lastSyncStatus  String?             @map("last_sync_status") // 'success', 'partial', 'failed'
+  syncedProductCount Int              @default(0) @map("synced_product_count")
+
+  createdAt   DateTime                @default(now()) @map("created_at")
+  updatedAt   DateTime                @updatedAt @map("updated_at")
+
+  artist      User                    @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  products    ShopifyProduct[]
+
+  @@index([status])
+  @@index([oauthState])
+  @@map("shopify_connections")
+}
+
+// Cached Shopify Products (synced from Shopify)
+
+model ShopifyProduct {
+  id                String            @id @default(uuid())
+  connectionId      String            @map("connection_id")
+  shopifyProductId  String            @map("shopify_product_id")
+
+  // Basic info (cached from Shopify)
+  title             String
+  description       String?
+  productType       String?           @map("product_type")
+  vendor            String?
+  handle            String?           // URL handle
+
+  // Pricing (first variant price)
+  price             Float
+  compareAtPrice    Float?            @map("compare_at_price")
+  currency          String            @default("USD")
+
+  // Media (cached)
+  coverImage        String?           @map("cover_image")
+  images            Json?             // Array of image URLs
+
+  // Availability
+  status            String            @default("active") // active, draft, archived
+  availableForSale  Boolean           @default(true) @map("available_for_sale")
+  totalInventory    Int?              @map("total_inventory")
+
+  // Variants (cached)
+  hasVariants       Boolean           @default(false) @map("has_variants")
+  variants          Json?             // Array of variant objects
+
+  // Tags and collections
+  tags              String[]          @default([])
+  collections       Json?             // Array of collection info
+
+  // Sync tracking
+  lastSyncedAt      DateTime          @map("last_synced_at")
+  shopifyUpdatedAt  DateTime?         @map("shopify_updated_at")
+
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  connection        ShopifyConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, shopifyProductId])
+  @@index([connectionId, status])
+  @@index([availableForSale])
+  @@map("shopify_products")
+}
+
+// Merch Drops - Time-limited product releases
+
+enum DropStatus {
+  DRAFT       // Being created, not visible to fans
+  SCHEDULED   // Set to go live at a future time
+  LIVE        // Currently active
+  ENDED       // Time window passed
+  CANCELLED   // Manually cancelled
+}
+
+enum DropGatingType {
+  PUBLIC                  // Anyone can access
+  ROOM_ONLY               // Must be a room member
+  FOLLOWERS_ONLY          // Only followers can access
+  FOLLOWERS_EARLY_ACCESS  // Followers get early access
+}
+
+model MerchDrop {
+  id          String        @id @default(uuid())
+  artistId    String        @map("artist_id")
+
+  // Basic info
+  title       String
+  description String?
+  heroImage   String?       @map("hero_image")
+
+  // Status
+  status      DropStatus    @default(DRAFT)
+
+  // Timing
+  startsAt    DateTime?     @map("starts_at")
+  endsAt      DateTime?     @map("ends_at")
+  showCountdown Boolean     @default(true) @map("show_countdown")
+
+  // Gating
+  gatingType          DropGatingType  @default(PUBLIC) @map("gating_type")
+  roomId              String?         @map("room_id") // Room ID for gating (ROOM_ONLY, FOLLOWERS_EARLY_ACCESS)
+  earlyAccessDays     Int?            @map("early_access_days") // For FOLLOWERS_EARLY_ACCESS
+
+  // Distribution settings
+  showOnArtistPage    Boolean         @default(true) @map("show_on_artist_page")
+  showInRoomFeed      Boolean         @default(false) @map("show_in_room_feed")
+  showInSessions      Boolean         @default(false) @map("show_in_sessions")
+
+  // Credits (future feature)
+  allowCreditsDiscount Boolean        @default(false) @map("allow_credits_discount")
+  maxCreditsPercent    Int?           @map("max_credits_percent")
+
+  // Stats
+  viewCount     Int           @default(0) @map("view_count")
+  purchaseCount Int           @default(0) @map("purchase_count")
+  totalRevenue  Float         @default(0) @map("total_revenue")
+
+  // Timestamps
+  publishedAt   DateTime?     @map("published_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  artist        User          @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  items         MerchDropItem[]
+
+  @@index([artistId, status])
+  @@index([status, startsAt])
+  @@index([gatingType])
+  @@map("merch_drops")
+}
+
+model MerchDropItem {
+  id          String          @id @default(uuid())
+  dropId      String          @map("drop_id")
+
+  // Product reference (can be native or Shopify)
+  productId   String          @map("product_id")
+  provider    String          @default("native") // 'native' or 'shopify'
+
+  // Display order
+  sortOrder   Int             @default(0) @map("sort_order")
+
+  // Optional drop-specific overrides
+  customPrice       Float?    @map("custom_price")
+  customTitle       String?   @map("custom_title")
+  maxQuantityPerUser Int?     @map("max_quantity_per_user")
+
+  // Stats for this item in this drop
+  viewCount     Int           @default(0) @map("view_count")
+  purchaseCount Int           @default(0) @map("purchase_count")
+
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  drop        MerchDrop       @relation(fields: [dropId], references: [id], onDelete: Cascade)
+
+  @@unique([dropId, productId, provider])
+  @@index([dropId, sortOrder])
+  @@map("merch_drop_items")
 }

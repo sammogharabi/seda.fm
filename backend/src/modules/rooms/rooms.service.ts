@@ -7,8 +7,32 @@ import {
 import { PrismaService } from '../../config/prisma.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
-import { SendMessageDto } from './dto/send-message.dto';
-import { RoomMemberRole } from '@prisma/client';
+import { SendMessageDto, SendProductMessageDto } from './dto/send-message.dto';
+import { RoomMemberRole, MessageType } from '@prisma/client';
+
+// Standard include for product data in messages
+const productInclude = {
+  include: {
+    artist: {
+      include: { artistProfile: true },
+    },
+  },
+};
+
+// Standard include for user data in messages
+const userInclude = {
+  select: {
+    id: true,
+    email: true,
+    profile: {
+      select: {
+        username: true,
+        displayName: true,
+        avatarUrl: true,
+      },
+    },
+  },
+};
 
 @Injectable()
 export class RoomsService {
@@ -379,19 +403,58 @@ export class RoomsService {
         roomId: roomId,
       },
       include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            profile: {
-              select: {
-                username: true,
-                displayName: true,
-                avatarUrl: true,
-              },
-            },
-          },
-        },
+        user: userInclude,
+        product: productInclude,
+      },
+    });
+
+    return message;
+  }
+
+  async sendProductMessage(
+    roomId: string,
+    userId: string,
+    dto: SendProductMessageDto,
+  ) {
+    const room = await this.prisma.room.findUnique({
+      where: { id: roomId },
+      include: {
+        memberships: true,
+      },
+    });
+
+    if (!room) {
+      throw new NotFoundException('Room not found');
+    }
+
+    // Check if user is a member
+    const isMember = room.memberships.some((m) => m.userId === userId);
+    if (!isMember) {
+      throw new ForbiddenException('You must be a member to send messages');
+    }
+
+    // Validate product exists and is published
+    const product = await this.prisma.marketplaceProduct.findUnique({
+      where: { id: dto.productId },
+    });
+    if (!product) {
+      throw new BadRequestException('Product not found');
+    }
+    if (product.status !== 'PUBLISHED') {
+      throw new BadRequestException('Cannot share unpublished products');
+    }
+
+    const message = await this.prisma.message.create({
+      data: {
+        type: MessageType.PRODUCT_CARD,
+        text: dto.caption || null,
+        productId: dto.productId,
+        userId: userId,
+        roomId: roomId,
+      },
+      include: {
+        user: userInclude,
+        product: productInclude,
       },
     });
 
@@ -437,19 +500,8 @@ export class RoomsService {
         createdAt: 'desc',
       },
       include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            profile: {
-              select: {
-                username: true,
-                displayName: true,
-                avatarUrl: true,
-              },
-            },
-          },
-        },
+        user: userInclude,
+        product: productInclude,
         reactions: {
           include: {
             user: {

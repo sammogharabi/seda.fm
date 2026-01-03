@@ -50,6 +50,10 @@ export interface AppStateHook {
   selectedFan: FanProfile | null;
   setSelectedFan: (fan: FanProfile | null) => void;
 
+  // Drop State
+  selectedDropId: string | null;
+  setSelectedDropId: (dropId: string | null) => void;
+
   // Utility functions
   handleViewChange: (view: string) => void;
   handleRoomSelect: (room: string) => void;
@@ -240,6 +244,9 @@ export const useAppState = (): AppStateHook => {
   const [selectedArtistForMarketplace, setSelectedArtistForMarketplace] = useState(null);
   const [selectedFan, setSelectedFan] = useState(null);
 
+  // Drop State
+  const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
+
   // Utility functions
   const handleViewChange = useCallback((view: string) => {
     setCurrentView(view);
@@ -316,7 +323,11 @@ export const useAppState = (): AppStateHook => {
     setSelectedArtistForMarketplace,
     selectedFan,
     setSelectedFan,
-    
+
+    // Drop State
+    selectedDropId,
+    setSelectedDropId,
+
     // Utility functions
     handleViewChange,
     handleRoomSelect,

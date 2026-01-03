@@ -40,7 +40,8 @@ import {
   Heart,
   Repeat,
   Play,
-  CheckCircle
+  CheckCircle,
+  Settings
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'sonner@2.0.3';
@@ -48,6 +49,7 @@ import { ArtistMarketplace } from './ArtistMarketplace';
 import { FanMarketplaceView } from './FanMarketplaceView';
 import { ProgressBar } from './ProgressBar';
 import { CreditsWallet } from './CreditsWallet';
+import { StreamingConnections } from './StreamingConnections';
 import { FanSupportActions } from './FanSupportActions';
 import { XPNotificationSystem } from './XPNotificationSystem';
 import { FanMessageModal } from './FanMessageModal';
@@ -981,7 +983,20 @@ export function UserProfile({ user, onUpdateUser, viewingUser = null, isOwnProfi
                 Credits
               </Button>
             )}
-            
+
+            {/* Settings - Own profile only */}
+            {isOwnProfile && (
+              <Button
+                variant={activeTab === 'settings' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('settings')}
+                size="sm"
+                className={activeTab === 'settings' ? 'bg-accent-coral hover:bg-accent-coral/90 text-background border-2 border-accent-coral' : 'border-2'}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </Button>
+            )}
+
             {/* Followers - Public profile only */}
             {!isOwnProfile && (
               <Button
@@ -1582,6 +1597,23 @@ export function UserProfile({ user, onUpdateUser, viewingUser = null, isOwnProfi
                       </ul>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Settings Tab - Own profile only */}
+          {isOwnProfile && activeTab === 'settings' && (
+            <div className="space-y-6 mt-6">
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-accent-coral" />
+                  <h3 className="text-lg font-medium">Settings</h3>
+                </div>
+
+                {/* Streaming Connections Section */}
+                <div className="border border-foreground/10 rounded-lg p-6">
+                  <StreamingConnections apiBaseUrl={import.meta.env.VITE_API_URL || '/api'} />
                 </div>
               </div>
             </div>

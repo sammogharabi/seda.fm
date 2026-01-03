@@ -2,6 +2,50 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { searchApi } from '../lib/api/search';
 import type { SearchResults, SearchType } from '../types';
 
+/**
+ * Normalize artist data from backend format to frontend format
+ * Backend returns: { id, userId, artistName, bio, verified, user: { profile: { username, displayName, avatarUrl } } }
+ * Frontend expects: { id, userId, displayName, username, avatarUrl, verified, bio, accentColor, followers, genres }
+ */
+function normalizeArtist(artist: any): any {
+  const profile = artist.user?.profile || {};
+  return {
+    id: artist.userId || artist.id,
+    artistProfileId: artist.id,
+    displayName: profile.displayName || artist.artistName || 'Unknown Artist',
+    username: profile.username || '',
+    avatarUrl: profile.avatarUrl || null,
+    verified: artist.verified || false,
+    bio: artist.bio || '',
+    accentColor: 'coral', // Default accent color for artists
+    followers: 0, // Not returned by search API
+    genres: profile.genres || [],
+    // Keep original data for navigation
+    artistName: artist.artistName,
+    websiteUrl: artist.websiteUrl,
+    spotifyUrl: artist.spotifyUrl,
+    bandcampUrl: artist.bandcampUrl,
+    soundcloudUrl: artist.soundcloudUrl,
+  };
+}
+
+/**
+ * Normalize user data from backend format
+ */
+function normalizeUser(user: any): any {
+  return {
+    id: user.userId || user.id,
+    userId: user.userId,
+    displayName: user.displayName || user.username || 'Unknown User',
+    username: user.username || '',
+    avatarUrl: user.avatarUrl || null,
+    bio: user.bio || '',
+    accentColor: 'blue', // Default accent color for fans
+    followers: 0,
+    genres: user.genres || [],
+  };
+}
+
 export function useSearch(query: string, activeTab: string) {
   const [results, setResults] = useState<SearchResults>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +92,14 @@ export function useSearch(query: string, activeTab: string) {
         limit: 20,
       });
 
-      setResults(data);
+      // Normalize the data for frontend consumption
+      const normalizedData: SearchResults = {
+        ...data,
+        artists: data.artists?.map(normalizeArtist) || [],
+        users: data.users?.map(normalizeUser) || [],
+      };
+
+      setResults(normalizedData);
       setError(null);
     } catch (err: unknown) {
       // Ignore abort errors

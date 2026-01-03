@@ -65,4 +65,9 @@ export class CreatePostDto {
   @IsString({ each: true })
   @MaxLength(2000, { each: true, message: 'Each media URL must not exceed 2000 characters' })
   mediaUrls?: string[];
+
+  @ApiPropertyOptional({ description: 'Product ID for PRODUCT posts' })
+  @IsOptional()
+  @IsUUID()
+  productId?: string;
 }

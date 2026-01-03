@@ -58,14 +58,13 @@ export function HeroSection({ onSignup, onLearnMorePBC }: HeroSectionProps) {
         </motion.h1>
 
         {/* Subhead */}
-        <motion.p 
-          className="text-lg sm:text-xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed"
+        <motion.p
+          className="text-lg sm:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
-          sedā.fm is powered by artists, fans, and scenes who create, share, and curate music together. 
-          Real songs, real playlists, real connections — and every time you join in or buy from artists, you can unlock ad-free Premium.
+          Real artists. Real fans. Real playlists built by humans who give a damn about music.
         </motion.p>
 
         {/* Beta Signup Form */}

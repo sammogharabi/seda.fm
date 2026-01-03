@@ -5,10 +5,8 @@ import { HeroSection } from './about/HeroSection';
 import { WhatIsSection } from './about/WhatIsSection';
 import { BenefitsSection } from './about/BenefitsSection';
 import { PBCSection } from './about/PBCSection';
-import { PrivacySection } from './about/PrivacySection';
 import { HowItWorksSection } from './about/HowItWorksSection';
 import { TierComparison } from './about/TierComparison';
-import { ArtistMonetizationSection } from './about/ArtistMonetizationSection';
 import { FAQSection } from './about/FAQSection';
 import { Footer } from './about/Footer';
 
@@ -35,14 +33,14 @@ export function AboutPage() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="min-h-screen bg-background text-foreground"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       {/* Hero Section */}
-      <HeroSection 
+      <HeroSection
         onSignup={handleSignup}
         onLearnMorePBC={handleLearnMorePBC}
       />
@@ -50,25 +48,19 @@ export function AboutPage() {
       {/* What is sedā.fm? */}
       <WhatIsSection />
 
-      {/* Benefits for Fans and Artists */}
+      {/* Why sedā.fm? - Core Benefits */}
       <BenefitsSection />
 
-      {/* Public Benefit Company */}
+      {/* How It Works */}
+      <HowItWorksSection />
+
+      {/* Our Promise - PBC + Privacy */}
       <div ref={pbcSectionRef}>
         <PBCSection />
       </div>
 
-      {/* Data Privacy Commitment */}
-      <PrivacySection />
-
-      {/* How sedā.fm Works */}
-      <HowItWorksSection />
-
       {/* Free vs Premium Tier Comparison */}
       <TierComparison onSignup={handleSignupRedirect} />
-
-      {/* Artist Monetization */}
-      <ArtistMonetizationSection />
 
       {/* FAQ Section */}
       <FAQSection />

@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { FeatureGuard } from '../../common/guards/feature.guard';
 import { Feature } from '../../common/decorators/feature.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { DiscoverService } from './discover.service';
 
 @ApiTags('discover')
@@ -12,6 +13,14 @@ import { DiscoverService } from './discover.service';
 @ApiBearerAuth()
 export class DiscoverController {
   constructor(private readonly discoverService: DiscoverService) {}
+
+  @Get('artists')
+  @Public()
+  @ApiOperation({ summary: 'Get verified artists' })
+  @ApiResponse({ status: 200, description: 'Artists retrieved successfully' })
+  async getArtists(@Query('limit') limit: number = 20) {
+    return this.discoverService.getArtists(limit);
+  }
 
   @Get('trending')
   @ApiOperation({ summary: 'Get trending crates' })

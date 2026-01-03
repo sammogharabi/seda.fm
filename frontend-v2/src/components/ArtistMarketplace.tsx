@@ -25,7 +25,8 @@ import {
   Heart,
   Send,
   Link as LinkIcon,
-  Copy
+  Copy,
+  Zap
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'sonner@2.0.3';
@@ -34,6 +35,9 @@ import { TrackUploadModal } from './TrackUploadModal';
 import { StoreAnalytics } from './StoreAnalytics';
 import { CreateStorePostModal } from './CreateStorePostModal';
 import { PaymentSetupModal } from './PaymentSetupModal';
+import { DropsView } from './DropsView';
+import { DropDetailView } from './DropDetailView';
+import { Drop } from '../lib/api/drops';
 import { marketplaceApi } from '../lib/api/marketplace';
 
 // No mock data - artists start with empty stores
@@ -73,6 +77,9 @@ export function ArtistMarketplace({ user, onUpdateUser, initialTab = 'merch', on
   const [merchItems, setMerchItems] = useState<any[]>([]);
   const [concertItems, setConcertItems] = useState<any[]>([]);
   const [trackItems, setTrackItems] = useState<any[]>([]);
+
+  // State for viewing drop detail
+  const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
 
   // Check payment setup status on mount
   useEffect(() => {
@@ -777,6 +784,7 @@ export function ArtistMarketplace({ user, onUpdateUser, initialTab = 'merch', on
         <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-2">
           {[
             { id: 'merch', label: 'Merch', icon: ShoppingBag },
+            { id: 'drops', label: 'Drops', icon: Zap },
             { id: 'concerts', label: 'Concerts', icon: Ticket },
             { id: 'tracks', label: 'Tracks', icon: Music },
             { id: 'analytics', label: 'Analytics', icon: TrendingUp },
@@ -808,6 +816,20 @@ export function ArtistMarketplace({ user, onUpdateUser, initialTab = 'merch', on
           className="min-h-0"
         >
           {activeSection === 'merch' && renderMerchSection()}
+          {activeSection === 'drops' && (
+            selectedDrop ? (
+              <DropDetailView
+                dropId={selectedDrop.id}
+                user={user}
+                onBack={() => setSelectedDrop(null)}
+              />
+            ) : (
+              <DropsView
+                user={user}
+                onViewDrop={(drop) => setSelectedDrop(drop)}
+              />
+            )
+          )}
           {activeSection === 'concerts' && renderConcertsSection()}
           {activeSection === 'tracks' && renderTracksSection()}
           {activeSection === 'analytics' && (

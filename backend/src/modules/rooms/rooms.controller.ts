@@ -14,7 +14,7 @@ import { Request } from 'express';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
-import { SendMessageDto } from './dto/send-message.dto';
+import { SendMessageDto, SendProductMessageDto } from './dto/send-message.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
 import { AddReactionDto } from './dto/reaction.dto';
 import { EditMessageDto } from './dto/edit-message.dto';
@@ -81,6 +81,15 @@ export class RoomsController {
     @Body() sendMessageDto: SendMessageDto,
   ) {
     return this.roomsService.sendMessage(id, req.user.id, sendMessageDto);
+  }
+
+  @Post(':id/messages/product')
+  async sendProductMessage(
+    @Param('id') id: string,
+    @Req() req: AuthRequest,
+    @Body() sendProductMessageDto: SendProductMessageDto,
+  ) {
+    return this.roomsService.sendProductMessage(id, req.user.id, sendProductMessageDto);
   }
 
   @Get(':id/messages')

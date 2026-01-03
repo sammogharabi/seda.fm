@@ -9,40 +9,24 @@ import {
 
 const faqs = [
   {
-    question: "Do you run ads?",
-    answer: "Yes — on Free. Ads keep the free tier alive, which means nobody has to pay just to join the community if they can't. But you can earn Premium (ad-free) by listening, sharing, and buying songs, merch, and tickets."
-  },
-  {
-    question: "Why Premium?",
-    answer: "So you can enjoy music ad-free while we keep sedā.fm people-first without relying on creepy ad sales."
-  },
-  {
     question: "Do you sell my data?",
-    answer: "No. Never."
+    answer: "Nope. Never have, never will. That's a promise."
   },
   {
-    question: "How do credits work (Free → ad-free)?",
-    answer: "Join rooms, share music, support artists — and every time you buy songs, merch, or tickets, you earn credits that unlock Premium (ad-free) time."
+    question: "What about ads?",
+    answer: "Free tier has 'em (gotta keep the lights on somehow). Buy from artists or stay active, and you earn your way to ad-free Premium."
   },
   {
-    question: "How do points work (Premium → more Premium)?",
-    answer: "Premium users earn points by being active, which extend Premium time."
+    question: "How do artists make money?",
+    answer: "Upload music, set your price, keep 90%. Sell merch and tickets too. No middlemen taking half your shit."
   },
   {
-    question: "How do artists earn money here?",
-    answer: "Upload songs, set a price (or let fans choose), and keep ~90%. Plus sell merch and concert tickets directly to your fans."
-  },
-  {
-    question: "What's \"bot-free ticketing\"?",
-    answer: "A purchasing flow designed to keep bots and scalpers out, so real fans can get tickets at fair prices."
-  },
-  {
-    question: "Can fans set their own price?",
-    answer: "Yes — when an artist enables fan-determined pricing."
+    question: "What's bot-free ticketing?",
+    answer: "Exactly what it sounds like — scalpers can fuck off. Real fans get real tickets at real prices."
   },
   {
     question: "When's beta?",
-    answer: "Soon. Join the waitlist and be first in."
+    answer: "Soon. Get on the waitlist if you want in early."
   }
 ];
 
@@ -50,18 +34,18 @@ export function FAQSection() {
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-secondary/20">
       <div className="max-w-4xl mx-auto">
-        <motion.div 
-          className="text-center mb-16"
+        <motion.div
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-3xl sm:text-4xl font-medium text-foreground mb-6">
-            FAQ
+          <h2 className="text-3xl sm:text-4xl font-medium text-foreground mb-4">
+            Questions?
           </h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            Questions about how sedā.fm works, from ads to artists to beta access.
+          <p className="text-lg text-muted-foreground">
+            Here's the quick version.
           </p>
         </motion.div>
 

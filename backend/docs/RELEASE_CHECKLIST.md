@@ -30,6 +30,14 @@
 - [ ] **Rate Limits**: Production rate limits configured appropriately
 - [ ] **CORS**: Origins list updated for new domains
 
+### Stripe Connect Setup (REQUIRED FOR ARTIST PAYOUTS)
+- [ ] **Stripe Account Approval**: Account approved and out of review
+- [ ] **Enable OAuth**: Settings → Connect → Onboarding options → Enable OAuth
+- [ ] **Add Redirect URI**: `https://sedafm-production.up.railway.app/stripe/connect/callback`
+- [ ] **Copy Client ID**: Get the `ca_...` client ID from Stripe Dashboard
+- [ ] **Add to Railway**: Set `STRIPE_CONNECT_CLIENT_ID` environment variable
+- [ ] **Test Connect Flow**: Verify artist onboarding creates Express accounts
+
 ## Deployment Process
 
 ### Pre-Deployment

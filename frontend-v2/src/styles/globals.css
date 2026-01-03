@@ -1360,3 +1360,51 @@ body {
     background: rgba(255, 255, 255, 0.1) !important;
   }
 }
+
+/* ===========================================
+   RADIX UI Z-INDEX FIXES FOR MODALS/DIALOGS
+   =========================================== */
+
+/*
+ * Radix UI uses portals that render content at the body level.
+ * When used inside dialogs, they can appear behind the dialog overlay.
+ * These rules ensure tooltips/selects/popovers always appear on top.
+ */
+
+/* Target the wrapper div that Radix creates around portaled popper content */
+[data-radix-popper-content-wrapper] {
+  z-index: 99999 !important;
+}
+
+/* Target Radix select portal specifically */
+[data-radix-select-content] {
+  z-index: 99999 !important;
+}
+
+/* Target all data-slot elements for our custom components */
+[data-slot="tooltip-content"] {
+  z-index: 99999 !important;
+}
+
+[data-slot="select-content"] {
+  z-index: 99999 !important;
+}
+
+/* Additional selectors for Radix portaled elements */
+[data-radix-portal] > * {
+  z-index: 99999 !important;
+}
+
+/* Ensure any element with role="tooltip" or "listbox" is on top when in a dialog */
+[role="tooltip"],
+[role="listbox"] {
+  z-index: 99999 !important;
+}
+
+/* Fixed positioned elements from Radix should be on top */
+[data-radix-popper-content-wrapper],
+[data-radix-select-content-wrapper],
+[data-radix-tooltip-content-wrapper],
+[data-radix-popover-content-wrapper] {
+  z-index: 99999 !important;
+}

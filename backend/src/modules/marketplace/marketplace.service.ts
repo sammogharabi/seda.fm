@@ -3,12 +3,14 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
+import { SendGridService } from '../../config/sendgrid.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
-import { ProductStatus, ProductType, PurchaseStatus } from '@prisma/client';
+import { ProductStatus, ProductType, PurchaseStatus, OrderStatus } from '@prisma/client';
 
 // Platform fee configuration
 export const PLATFORM_FEE_PERCENT = 0.10; // 10% platform fee
@@ -26,7 +28,12 @@ export interface RevenueBreakdown {
 
 @Injectable()
 export class MarketplaceService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(MarketplaceService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private sendGridService: SendGridService,
+  ) {}
 
   /**
    * Calculate revenue breakdown for a sale
@@ -176,7 +183,27 @@ export class MarketplaceService {
   }
 
   async getArtistProducts(artistId: string, includesDrafts = false) {
-    const where: any = { artistId };
+    // artistId could be either the database user ID or the Supabase auth ID
+    // Try to find the user by either ID
+    let resolvedArtistId = artistId;
+
+    // First check if it's a valid database user ID
+    const userById = await this.prisma.user.findUnique({
+      where: { id: artistId },
+    });
+
+    if (!userById) {
+      // If not found by ID, try to find by supabaseId
+      const userBySupabaseId = await this.prisma.user.findUnique({
+        where: { supabaseId: artistId },
+      });
+
+      if (userBySupabaseId) {
+        resolvedArtistId = userBySupabaseId.id;
+      }
+    }
+
+    const where: any = { artistId: resolvedArtistId };
 
     if (!includesDrafts) {
       where.status = ProductStatus.PUBLISHED;
@@ -223,6 +250,14 @@ export class MarketplaceService {
 
   // Purchase Management
 
+  // Product types that require shipping address
+  // Note: MERCHANDISE_LINK and CONCERT_LINK are typically external links, but if they have
+  // shippingAddress provided, they're treated as direct sales requiring fulfillment
+  private readonly PHYSICAL_PRODUCT_TYPES: ProductType[] = [
+    ProductType.MERCHANDISE_LINK,
+    ProductType.CONCERT_LINK,
+  ];
+
   async createPurchase(userId: string, dto: CreatePurchaseDto) {
     const product = await this.prisma.marketplaceProduct.findUnique({
       where: { id: dto.productId },
@@ -236,16 +271,39 @@ export class MarketplaceService {
       throw new BadRequestException('Product is not available for purchase');
     }
 
+    // Validate shipping address for physical products
+    const isPhysicalProduct = this.PHYSICAL_PRODUCT_TYPES.includes(product.type);
+    if (isPhysicalProduct && !dto.shippingAddress) {
+      throw new BadRequestException('Shipping address is required for physical products');
+    }
+
+    // Build purchase data
+    const purchaseData: any = {
+      productId: dto.productId,
+      buyerId: userId,
+      amount: dto.amount,
+      paymentMethod: dto.paymentMethod,
+      paymentIntentId: dto.paymentIntentId,
+      status: PurchaseStatus.PENDING,
+      productVariant: dto.productVariant,
+      buyerNotes: dto.buyerNotes,
+    };
+
+    // Add shipping info for physical products
+    if (dto.shippingAddress) {
+      purchaseData.shippingName = dto.shippingAddress.name;
+      purchaseData.shippingAddress1 = dto.shippingAddress.address1;
+      purchaseData.shippingAddress2 = dto.shippingAddress.address2;
+      purchaseData.shippingCity = dto.shippingAddress.city;
+      purchaseData.shippingState = dto.shippingAddress.state;
+      purchaseData.shippingZip = dto.shippingAddress.zip;
+      purchaseData.shippingCountry = dto.shippingAddress.country;
+      purchaseData.shippingPhone = dto.shippingAddress.phone;
+    }
+
     // Create purchase record
     const purchase = await this.prisma.purchase.create({
-      data: {
-        productId: dto.productId,
-        buyerId: userId,
-        amount: dto.amount,
-        paymentMethod: dto.paymentMethod,
-        paymentIntentId: dto.paymentIntentId,
-        status: PurchaseStatus.PENDING,
-      },
+      data: purchaseData,
       include: {
         product: true,
         buyer: true,
@@ -255,10 +313,33 @@ export class MarketplaceService {
     return purchase;
   }
 
+  /**
+   * Check if a product type requires shipping
+   */
+  isPhysicalProduct(productType: ProductType): boolean {
+    return this.PHYSICAL_PRODUCT_TYPES.includes(productType);
+  }
+
   async completePurchase(purchaseId: string) {
     const purchase = await this.prisma.purchase.findUnique({
       where: { id: purchaseId },
-      include: { product: true },
+      include: {
+        product: {
+          include: {
+            artist: {
+              include: {
+                artistProfile: true,
+                profile: true,
+              },
+            },
+          },
+        },
+        buyer: {
+          include: {
+            profile: true,
+          },
+        },
+      },
     });
 
     if (!purchase) {
@@ -269,12 +350,17 @@ export class MarketplaceService {
     const paymentMethod = (purchase.paymentMethod === 'paypal' ? 'paypal' : 'stripe') as 'stripe' | 'paypal';
     const breakdown = this.calculateRevenueBreakdown(purchase.amount, paymentMethod);
 
+    // Determine if this is a physical product requiring fulfillment
+    const isPhysicalProduct = this.PHYSICAL_PRODUCT_TYPES.includes(purchase.product.type);
+
     // Update purchase status
     const updatedPurchase = await this.prisma.purchase.update({
       where: { id: purchaseId },
       data: {
         status: PurchaseStatus.COMPLETED,
         completedAt: new Date(),
+        // Set order status for physical products
+        ...(isPhysicalProduct && { orderStatus: OrderStatus.PENDING_FULFILLMENT }),
       },
     });
 
@@ -301,7 +387,33 @@ export class MarketplaceService {
       purchase.amount,
     );
 
+    // Send purchase confirmation email (non-blocking)
+    this.sendPurchaseEmail(purchase).catch((error) => {
+      this.logger.error(`Failed to send purchase confirmation email: ${error.message}`);
+    });
+
     return updatedPurchase;
+  }
+
+  private async sendPurchaseEmail(purchase: any) {
+    const buyerEmail = purchase.buyer.email;
+    const buyerName = purchase.buyer.profile?.displayName || purchase.buyer.profile?.username || 'Valued Customer';
+    const artistName = purchase.product.artist.artistProfile?.artistName ||
+                       purchase.product.artist.profile?.displayName ||
+                       'Artist';
+
+    await this.sendGridService.sendPurchaseConfirmationEmail(
+      buyerEmail,
+      buyerName,
+      {
+        productTitle: purchase.product.title,
+        productType: purchase.product.type,
+        artistName,
+        amount: purchase.amount,
+        purchaseId: purchase.id,
+        hasDownload: !!purchase.product.fileUrl,
+      },
+    );
   }
 
   async getUserPurchases(userId: string) {
@@ -350,6 +462,60 @@ export class MarketplaceService {
         lastDownloadAt: new Date(),
       },
     });
+  }
+
+  /**
+   * Get download link for a completed purchase
+   * Validates ownership and purchase status, returns file URL
+   */
+  async getDownloadLink(purchaseId: string, userId: string) {
+    const purchase = await this.prisma.purchase.findUnique({
+      where: { id: purchaseId },
+      include: {
+        product: {
+          select: {
+            id: true,
+            title: true,
+            type: true,
+            fileUrl: true,
+            fileSize: true,
+          },
+        },
+      },
+    });
+
+    if (!purchase) {
+      throw new NotFoundException('Purchase not found');
+    }
+
+    if (purchase.buyerId !== userId) {
+      throw new ForbiddenException('You can only download your own purchases');
+    }
+
+    if (purchase.status !== PurchaseStatus.COMPLETED) {
+      throw new BadRequestException('Purchase is not completed');
+    }
+
+    if (!purchase.product.fileUrl) {
+      throw new BadRequestException('This product does not have a downloadable file');
+    }
+
+    // Increment download count
+    await this.prisma.purchase.update({
+      where: { id: purchaseId },
+      data: {
+        downloadCount: { increment: 1 },
+        lastDownloadAt: new Date(),
+      },
+    });
+
+    return {
+      downloadUrl: purchase.product.fileUrl,
+      fileName: purchase.product.title,
+      fileSize: purchase.product.fileSize,
+      productType: purchase.product.type,
+      downloadCount: purchase.downloadCount + 1,
+    };
   }
 
   // Revenue Management
@@ -490,5 +656,159 @@ export class MarketplaceService {
         lastEngagement: new Date(),
       },
     });
+  }
+
+  // Order Management (for physical products)
+
+  /**
+   * Get specific order details (for artist)
+   */
+  async getOrderDetails(artistId: string, purchaseId: string) {
+    const purchase = await this.prisma.purchase.findUnique({
+      where: { id: purchaseId },
+      include: {
+        product: true,
+        buyer: {
+          include: {
+            profile: true,
+          },
+        },
+      },
+    });
+
+    if (!purchase) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (purchase.product.artistId !== artistId) {
+      throw new ForbiddenException('You can only view orders for your own products');
+    }
+
+    return purchase;
+  }
+
+  /**
+   * Get all orders for an artist (purchases of their products)
+   */
+  async getArtistOrders(artistId: string, status?: OrderStatus) {
+    const where: any = {
+      product: {
+        artistId,
+      },
+      // Only include physical product orders
+      orderStatus: status ? status : { not: null },
+    };
+
+    return this.prisma.purchase.findMany({
+      where,
+      include: {
+        product: true,
+        buyer: {
+          include: {
+            profile: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  /**
+   * Update order status (for artist to mark as shipped, etc.)
+   */
+  async updateOrderStatus(
+    artistId: string,
+    purchaseId: string,
+    newStatus: OrderStatus,
+    trackingInfo?: { trackingNumber?: string; trackingCarrier?: string },
+  ) {
+    const purchase = await this.prisma.purchase.findUnique({
+      where: { id: purchaseId },
+      include: {
+        product: true,
+        buyer: {
+          include: { profile: true },
+        },
+      },
+    });
+
+    if (!purchase) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (purchase.product.artistId !== artistId) {
+      throw new ForbiddenException('You can only update orders for your own products');
+    }
+
+    if (!purchase.orderStatus) {
+      throw new BadRequestException('This is not a physical product order');
+    }
+
+    const updateData: any = {
+      orderStatus: newStatus,
+    };
+
+    // Add tracking info if shipping
+    if (newStatus === OrderStatus.SHIPPED) {
+      updateData.shippedAt = new Date();
+      if (trackingInfo?.trackingNumber) {
+        updateData.trackingNumber = trackingInfo.trackingNumber;
+      }
+      if (trackingInfo?.trackingCarrier) {
+        updateData.trackingCarrier = trackingInfo.trackingCarrier;
+      }
+    }
+
+    // Set delivered timestamp if marking as delivered
+    if (newStatus === OrderStatus.DELIVERED) {
+      updateData.deliveredAt = new Date();
+    }
+
+    const updatedPurchase = await this.prisma.purchase.update({
+      where: { id: purchaseId },
+      data: updateData,
+      include: {
+        product: true,
+        buyer: {
+          include: { profile: true },
+        },
+      },
+    });
+
+    // Send shipping notification email if just shipped
+    if (newStatus === OrderStatus.SHIPPED) {
+      this.sendShippingNotificationEmail(updatedPurchase).catch((error) => {
+        this.logger.error(`Failed to send shipping notification: ${error.message}`);
+      });
+    }
+
+    return updatedPurchase;
+  }
+
+  private async sendShippingNotificationEmail(purchase: any) {
+    const buyerEmail = purchase.buyer.email;
+    const buyerName = purchase.buyer.profile?.displayName || purchase.buyer.profile?.username || 'Valued Customer';
+
+    await this.sendGridService.sendOrderShippedEmail(
+      buyerEmail,
+      buyerName,
+      {
+        productTitle: purchase.product.title,
+        orderId: purchase.id,
+        trackingNumber: purchase.trackingNumber,
+        trackingCarrier: purchase.trackingCarrier,
+        shippingAddress: {
+          name: purchase.shippingName,
+          address1: purchase.shippingAddress1,
+          address2: purchase.shippingAddress2,
+          city: purchase.shippingCity,
+          state: purchase.shippingState,
+          zip: purchase.shippingZip,
+          country: purchase.shippingCountry,
+        },
+      },
+    );
   }
 }

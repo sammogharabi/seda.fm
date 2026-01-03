@@ -1,12 +1,44 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
 import { CreatePostDto } from './dto/create-post.dto';
+
+// Standard include for product data in posts
+const productInclude = {
+  include: {
+    artist: {
+      include: { artistProfile: true },
+    },
+  },
+};
+
+// Standard include for user data in posts
+const userInclude = {
+  select: {
+    userId: true,
+    username: true,
+    displayName: true,
+    avatarUrl: true,
+  },
+};
 
 @Injectable()
 export class PostsService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreatePostDto) {
+    // Validate product exists and is published for PRODUCT posts
+    if (dto.productId) {
+      const product = await this.prisma.marketplaceProduct.findUnique({
+        where: { id: dto.productId },
+      });
+      if (!product) {
+        throw new BadRequestException('Product not found');
+      }
+      if (product.status !== 'PUBLISHED') {
+        throw new BadRequestException('Cannot share unpublished products');
+      }
+    }
+
     return this.prisma.post.create({
       data: {
         userId,
@@ -15,9 +47,11 @@ export class PostsService {
         trackRef: dto.trackRef as object | undefined,
         crateId: dto.crateId,
         mediaUrls: dto.mediaUrls || [],
+        productId: dto.productId,
       },
       include: {
-        user: { select: { userId: true, username: true, displayName: true } },
+        user: userInclude,
+        product: productInclude,
       },
     });
   }
@@ -26,7 +60,8 @@ export class PostsService {
     const post = await this.prisma.post.findUnique({
       where: { id },
       include: {
-        user: { select: { userId: true, username: true, displayName: true } },
+        user: userInclude,
+        product: productInclude,
         _count: { select: { likes: true, comments: true, reposts: true } },
       },
     });

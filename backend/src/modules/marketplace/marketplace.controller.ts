@@ -14,8 +14,9 @@ import { MarketplaceService } from './marketplace.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
-import { ProductType } from '@prisma/client';
+import { ProductType, OrderStatus } from '@prisma/client';
 
 @Controller('marketplace')
 export class MarketplaceController {
@@ -92,6 +93,16 @@ export class MarketplaceController {
     return this.marketplaceService.incrementDownloadCount(id, req.user.id);
   }
 
+  /**
+   * Get download URL for a completed purchase
+   * Returns the file URL and updates download count
+   */
+  @UseGuards(AuthGuard)
+  @Get('purchases/:id/download-link')
+  getDownloadLink(@Request() req: any, @Param('id') id: string) {
+    return this.marketplaceService.getDownloadLink(id, req.user.id);
+  }
+
   // Revenue Endpoints
 
   /**
@@ -133,5 +144,51 @@ export class MarketplaceController {
   getTopFans(@Request() req: any, @Query('limit') limit?: string) {
     const parsedLimit = limit ? parseInt(limit, 10) : 10;
     return this.marketplaceService.getTopFans(req.user.id, parsedLimit);
+  }
+
+  // Order Management Endpoints (for physical products)
+
+  /**
+   * Get all orders for an artist (purchases of their physical products)
+   * Filter by order status optionally
+   */
+  @UseGuards(AuthGuard)
+  @Get('orders')
+  getArtistOrders(
+    @Request() req: any,
+    @Query('status') status?: OrderStatus,
+  ) {
+    return this.marketplaceService.getArtistOrders(req.user.id, status);
+  }
+
+  /**
+   * Get a specific order's details
+   */
+  @UseGuards(AuthGuard)
+  @Get('orders/:id')
+  getOrderDetails(@Request() req: any, @Param('id') id: string) {
+    return this.marketplaceService.getOrderDetails(req.user.id, id);
+  }
+
+  /**
+   * Update order status (for artists to mark orders as shipped, etc.)
+   * Optionally include tracking info when marking as shipped
+   */
+  @UseGuards(AuthGuard)
+  @Put('orders/:id/status')
+  updateOrderStatus(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() dto: UpdateOrderStatusDto,
+  ) {
+    return this.marketplaceService.updateOrderStatus(
+      req.user.id,
+      id,
+      dto.status,
+      {
+        trackingNumber: dto.trackingNumber,
+        trackingCarrier: dto.trackingCarrier,
+      },
+    );
   }
 }

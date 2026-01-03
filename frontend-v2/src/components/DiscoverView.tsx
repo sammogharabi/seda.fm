@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
@@ -6,8 +6,9 @@ import { Card, CardContent } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
 import { FollowSuggestions } from './FollowSuggestions';
 import { SessionsView } from './SessionsView';
-import { ShoppingBag, MapPin, Calendar, Users, Music, Palette, Radio } from 'lucide-react';
+import { ShoppingBag, MapPin, Calendar, Users, Music, Palette, Radio, Loader2 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
+import { discoverApi, DiscoverArtist } from '../lib/api/discover';
 
 const TRENDING_TRACKS = [
   {
@@ -234,13 +235,13 @@ const UPCOMING_SHOWS = [
   }
 ];
 
-export function DiscoverView({ 
-  user, 
-  onNowPlaying, 
-  onFollowUser, 
-  onUnfollowUser, 
-  isFollowing, 
-  followingList = [], 
+export function DiscoverView({
+  user,
+  onNowPlaying,
+  onFollowUser,
+  onUnfollowUser,
+  isFollowing,
+  followingList = [],
   onRoomSelect,
   onViewArtistProfile,
   onViewFanProfile,
@@ -248,6 +249,35 @@ export function DiscoverView({
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('people');
+  const [apiArtists, setApiArtists] = useState<DiscoverArtist[]>([]);
+  const [loadingArtists, setLoadingArtists] = useState(false);
+
+  // Fetch artists from API when artists tab is selected
+  useEffect(() => {
+    const fetchArtists = async () => {
+      if (activeTab !== 'artists') return;
+
+      try {
+        setLoadingArtists(true);
+        console.log('[DiscoverView] Fetching artists from API...');
+        const artists = await discoverApi.getArtists(20);
+        console.log('[DiscoverView] Got artists from API:', artists);
+        setApiArtists(artists);
+      } catch (error) {
+        console.error('[DiscoverView] Failed to load artists:', error);
+        // Fall back to mock data silently
+      } finally {
+        setLoadingArtists(false);
+      }
+    };
+
+    fetchArtists();
+  }, [activeTab]);
+
+  // Combine API artists with mock artists, prioritizing API artists
+  const allArtists = apiArtists.length > 0
+    ? [...apiArtists, ...TRENDING_ARTISTS.filter(mock => !apiArtists.some(api => api.username === mock.username))]
+    : [...mockArtists, ...TRENDING_ARTISTS];
 
   const formatNumber = (num) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -494,8 +524,13 @@ export function DiscoverView({
         {/* Artists Section */}
         {activeTab === 'artists' && (
           <div>
+            {loadingArtists ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-accent-coral" />
+              </div>
+            ) : (
             <div className="space-y-4">
-              {[...mockArtists, ...TRENDING_ARTISTS].map((artist, index) => (
+              {allArtists.map((artist, index) => (
                 <Card key={artist.id} className="hover:border-accent-blue/50 transition-colors">
                   <CardContent className="p-4 md:p-6">
                     <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
@@ -577,6 +612,7 @@ export function DiscoverView({
                 </Card>
               ))}
             </div>
+            )}
           </div>
         )}
 

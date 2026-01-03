@@ -48,6 +48,7 @@ import { toast } from 'sonner@2.0.3';
 import { XPNotificationSystem } from './components/XPNotificationSystem';
 import { ProgressionDashboard } from './components/ProgressionDashboard';
 import { AIDetectionSystemDemo } from './components/AIDetectionSystemDemo';
+import { DropDetailView } from './components/DropDetailView';
 import { sendMessage, getUnreadMessageCount } from './utils/messageService';
 import { mockFans, mockArtists } from './data/mockData';
 import { EmailVerificationHandler } from './components/EmailVerificationHandler';
@@ -892,7 +893,32 @@ export default function App() {
         
         case 'ai-detection':
           return <AIDetectionSystemDemo />;
-        
+
+        case 'drop-detail':
+          if (!appState.selectedDropId) {
+            appState.setCurrentView('feed');
+            return null;
+          }
+          return (
+            <DropDetailView
+              dropId={appState.selectedDropId}
+              user={auth.currentUser}
+              onBack={() => {
+                appState.setSelectedDropId(null);
+                appState.setCurrentView(appState.previousView || 'feed');
+              }}
+              onPurchase={(productId) => {
+                // TODO: Handle purchase flow
+                toast.success('Opening checkout...');
+              }}
+              onJoinScene={(sceneId) => {
+                // Navigate to the scene/room
+                appState.setCurrentRoom(sceneId);
+                appState.setCurrentView('room');
+              }}
+            />
+          );
+
         default:
           return (
             <SocialFeed

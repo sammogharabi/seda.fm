@@ -7,11 +7,6 @@ echo "PORT: $PORT"
 export NODE_ENV=${NODE_ENV:-sandbox}
 
 echo "Using NODE_ENV: $NODE_ENV"
-
-# Run database migrations
-echo "Running database migrations..."
-npx prisma db push --accept-data-loss || echo "Migration warning (may be expected if no changes)"
-
 echo "Starting application..."
 
 # Start the application

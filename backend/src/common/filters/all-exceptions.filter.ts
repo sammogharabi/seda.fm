@@ -9,6 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import * as Sentry from '@sentry/node';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -93,6 +94,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (status >= 500) {
       this.logger.error(`${request.method} ${request.url}`, exception, logContext);
+
+      // Capture 5xx errors to Sentry
+      if (exception instanceof Error) {
+        Sentry.captureException(exception, {
+          extra: logContext,
+          tags: {
+            statusCode: status.toString(),
+            errorCode,
+          },
+        });
+      }
     } else {
       this.logger.warn(`${request.method} ${request.url} - ${message}`, logContext);
     }

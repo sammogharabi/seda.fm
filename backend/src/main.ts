@@ -5,9 +5,20 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import helmet from 'helmet';
 import * as compression from 'compression';
+import * as Sentry from '@sentry/node';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { PrismaService } from './config/prisma.service';
+
+// Initialize Sentry for error tracking
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    integrations: [],
+  });
+}
 
 // Validate required environment variables at startup
 function validateEnvironment(): void {

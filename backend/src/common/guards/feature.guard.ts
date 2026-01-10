@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, NotFoundException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, NotFoundException, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { FEATURE_KEY, FeatureFlag } from '../decorators/feature.decorator';
@@ -6,6 +6,8 @@ import { IS_PUBLIC_KEY } from './auth.guard';
 
 @Injectable()
 export class FeatureGuard implements CanActivate {
+  private readonly logger = new Logger(FeatureGuard.name);
+
   constructor(
     private reflector: Reflector,
     private configService: ConfigService,
@@ -39,7 +41,7 @@ export class FeatureGuard implements CanActivate {
       const isEnabled = this.configService.get<string>(envKey) === 'true';
 
       if (!isEnabled) {
-        console.log(`Feature ${feature} is disabled (${envKey}=${this.configService.get(envKey)})`);
+        this.logger.debug(`Feature ${feature} is disabled (${envKey}=${this.configService.get(envKey)})`);
       }
 
       return isEnabled;

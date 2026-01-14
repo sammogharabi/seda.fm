@@ -880,7 +880,7 @@ export function ZineAboutPage() {
             >
               <h3 className="text-2xl font-black text-background mb-4">OUR PRICING PHILOSOPHY</h3>
               <p className="text-lg text-background leading-relaxed mb-4">
-                Music discovery should be accessible to everyone, regardless of financial situation. Our two-tier system ensures nobody gets excluded while supporting the platform's mission to fairly compensate artists.
+                Music discovery should be accessible to everyone, regardless of financial situation. That's why sedā.fm is completely free for all users. No subscriptions, no paywalls—just great music and direct artist support.
               </p>
               <div className="bg-accent-coral border border-accent-coral p-4 rounded-lg">
                 <p className="text-background text-sm leading-relaxed">
@@ -936,7 +936,7 @@ export function ZineAboutPage() {
                 </div>
               </motion.div>
 
-              {/* Support Tier - Premium */}
+              {/* All Features - Free */}
               <motion.div
                 className="bg-card border-2 border-accent-coral p-8 relative"
                 initial={{ opacity: 0, y: 20 }}
@@ -946,22 +946,19 @@ export function ZineAboutPage() {
               >
                 {/* Tier badge */}
                 <div className="absolute -top-3 left-6 bg-accent-coral text-background px-4 py-1 font-mono text-xs uppercase tracking-wider">
-                  SUPPORT TIER
+                  ALL FEATURES
                 </div>
 
                 <div className="pt-4">
                   <div className="mb-6">
-                    <div className="flex items-baseline gap-2 mb-2">
-                      <span className="text-6xl font-black text-primary">$10</span>
-                      <span className="text-2xl font-black text-muted-foreground">/month</span>
-                    </div>
-                    <div className="font-mono text-sm text-muted-foreground">PREMIUM EXPERIENCE</div>
+                    <div className="text-6xl font-black text-primary mb-2">FREE</div>
+                    <div className="font-mono text-sm text-muted-foreground">EVERYTHING INCLUDED</div>
                   </div>
 
                   <div className="space-y-4 mb-8">
                     <div className="flex items-center gap-3">
                       <CheckCircle className="w-5 h-5 text-accent-mint" />
-                      <span className="text-foreground">Everything in Discover tier</span>
+                      <span className="text-foreground">Full social feed & discovery</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <CheckCircle className="w-5 h-5 text-accent-mint" />
@@ -973,7 +970,7 @@ export function ZineAboutPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <CheckCircle className="w-5 h-5 text-accent-mint" />
-                      <span className="text-foreground">Priority support</span>
+                      <span className="text-foreground">Support artists directly</span>
                     </div>
                   </div>
                 </div>
@@ -996,7 +993,7 @@ export function ZineAboutPage() {
               </div>
 
               <p className="text-background leading-relaxed mb-6">
-                Both free and premium users earn credits through platform engagement. Active community members get rewarded for sharing great music, supporting artists, and contributing to the ecosystem. Credits can be redeemed for premium time upgrades.
+                Earn credits through platform engagement. Active community members get rewarded for sharing great music, supporting artists, and contributing to the ecosystem. Credits can be used to support your favorite artists.
               </p>
 
               <div className="grid md:grid-cols-3 gap-6">

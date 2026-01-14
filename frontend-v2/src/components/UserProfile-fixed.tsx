@@ -1506,13 +1506,13 @@ export function UserProfile({ user, onUpdateUser, viewingUser = null, isOwnProfi
                       <Coins className="w-4 h-4 text-accent-yellow mt-0.5 flex-shrink-0" />
                       <div className="text-sm">
                         <p className="font-medium text-accent-yellow mb-1">
-                          Credits & Premium
+                          Credits & Rewards
                         </p>
                         <ul className="text-xs text-muted-foreground space-y-0.5">
-                          <li>• Credits are only redeemable for Premium subscriptions</li>
-                          <li>• 100 credits = 1 month of Premium access</li>
+                          <li>• Credits can be used to support artists</li>
+                          <li>• Earn credits through platform engagement</li>
                           <li>• Seasonal cap of 125 credits per season</li>
-                          <li>• No cash value or alternative redemption options</li>
+                          <li>• No cash value</li>
                         </ul>
                       </div>
                     </div>

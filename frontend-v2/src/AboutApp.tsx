@@ -2,21 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Toaster } from './components/ui/sonner';
 import { motion } from 'motion/react';
 import { ZineAboutPage } from './components/ZineAboutPage';
-import { StickyEmailSignup } from './components/StickyEmailSignup';
 
 export default function AboutApp() {
-  const [emailSignupDismissed, setEmailSignupDismissed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Initialize app
     const initApp = async () => {
       setIsLoading(true);
-      
+
       // Apply dark theme to document
       if (typeof document !== 'undefined') {
         document.documentElement.classList.add('dark');
-        
+
         // Add viewport meta tag for PWA
         const viewportMeta = document.querySelector('meta[name="viewport"]');
         if (!viewportMeta) {
@@ -25,7 +23,7 @@ export default function AboutApp() {
           meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
           document.head.appendChild(meta);
         }
-        
+
         // Add theme color meta tags for dark mode
         const themeColorMeta = document.querySelector('meta[name="theme-color"]');
         if (!themeColorMeta) {
@@ -36,10 +34,10 @@ export default function AboutApp() {
         } else {
           themeColorMeta.setAttribute('content', '#0a0a0a');
         }
-        
+
         // Set page title
-        document.title = 'About sedā.fm - Music Community for Artists & Fans';
-        
+        document.title = 'sedā.fm - Music Community for Artists & Fans';
+
         // Add meta description
         const metaDescription = document.querySelector('meta[name="description"]');
         if (!metaDescription) {
@@ -49,17 +47,7 @@ export default function AboutApp() {
           document.head.appendChild(meta);
         }
       }
-      
-      // Check if email signup was previously dismissed
-      try {
-        const emailDismissed = localStorage.getItem('seda_email_signup_dismissed');
-        if (emailDismissed === 'true') {
-          setEmailSignupDismissed(true);
-        }
-      } catch (error) {
-        console.error('Error loading email signup state:', error);
-      }
-      
+
       // Short delay for smooth loading experience
       setTimeout(() => {
         setIsLoading(false);
@@ -68,12 +56,6 @@ export default function AboutApp() {
 
     initApp();
   }, []);
-
-  const handleDismissEmailSignup = () => {
-    setEmailSignupDismissed(true);
-    // Store dismissal in localStorage so it persists across sessions
-    localStorage.setItem('seda_email_signup_dismissed', 'true');
-  };
 
   // Show loading screen
   if (isLoading) {
@@ -123,16 +105,21 @@ export default function AboutApp() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Main About Page Content */}
-      <div className={`${!emailSignupDismissed ? 'pb-20' : ''}`}>
-        <ZineAboutPage />
-      </div>
-      
-      {/* Sticky Email Signup */}
-      <StickyEmailSignup
-        onDismiss={handleDismissEmailSignup}
-        isDismissed={emailSignupDismissed}
-      />
+      <ZineAboutPage />
+
+      {/* Enter Platform Button */}
+      <motion.button
+        onClick={() => window.location.href = '/app'}
+        className="fixed bottom-6 right-6 bg-accent-coral text-background px-6 py-3 font-black uppercase tracking-wider hover:bg-accent-coral/90 transition-all border-2 border-accent-coral shadow-lg z-50 md:px-8 md:py-4"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 1, type: "spring", stiffness: 300 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <span className="hidden md:inline">Enter Platform</span>
+        <span className="md:hidden">Enter</span>
+      </motion.button>
 
       <Toaster />
     </div>

@@ -1,29 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
-import { Music, DollarSign, TrendingUp, Users, Radio, Heart, Shield, CheckCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { Music, DollarSign, Users, Radio, Shield } from 'lucide-react';
 
 export function ZineAboutPage() {
-  const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleEmailSubmit = async (e: React.FormEvent, emailValue: string, setSubmitting: (v: boolean) => void) => {
-    e.preventDefault();
-    if (!emailValue) {
-      toast.error("Please enter your email address");
-      return;
-    }
-
-    setSubmitting(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      toast.success("Thanks! You're on the waitlist. We'll email you when beta launches.");
-      setEmail('');
-      setSubmitting(false);
-    }, 1000);
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground">
 
@@ -109,38 +88,6 @@ export function ZineAboutPage() {
               </div>
             </div>
 
-            {/* Raw Signup */}
-            <motion.div
-              className="mt-12"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-            >
-              <div className="bg-primary text-primary-foreground p-1 inline-block mb-4 font-mono text-sm">
-                {"> GET EARLY ACCESS"}
-              </div>
-
-              <form
-                onSubmit={(e) => handleEmailSubmit(e, email, setIsSubmitting)}
-                className="flex flex-col sm:flex-row gap-4 max-w-lg"
-              >
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your.email@domain.com"
-                  className="flex-1 px-4 py-3 bg-transparent border-2 border-foreground font-mono focus:border-accent-coral focus:outline-none transition-colors"
-                  required
-                />
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-accent-coral text-background px-8 py-3 font-bold uppercase tracking-wider hover:bg-accent-coral/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-accent-coral"
-                >
-                  {isSubmitting ? 'JOINING...' : 'JOIN BETA'}
-                </button>
-              </form>
-            </motion.div>
           </motion.div>
         </div>
       </motion.section>
@@ -886,138 +833,6 @@ export function ZineAboutPage() {
                 <p className="text-background text-sm leading-relaxed">
                   <strong>For artists:</strong> Zero monthly fees, ever. While competitors charge $20-50+ per month just to upload music, artists on sedā.fm pay nothing to join and share their work. You only pay our 10% fee when you actually make a sale.
                 </p>
-              </div>
-            </motion.div>
-
-            {/* Tier Comparison */}
-            <div className="grid md:grid-cols-2 gap-8 relative">
-
-              {/* Discover Tier - Free */}
-              <motion.div
-                className="bg-card border-2 border-foreground p-8 relative"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                viewport={{ once: true }}
-              >
-                {/* Tier badge */}
-                <div className="absolute -top-3 left-6 bg-accent-blue text-background px-4 py-1 font-mono text-xs uppercase tracking-wider">
-                  DISCOVER TIER
-                </div>
-
-                <div className="pt-4">
-                  <div className="mb-6">
-                    <div className="text-6xl font-black text-primary mb-2">FREE</div>
-                    <div className="font-mono text-sm text-muted-foreground">FOREVER FREE</div>
-                  </div>
-
-                  <div className="space-y-4 mb-8">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-accent-mint" />
-                      <span className="text-foreground">Full social feed & discovery</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-accent-mint" />
-                      <span className="text-foreground">Join DJ sessions & listen parties</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-accent-mint" />
-                      <span className="text-foreground">Follow artists & fans</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-accent-mint" />
-                      <span className="text-foreground">Earn credits for engagement</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-accent-mint" />
-                      <span className="text-foreground">Support artists with tips</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* All Features - Free */}
-              <motion.div
-                className="bg-card border-2 border-accent-coral p-8 relative"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                viewport={{ once: true }}
-              >
-                {/* Tier badge */}
-                <div className="absolute -top-3 left-6 bg-accent-coral text-background px-4 py-1 font-mono text-xs uppercase tracking-wider">
-                  ALL FEATURES
-                </div>
-
-                <div className="pt-4">
-                  <div className="mb-6">
-                    <div className="text-6xl font-black text-primary mb-2">FREE</div>
-                    <div className="font-mono text-sm text-muted-foreground">EVERYTHING INCLUDED</div>
-                  </div>
-
-                  <div className="space-y-4 mb-8">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-accent-mint" />
-                      <span className="text-foreground">Full social feed & discovery</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-accent-mint" />
-                      <span className="text-foreground">Host your own DJ sessions</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-accent-mint" />
-                      <span className="text-foreground">Advanced discovery features</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-accent-mint" />
-                      <span className="text-foreground">Support artists directly</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Credit System Explanation */}
-            <motion.div
-              className="bg-accent-yellow border border-accent-yellow p-8 rounded-lg"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              viewport={{ once: true }}
-            >
-              <div className="mb-6">
-                <div>
-                  <h3 className="text-2xl font-black text-background mb-1">PLATFORM CREDITS</h3>
-                  <div className="font-mono text-xs text-background/70">ENGAGEMENT_REWARDS.SYSTEM</div>
-                </div>
-              </div>
-
-              <p className="text-background leading-relaxed mb-6">
-                Earn credits through platform engagement. Active community members get rewarded for sharing great music, supporting artists, and contributing to the ecosystem. Credits can be used to support your favorite artists.
-              </p>
-
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-accent-blue rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <Music className="w-6 h-6 text-card" />
-                  </div>
-                  <div className="font-black text-sm mb-1 text-background">SHARE MUSIC</div>
-                  <div className="text-xs text-background/70">Posts with upvotes earn credits</div>
-                </div>
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-accent-coral rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <Heart className="w-6 h-6 text-card" />
-                  </div>
-                  <div className="font-black text-sm mb-1 text-background">TIP ARTISTS</div>
-                  <div className="text-xs text-background/70">Supporting creators earns bonus credits</div>
-                </div>
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-accent-mint rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <TrendingUp className="w-6 h-6 text-card" />
-                  </div>
-                  <div className="font-black text-sm mb-1 text-background">STAY ACTIVE</div>
-                  <div className="text-xs text-background/70">Weekly engagement builds credit balance</div>
-                </div>
               </div>
             </motion.div>
           </div>

@@ -1268,71 +1268,75 @@ export default function App() {
           enabled={auth.currentUser.userType !== 'artist'} 
         />
 
-        {/* Development User Type Switcher - Show on all screen sizes for testing */}
-        <UserTypeSwitcher
-          currentUser={auth.currentUser}
-          onSwitchUserType={(userType) => {
-            // Create a mock user of the specified type
-            const mockUser = userType === 'artist' 
-              ? { ...mockArtists[0], id: `${userType}-demo-${Date.now()}` }
-              : { ...mockFans[0], id: `${userType}-demo-${Date.now()}` };
-            console.log('🔄 Switching to user type:', userType, mockUser);
-            auth.switchUser(mockUser);
-            
-            // Reset app state for clean switch
-            appState.setFollowingList([]);
-            appState.setCurrentView('feed');
-            appState.setNowPlaying(null);
-            appState.setCurrentRoom(null);
-            
-            // Set appropriate default view based on user type
-            setTimeout(() => {
-              if (mockUser.userType === 'artist' && appState.isMobile) {
-                console.log('🎨 Setting artist dashboard view');
-                appState.setCurrentView('artist-dashboard');
-              } else {
-                console.log('🎵 Setting fan feed view');
-                appState.setCurrentView('feed');
-              }
-            }, 200);
-          }}
-          onSelectUser={(user) => {
-            console.log('👤 Selecting user:', user);
-            console.log('Current user before switch:', auth.currentUser);
-            console.log('User being selected:', user);
-            
-            // Use the new switchUser method for proper state management
-            auth.switchUser(user);
-            
-            // Reset app state for clean switch
-            appState.setFollowingList([]);
-            appState.setCurrentView('feed');
-            appState.setNowPlaying(null);
-            appState.setCurrentRoom(null);
-            
-            // Set appropriate default view based on user type
-            setTimeout(() => {
-              if (user.userType === 'artist' && appState.isMobile) {
-                console.log('🎨 Setting artist dashboard view');
-                appState.setCurrentView('artist-dashboard');
-              } else {
-                console.log('🎵 Setting fan feed view');
-                appState.setCurrentView('feed');
-              }
-            }, 200);
-          }}
-          onViewChange={handleViewChangeWithDJMinimize}
-        />
+        {/* Development User Type Switcher - Only visible in development mode */}
+        {import.meta.env.DEV && (
+          <UserTypeSwitcher
+            currentUser={auth.currentUser}
+            onSwitchUserType={(userType) => {
+              // Create a mock user of the specified type
+              const mockUser = userType === 'artist'
+                ? { ...mockArtists[0], id: `${userType}-demo-${Date.now()}` }
+                : { ...mockFans[0], id: `${userType}-demo-${Date.now()}` };
+              console.log('🔄 Switching to user type:', userType, mockUser);
+              auth.switchUser(mockUser);
 
-        {/* Debug State - Development only */}
-        <DebugState
-          currentUser={auth.currentUser}
-          currentView={appState.currentView}
-          isMobile={appState.isMobile}
-          isAuthenticated={auth.isAuthenticated}
-          showMainApp={auth.showMainApp}
-          showLoginPage={auth.showLoginPage}
-        />
+              // Reset app state for clean switch
+              appState.setFollowingList([]);
+              appState.setCurrentView('feed');
+              appState.setNowPlaying(null);
+              appState.setCurrentRoom(null);
+
+              // Set appropriate default view based on user type
+              setTimeout(() => {
+                if (mockUser.userType === 'artist' && appState.isMobile) {
+                  console.log('🎨 Setting artist dashboard view');
+                  appState.setCurrentView('artist-dashboard');
+                } else {
+                  console.log('🎵 Setting fan feed view');
+                  appState.setCurrentView('feed');
+                }
+              }, 200);
+            }}
+            onSelectUser={(user) => {
+              console.log('👤 Selecting user:', user);
+              console.log('Current user before switch:', auth.currentUser);
+              console.log('User being selected:', user);
+
+              // Use the new switchUser method for proper state management
+              auth.switchUser(user);
+
+              // Reset app state for clean switch
+              appState.setFollowingList([]);
+              appState.setCurrentView('feed');
+              appState.setNowPlaying(null);
+              appState.setCurrentRoom(null);
+
+              // Set appropriate default view based on user type
+              setTimeout(() => {
+                if (user.userType === 'artist' && appState.isMobile) {
+                  console.log('🎨 Setting artist dashboard view');
+                  appState.setCurrentView('artist-dashboard');
+                } else {
+                  console.log('🎵 Setting fan feed view');
+                  appState.setCurrentView('feed');
+                }
+              }, 200);
+            }}
+            onViewChange={handleViewChangeWithDJMinimize}
+          />
+        )}
+
+        {/* Debug State - Only visible in development mode */}
+        {import.meta.env.DEV && (
+          <DebugState
+            currentUser={auth.currentUser}
+            currentView={appState.currentView}
+            isMobile={appState.isMobile}
+            isAuthenticated={auth.isAuthenticated}
+            showMainApp={auth.showMainApp}
+            showLoginPage={auth.showLoginPage}
+          />
+        )}
 
         <Toaster />
       </ErrorBoundary>
@@ -1371,28 +1375,6 @@ export default function App() {
         </motion.button>
       )}
 
-      {/* Quick Demo Access Button - only show if auth is enabled and on desktop */}
-      {import.meta.env.VITE_ENABLE_AUTH !== 'false' && !appState.isMobile && (
-        <motion.button
-          onClick={() => auth.handleDemoLogin()}
-          className="fixed bottom-6 left-6 bg-accent-mint text-background px-6 py-3 font-black uppercase tracking-wider hover:bg-accent-mint/90 transition-all border-2 border-accent-mint shadow-lg z-50"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 1.2, type: 'spring', stiffness: 300 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          Quick Demo
-        </motion.button>
-      )}
-
-      {/* Sticky Email Signup for About Page - Hidden on desktop */}
-      {appState.isMobile && (
-        <StickyEmailSignup
-          onDismiss={modals.handleDismissEmailSignup}
-          isDismissed={modals.emailSignupDismissed}
-        />
-      )}
       
       <Toaster />
 

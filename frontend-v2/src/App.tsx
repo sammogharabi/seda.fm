@@ -1269,7 +1269,7 @@ export default function App() {
         />
 
         {/* Development User Type Switcher - Only visible in development mode */}
-        {import.meta.env.DEV && (
+        {import.meta.env.MODE === 'development' && (
           <UserTypeSwitcher
             currentUser={auth.currentUser}
             onSwitchUserType={(userType) => {
@@ -1327,7 +1327,7 @@ export default function App() {
         )}
 
         {/* Debug State - Only visible in development mode */}
-        {import.meta.env.DEV && (
+        {import.meta.env.MODE === 'development' && (
           <DebugState
             currentUser={auth.currentUser}
             currentView={appState.currentView}

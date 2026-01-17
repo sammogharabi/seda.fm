@@ -73,7 +73,13 @@ export const useAuth = (): AuthHook => {
       const response = await http.get('/profiles/me/profile', { auth: true });
       // The profile endpoint returns emailVerified status
       return response?.emailVerified === true;
-    } catch (error) {
+    } catch (error: any) {
+      // 404 means profile doesn't exist yet (user needs to complete onboarding)
+      // This is expected for new signups, not an error
+      if (error?.status === 404 || error?.message?.includes('not found') || error?.message?.includes('Resource not found')) {
+        console.log('Profile not found - user needs to complete onboarding');
+        return true; // Allow user to proceed to onboarding
+      }
       console.error('Failed to check email verification status:', error);
       // If we can't check, assume verified to avoid blocking users
       return true;

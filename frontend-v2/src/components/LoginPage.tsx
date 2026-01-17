@@ -754,27 +754,47 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
     }));
   };
 
-  const completeOnboarding = () => {
-    const newUser = {
-      id: Date.now(),
-      username: formData.username,
-      displayName: formData.username,
-      email: formData.email,
-      verified: false, // Verification is now optional for all users
-      verificationStatus: 'not-requested',
-      points: 0,
-      accentColor: userType === 'artist' ? 'coral' : 'blue',
-      bio: formData.bio || `${userType === 'artist' ? 'Artist' : 'Music lover'} on sedā.fm`,
-      location: '',
-      joinedDate: new Date(),
-      genres: formData.selectedGenres,
-      connectedServices: ['Email'],
-      isArtist: userType === 'artist',
-      website: ''
-    };
-    
-    toast.success('Welcome to the underground music community!');
-    onLogin(newUser);
+  const completeOnboarding = async () => {
+    setIsLoading(true);
+    try {
+      // Create profile in backend
+      const profileData = {
+        username: formData.username,
+        displayName: formData.username,
+        bio: formData.bio || `${userType === 'artist' ? 'Artist' : 'Music lover'} on sedā.fm`,
+        userType: userType,
+        genres: formData.selectedGenres,
+      };
+
+      const createdProfile = await profilesApi.create(profileData);
+
+      const newUser = {
+        id: createdProfile.id || pendingUserId || Date.now().toString(),
+        username: createdProfile.username || formData.username,
+        displayName: createdProfile.displayName || formData.username,
+        email: formData.email,
+        verified: false,
+        verificationStatus: 'not-requested',
+        points: 0,
+        accentColor: userType === 'artist' ? 'coral' : 'blue',
+        bio: createdProfile.bio || formData.bio || `${userType === 'artist' ? 'Artist' : 'Music lover'} on sedā.fm`,
+        location: '',
+        joinedDate: new Date(),
+        genres: createdProfile.genres || formData.selectedGenres,
+        connectedServices: ['Email'],
+        isArtist: userType === 'artist',
+        userType: userType,
+        website: ''
+      };
+
+      toast.success('Welcome to the underground music community!');
+      onLogin(newUser);
+    } catch (error: any) {
+      console.error('Failed to create profile:', error);
+      toast.error(error.message || 'Failed to create profile. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -275,9 +275,11 @@ export function DiscoverView({
   }, [activeTab]);
 
   // Combine API artists with mock artists, prioritizing API artists
-  const allArtists = apiArtists.length > 0
-    ? [...apiArtists, ...TRENDING_ARTISTS.filter(mock => !apiArtists.some(api => api.username === mock.username))]
-    : [...mockArtists, ...TRENDING_ARTISTS];
+  const safeApiArtists = Array.isArray(apiArtists) ? apiArtists : [];
+  const safeMockArtists = Array.isArray(mockArtists) ? mockArtists : [];
+  const allArtists = safeApiArtists.length > 0
+    ? [...safeApiArtists, ...TRENDING_ARTISTS.filter(mock => !safeApiArtists.some(api => api.username === mock.username))]
+    : [...safeMockArtists, ...TRENDING_ARTISTS];
 
   const formatNumber = (num) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;

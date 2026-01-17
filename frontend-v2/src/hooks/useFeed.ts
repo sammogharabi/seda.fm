@@ -41,13 +41,16 @@ export const useFeed = (options: UseFeedOptions = {}) => {
         ? await feedService.getFeed(feedParams)
         : await feedService.getGlobalFeed(feedParams);
 
+      // Safely extract posts array from response
+      const postsArray = Array.isArray(data?.posts) ? data.posts : (Array.isArray(data) ? data : []);
+
       // Handle pagination
       if (params?.cursor) {
         // Append to existing posts
-        setPosts((prev) => [...prev, ...(data.posts || data)]);
+        setPosts((prev) => [...prev, ...postsArray]);
       } else {
         // Replace posts (initial load or refresh)
-        setPosts(data.posts || data);
+        setPosts(postsArray);
       }
 
       // Update cursor for next page

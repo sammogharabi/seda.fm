@@ -1163,13 +1163,13 @@ export function SocialFeed({ user, onNowPlaying, onStartDJ, posts = [], onFollow
       {/* Feed Content */}
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 pb-32">
         {/* Empty state */}
-        {!isLoading && feedData.length === 0 && (
+        {!isLoading && (!feedData || feedData.length === 0) && (
           <EmptyFeedState />
         )}
 
         {/* Feed posts */}
         <AnimatePresence>
-          {feedData.map((post) => renderPost(post))}
+          {Array.isArray(feedData) && feedData.map((post) => renderPost(post))}
         </AnimatePresence>
 
         {/* Loading indicator */}

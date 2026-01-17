@@ -61,126 +61,6 @@ const getAccentClasses = (color) => {
   return colorMap[color] || colorMap.coral;
 };
 
-// Mock messages ordered by newest first (timeline order)
-const MOCK_MESSAGES = [
-  {
-    id: 4,
-    type: 'text_post',
-    user: { username: 'synth_wave', accentColor: 'yellow' },
-    content: 'Anyone know similar tracks to this? Been diving deep into ambient techno lately and looking for more underground gems like this one.',
-    timestamp: new Date(Date.now() - 120000),
-    likes: 3,
-    reposts: 1,
-    comments: [],
-    isLiked: false,
-    isReposted: false
-  },
-  {
-    id: 3,
-    type: 'music_share',
-    user: { username: 'dj_nova', verified: true, accentColor: 'coral', displayName: 'DJ Nova' },
-    content: 'This track absolutely destroyed the dancefloor last night! The build-up around 6:30 is pure magic ✨',
-    track: {
-      title: 'Strobe',
-      artist: 'Deadmau5',
-      artwork: 'https://images.unsplash.com/photo-1629426958038-a4cb6e3830a0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW55bCUyMHJlY29yZCUyMG11c2ljfGVufDF8fHx8MTc1NTQ4OTcyMnww&ixlib=rb-4.0&q=80&w=300',
-      duration: '10:36',
-      url: '#'
-    },
-    timestamp: new Date(Date.now() - 180000),
-    likes: 24,
-    reposts: 8,
-    comments: [],
-    isLiked: false,
-    isReposted: false
-  },
-  {
-    id: 2,
-    type: 'text_post',
-    user: { username: 'vinyl_collector', accentColor: 'mint', displayName: 'Vinyl Collector' },
-    content: 'Just picked up some rare pressings from the local record shop. The underground scene is alive and thriving! 🔥 Support your local music stores.',
-    timestamp: new Date(Date.now() - 240000),
-    likes: 8,
-    reposts: 2,
-    comments: [],
-    isLiked: false,
-    isReposted: false
-  },
-  {
-    id: 1,
-    type: 'music_share',
-    user: { username: 'beatmaster_99', accentColor: 'blue', displayName: 'Beat Master' },
-    content: 'Classic vibes for late night listening. This album changed everything for me.',
-    track: {
-      title: 'Midnight City',
-      artist: 'M83',
-      artwork: 'https://images.unsplash.com/photo-1583927109257-f21c74dd0c3f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtdXNpYyUyMGFsYnVtJTIwY292ZXIlMjBlbGVjdHJvbmljfGVufDF8fHx8MTc1NTUyMzY3OHww&ixlib=rb-4.0&q=80&w=300',
-      duration: '4:03',
-      url: '#'
-    },
-    timestamp: new Date(Date.now() - 300000),
-    likes: 12,
-    reposts: 4,
-    comments: [
-      {
-        id: 301,
-        user: { username: 'synth_lover', displayName: 'Synth Lover', accentColor: 'mint', verified: false },
-        content: 'This is a classic! Love the atmosphere in this track',
-        timestamp: new Date(Date.now() - 240000),
-        likes: 3,
-        isLiked: false,
-        replies: []
-      }
-    ],
-    isLiked: false,
-    isReposted: false
-  }
-];
-
-const ROOM_INFO = {
-  '#hiphop': { name: 'Hip Hop', description: 'The latest in hip hop culture', members: 1247, color: 'bg-accent-coral' },
-  '#electronic': { name: 'Electronic', description: 'Electronic music of all kinds', members: 892, color: 'bg-accent-blue' },
-  '#rock': { name: 'Rock', description: 'Rock music through the ages', members: 1456, color: 'bg-accent-mint' },
-  '#ambient': { name: 'Ambient', description: 'Chill ambient soundscapes', members: 234, color: 'bg-accent-yellow' }
-};
-
-// Mock active DJ sessions data
-const ACTIVE_DJ_SESSIONS = {
-  '#electronic': {
-    isActive: true,
-    host: {
-      username: 'dj_nova',
-      verified: true
-    },
-    currentTrack: {
-      title: 'One More Time',
-      artist: 'Daft Punk',
-      artwork: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop'
-    },
-    listeners: 23,
-    startedAt: new Date(Date.now() - 1800000) // 30 minutes ago
-  },
-  '#hiphop': {
-    isActive: false
-  },
-  '#rock': {
-    isActive: false
-  },
-  '#ambient': {
-    isActive: true,
-    host: {
-      username: 'ambient_sage',
-      verified: false
-    },
-    currentTrack: {
-      title: 'Weightless',
-      artist: 'Marconi Union',
-      artwork: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop'
-    },
-    listeners: 8,
-    startedAt: new Date(Date.now() - 900000) // 15 minutes ago
-  }
-};
 
 interface RoomViewProps {
   roomId: string;
@@ -453,11 +333,17 @@ export function RoomView({ roomId, user, onNowPlaying, viewMode = 'member', onJo
 
   const refreshRoom = useCallback(async () => {
     setIsRefreshing(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setMessages(MOCK_MESSAGES);
-    setIsRefreshing(false);
-    toast.success('Room refreshed!');
-  }, []);
+    try {
+      const response = await roomsApi.getMessages(roomId, { limit: 50 });
+      setMessages(Array.isArray(response?.messages) ? response.messages : []);
+      toast.success('Room refreshed!');
+    } catch (err) {
+      console.error('Error refreshing room:', err);
+      toast.error('Failed to refresh room');
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [roomId]);
 
   const handleJoinSession = useCallback(() => {
     if (onJoinSession && sessionData) {

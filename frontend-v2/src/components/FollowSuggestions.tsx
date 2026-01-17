@@ -103,9 +103,12 @@ export function FollowSuggestions({
     });
   };
 
+  // Ensure followingList is an array to prevent crashes
+  const safeFollowingList = Array.isArray(followingList) ? followingList : [];
+
   // Filter out already following users and dismissed users
   const filteredSuggestions = suggestedUsers
-    .filter(user => !followingList.some(f => f.id === user.id))
+    .filter(user => !safeFollowingList.some(f => f.id === user.id))
     .filter(user => !dismissedUsers.includes(user.id))
     .slice(0, maxSuggestions);
 

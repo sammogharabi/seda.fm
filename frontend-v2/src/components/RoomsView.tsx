@@ -384,7 +384,7 @@ export function RoomsView({
         setLoading(true);
         setError(null);
         const fetchedRooms = await roomsApi.getAll();
-        setRooms(fetchedRooms);
+        setRooms(Array.isArray(fetchedRooms) ? fetchedRooms : []);
       } catch (err) {
         console.error('Error fetching rooms:', err);
         setError('Failed to load rooms. Please try again.');
@@ -397,8 +397,8 @@ export function RoomsView({
     fetchRooms();
   }, []);
 
-  // Use API data instead of mock data
-  const allRooms = rooms;
+  // Use API data instead of mock data - ensure it's always an array
+  const allRooms = Array.isArray(rooms) ? rooms : [];
 
   // Extract unique genres from all rooms
   const availableGenres = useMemo(() => {
@@ -469,7 +469,7 @@ export function RoomsView({
 
       // Refresh rooms data to get updated membership
       const fetchedRooms = await roomsApi.getAll();
-      setRooms(fetchedRooms);
+      setRooms(Array.isArray(fetchedRooms) ? fetchedRooms : []);
 
       toast.success(`Successfully joined ${room.name}`);
 

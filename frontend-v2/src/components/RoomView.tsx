@@ -233,7 +233,7 @@ export function RoomView({ roomId, user, onNowPlaying, viewMode = 'member', onJo
     async function fetchMessages() {
       try {
         const response = await roomsApi.getMessages(roomId, { limit: 50 });
-        setMessages(response.messages);
+        setMessages(Array.isArray(response?.messages) ? response.messages : []);
       } catch (err) {
         console.error('Error fetching messages:', err);
         toast.error('Failed to load messages');
@@ -251,7 +251,7 @@ export function RoomView({ roomId, user, onNowPlaying, viewMode = 'member', onJo
     const interval = setInterval(async () => {
       try {
         const response = await roomsApi.getMessages(roomId, { limit: 50 });
-        setMessages(response.messages);
+        setMessages(Array.isArray(response?.messages) ? response.messages : []);
       } catch (err) {
         console.error('Error polling messages:', err);
         // Don't show toast on polling errors to avoid spam
@@ -885,11 +885,11 @@ export function RoomView({ roomId, user, onNowPlaying, viewMode = 'member', onJo
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-8">
         <div className="space-y-8">
           <AnimatePresence>
-            {messages.map(renderPost)}
+            {Array.isArray(messages) && messages.map(renderPost)}
           </AnimatePresence>
-          
+
           {/* Preview Mode Footer Message */}
-          {viewMode === 'preview' && messages.length > 0 && (
+          {viewMode === 'preview' && Array.isArray(messages) && messages.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

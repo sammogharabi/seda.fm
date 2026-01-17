@@ -281,10 +281,10 @@ export default function App() {
 
   // Initialize following list when user logs in
   React.useEffect(() => {
-    if (auth.currentUser && auth.currentUser.following && appState.followingList.length === 0) {
+    if (auth.currentUser && Array.isArray(auth.currentUser.following) && auth.currentUser.following.length > 0 && appState.followingList.length === 0) {
       console.log('🔗 Initializing following list for user:', auth.currentUser.id);
       console.log('User following IDs:', auth.currentUser.following);
-      
+
       // Convert following IDs to actual user objects
       const followingUsers = auth.currentUser.following.map(followingId => {
         // Check in mock fans first

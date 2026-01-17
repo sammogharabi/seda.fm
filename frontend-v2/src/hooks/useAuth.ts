@@ -26,6 +26,9 @@ export interface User {
   isArtist: boolean;
   userType: 'fan' | 'artist';
   website: string;
+  following?: string[];
+  followers?: string[];
+  email?: string;
 }
 
 export interface AuthHook {
@@ -109,7 +112,10 @@ export const useAuth = (): AuthHook => {
           connectedServices: ['Supabase'],
           isArtist: supabaseUser.user_metadata?.userType === 'artist',
           userType: supabaseUser.user_metadata?.userType || 'fan',
-          website: ''
+          website: '',
+          email: supabaseUser.email || '',
+          following: [],
+          followers: [],
         };
 
         setCurrentUser(user);

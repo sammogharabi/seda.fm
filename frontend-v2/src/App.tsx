@@ -15,8 +15,9 @@ import { ArtistAnalytics } from './components/ArtistAnalytics';
 import { ArtistContentManager } from './components/ArtistContentManager';
 import { ArtistMarketplace } from './components/ArtistMarketplace';
 import { ArtistFansManager } from './components/ArtistFansManager';
-import { UserTypeSwitcher } from './components/UserTypeSwitcher';
-import { DebugState } from './components/DebugState';
+// Development-only imports removed for production
+// import { UserTypeSwitcher } from './components/UserTypeSwitcher';
+// import { DebugState } from './components/DebugState';
 import { ArtistExperienceGuide } from './components/ArtistExperienceGuide';
 import { SocialFeed } from './components/SocialFeed';
 import { DiscoverView } from './components/DiscoverView';
@@ -1268,75 +1269,7 @@ export default function App() {
           enabled={auth.currentUser.userType !== 'artist'} 
         />
 
-        {/* Development User Type Switcher - Only visible in development mode */}
-        {import.meta.env.MODE === 'development' && (
-          <UserTypeSwitcher
-            currentUser={auth.currentUser}
-            onSwitchUserType={(userType) => {
-              // Create a mock user of the specified type
-              const mockUser = userType === 'artist'
-                ? { ...mockArtists[0], id: `${userType}-demo-${Date.now()}` }
-                : { ...mockFans[0], id: `${userType}-demo-${Date.now()}` };
-              console.log('🔄 Switching to user type:', userType, mockUser);
-              auth.switchUser(mockUser);
-
-              // Reset app state for clean switch
-              appState.setFollowingList([]);
-              appState.setCurrentView('feed');
-              appState.setNowPlaying(null);
-              appState.setCurrentRoom(null);
-
-              // Set appropriate default view based on user type
-              setTimeout(() => {
-                if (mockUser.userType === 'artist' && appState.isMobile) {
-                  console.log('🎨 Setting artist dashboard view');
-                  appState.setCurrentView('artist-dashboard');
-                } else {
-                  console.log('🎵 Setting fan feed view');
-                  appState.setCurrentView('feed');
-                }
-              }, 200);
-            }}
-            onSelectUser={(user) => {
-              console.log('👤 Selecting user:', user);
-              console.log('Current user before switch:', auth.currentUser);
-              console.log('User being selected:', user);
-
-              // Use the new switchUser method for proper state management
-              auth.switchUser(user);
-
-              // Reset app state for clean switch
-              appState.setFollowingList([]);
-              appState.setCurrentView('feed');
-              appState.setNowPlaying(null);
-              appState.setCurrentRoom(null);
-
-              // Set appropriate default view based on user type
-              setTimeout(() => {
-                if (user.userType === 'artist' && appState.isMobile) {
-                  console.log('🎨 Setting artist dashboard view');
-                  appState.setCurrentView('artist-dashboard');
-                } else {
-                  console.log('🎵 Setting fan feed view');
-                  appState.setCurrentView('feed');
-                }
-              }, 200);
-            }}
-            onViewChange={handleViewChangeWithDJMinimize}
-          />
-        )}
-
-        {/* Debug State - Only visible in development mode */}
-        {import.meta.env.MODE === 'development' && (
-          <DebugState
-            currentUser={auth.currentUser}
-            currentView={appState.currentView}
-            isMobile={appState.isMobile}
-            isAuthenticated={auth.isAuthenticated}
-            showMainApp={auth.showMainApp}
-            showLoginPage={auth.showLoginPage}
-          />
-        )}
+        {/* Development User Type Switcher and Debug State removed for production */}
 
         <Toaster />
       </ErrorBoundary>

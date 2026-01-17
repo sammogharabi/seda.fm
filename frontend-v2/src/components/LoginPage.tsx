@@ -276,7 +276,9 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
             genres: [],
             connectedServices: ['Email'],
             isArtist: user.user_metadata?.userType === 'artist',
-            website: ''
+            website: '',
+            following: [],
+            followers: [],
           };
 
           toast.success('Welcome back to sedā.fm!');
@@ -693,7 +695,9 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
           connectedServices: ['Supabase'],
           isArtist: false,
           userType: 'fan' as const,
-          website: ''
+          website: '',
+          following: [],
+          followers: [],
         };
 
         toast.success('Welcome to the community! 🎵');
@@ -733,7 +737,9 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
           connectedServices: ['Supabase'],
           isArtist: true,
           userType: 'artist' as const,
-          website: ''
+          website: '',
+          following: [],
+          followers: [],
         };
 
         toast.success('Welcome to sedā.fm! Your artist profile is live. 🎵');
@@ -784,7 +790,9 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
         connectedServices: ['Email'],
         isArtist: userType === 'artist',
         userType: userType,
-        website: ''
+        website: '',
+        following: [],
+        followers: [],
       };
 
       toast.success('Welcome to the underground music community!');

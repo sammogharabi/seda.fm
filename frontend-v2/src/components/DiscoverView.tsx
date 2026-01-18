@@ -5,7 +5,7 @@ import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
 import { FollowSuggestions } from './FollowSuggestions';
 import { SessionsView } from './SessionsView';
-import { ShoppingBag, Calendar, Users, Music, Palette, Radio, Loader2 } from 'lucide-react';
+import { ShoppingBag, MapPin, Calendar, Users, Music, Palette, Radio, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { discoverApi, DiscoverArtist } from '../lib/api/discover';
 

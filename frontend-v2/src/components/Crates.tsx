@@ -34,93 +34,7 @@ import {
   ThumbsUp,
   ThumbsDown
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
-
-const MOCK_CRATES = [
-  {
-    id: 1,
-    name: 'Late Night Vibes',
-    description: 'Perfect tracks for those midnight coding sessions',
-    isPublic: true,
-    isCollaborative: false,
-    trackCount: 24,
-    duration: '1h 47m',
-    owner: { username: 'night_owl', verified: false },
-    collaborators: [],
-    plays: 156,
-    likes: 23,
-    createdAt: '2024-02-15',
-    tracks: [
-      {
-        id: 1,
-        title: 'Midnight City',
-        artist: 'M83',
-        duration: '4:03',
-        addedBy: { username: 'night_owl' },
-        addedAt: '2024-02-15'
-      },
-      {
-        id: 2,
-        title: 'Breathe Me',
-        artist: 'Sia',
-        duration: '4:31',
-        addedBy: { username: 'night_owl' },
-        addedAt: '2024-02-16'
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: 'Electronic Collaboration',
-    description: 'A community-curated electronic crate',
-    isPublic: true,
-    isCollaborative: true,
-    trackCount: 42,
-    duration: '3h 12m',
-    owner: { username: 'edm_curator', verified: true },
-    collaborators: [
-      { username: 'beat_maker' },
-      { username: 'bass_head' },
-      { username: 'synth_lover' }
-    ],
-    plays: 892,
-    likes: 127,
-    createdAt: '2024-01-20',
-    tracks: [
-      {
-        id: 3,
-        title: 'Strobe',
-        artist: 'Deadmau5',
-        duration: '10:36',
-        addedBy: { username: 'edm_curator' },
-        addedAt: '2024-01-20'
-      },
-      {
-        id: 4,
-        title: 'One More Time',
-        artist: 'Daft Punk',
-        duration: '5:20',
-        addedBy: { username: 'beat_maker' },
-        addedAt: '2024-01-22'
-      }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Private Collection',
-    description: 'My secret stash of rare finds',
-    isPublic: false,
-    isCollaborative: false,
-    trackCount: 15,
-    duration: '58m',
-    owner: { username: 'vinyl_digger', verified: false },
-    collaborators: [],
-    plays: 45,
-    likes: 8,
-    createdAt: '2024-03-01',
-    tracks: []
-  }
-];
+import { toast } from 'sonner';
 
 export function Crates({
   user,
@@ -154,9 +68,9 @@ export function Crates({
     }
   }, [localCrates]);
 
-  // Compute crates from localCrates + userCrates + MOCK_CRATES
+  // Compute crates from localCrates + userCrates (no mock data)
   const crates = React.useMemo(() => {
-    return [...localCrates, ...userCrates, ...MOCK_CRATES];
+    return [...localCrates, ...userCrates];
   }, [localCrates, userCrates]);
   const [selectedCrate, setSelectedCrate] = useState(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);

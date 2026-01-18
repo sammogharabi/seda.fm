@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -32,9 +32,13 @@ import {
   Volume2,
   Minimize2,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  TrendingUp,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { playlistsApi } from '../lib/api/playlists';
+import type { Playlist } from '../lib/api/types';
 
 export function Crates({
   user,
@@ -59,6 +63,10 @@ export function Crates({
     }
   });
 
+  // Community crates from API
+  const [communityCrates, setCommunityCrates] = useState<Playlist[]>([]);
+  const [loadingCommunity, setLoadingCommunity] = useState(true);
+
   // Save localCrates to localStorage whenever they change
   React.useEffect(() => {
     try {
@@ -67,6 +75,24 @@ export function Crates({
       console.error('Failed to save local crates:', error);
     }
   }, [localCrates]);
+
+  // Fetch community crates (trending public crates)
+  useEffect(() => {
+    const fetchCommunityCrates = async () => {
+      try {
+        setLoadingCommunity(true);
+        const trending = await playlistsApi.getTrending(12);
+        setCommunityCrates(Array.isArray(trending) ? trending : []);
+      } catch (error) {
+        console.error('[Crates] Failed to load community crates:', error);
+        setCommunityCrates([]);
+      } finally {
+        setLoadingCommunity(false);
+      }
+    };
+
+    fetchCommunityCrates();
+  }, []);
 
   // Compute crates from localCrates + userCrates (no mock data)
   const crates = React.useMemo(() => {
@@ -253,12 +279,34 @@ export function Crates({
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   };
+
+  // Convert API Playlist to local crate format for display
+  const convertPlaylistToCrate = (playlist: Playlist) => ({
+    id: playlist.id,
+    name: playlist.title,
+    description: playlist.description || '',
+    isPublic: playlist.isPublic,
+    isCollaborative: playlist.isCollaborative,
+    trackCount: playlist._count?.items || 0,
+    duration: '', // Not available from API
+    owner: {
+      username: playlist.owner?.username || 'unknown',
+      displayName: playlist.owner?.displayName,
+      verified: false
+    },
+    collaborators: [],
+    plays: playlist.playCount || 0,
+    likes: playlist._count?.likes || 0,
+    createdAt: playlist.createdAt,
+    tracks: [],
+    genre: playlist.genre
+  });
 
   if (selectedCrate) {
     return (
@@ -730,13 +778,13 @@ export function Crates({
         </div>
 
         {crates.length === 0 && (
-          <Card className="p-12 text-center">
+          <Card className="p-12 text-center mb-8">
             <Music className="w-20 h-20 mx-auto mb-6 text-muted-foreground opacity-50" />
             <h3 className="text-2xl font-semibold mb-2">No Crates Yet</h3>
             <p className="text-muted-foreground mb-6">
               Create your first crate to start curating your favorite tracks
             </p>
-            <Button 
+            <Button
               onClick={() => setShowCreateDialog(true)}
               className="bg-accent-mint text-background hover:bg-accent-mint/90"
             >
@@ -745,6 +793,95 @@ export function Crates({
             </Button>
           </Card>
         )}
+
+        {/* Community Crates Section */}
+        <div className="mt-12">
+          <div className="flex items-center gap-3 mb-6">
+            <TrendingUp className="w-6 h-6 text-accent-coral" />
+            <div>
+              <h2 className="text-2xl font-semibold text-primary">Community Crates</h2>
+              <p className="text-sm text-muted-foreground">
+                Discover public crates shared by the community
+              </p>
+            </div>
+          </div>
+
+          {loadingCommunity ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-accent-coral" />
+            </div>
+          ) : communityCrates.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {communityCrates.map((playlist) => {
+                const crate = convertPlaylistToCrate(playlist);
+                return (
+                  <Card
+                    key={crate.id}
+                    className="cursor-pointer hover:border-accent-coral/50 transition-colors"
+                    onClick={() => setSelectedCrate(crate)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="space-y-3">
+                        <h3 className="font-semibold text-lg truncate">{crate.name}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {crate.description || 'No description'}
+                        </p>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground truncate">
+                            @{crate.owner.username}
+                          </span>
+                          {crate.owner.verified && <Crown className="w-3 h-3 text-accent-yellow" />}
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <span>{crate.trackCount} tracks</span>
+                          {crate.genre && (
+                            <Badge variant="outline" className="text-xs">
+                              {crate.genre}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-accent-mint/10 text-accent-mint border-accent-mint/20 text-xs">
+                            <Globe className="w-2 h-2 mr-1" />
+                            Public
+                          </Badge>
+                          {crate.isCollaborative && (
+                            <Badge className="bg-accent-blue/10 text-accent-blue border-accent-blue/20 text-xs">
+                              <Users className="w-2 h-2 mr-1" />
+                              Collab
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Play className="w-3 h-3" />
+                            <span>{crate.plays}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Heart className="w-3 h-3" />
+                            <span>{crate.likes}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <Card className="p-8 text-center">
+              <Globe className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <h3 className="text-lg font-semibold mb-2">No Community Crates Yet</h3>
+              <p className="text-muted-foreground text-sm">
+                Be the first to share a public crate with the community!
+              </p>
+            </Card>
+          )}
+        </div>
       </div>
 
       {/* MiniPlayer is now rendered globally at App.tsx level */}

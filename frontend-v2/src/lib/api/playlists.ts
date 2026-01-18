@@ -58,16 +58,16 @@ export const playlistsApi = {
   // ===== Crate Social Features =====
 
   /**
-   * Get trending crates (most played in last 7 days)
+   * Get trending crates (most played in last 7 days) - public endpoint
    */
   async getTrending(limit: number = 20): Promise<Playlist[]> {
-    return http.get<Playlist[]>(`/playlists/trending?limit=${limit}`);
+    return http.get<Playlist[]>(`/playlists/trending?limit=${limit}`, { auth: false });
   },
 
   /**
-   * Get featured crates
+   * Get featured crates - public endpoint
    */
   async getFeatured(limit: number = 20): Promise<Playlist[]> {
-    return http.get<Playlist[]>(`/playlists/featured?limit=${limit}`);
+    return http.get<Playlist[]>(`/playlists/featured?limit=${limit}`, { auth: false });
   },
 };

@@ -15,6 +15,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { FeatureGuard } from '../../common/guards/feature.guard';
 import { Feature } from '../../common/decorators/feature.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { PlaylistsService } from './playlists.service';
 import { CreatePlaylistDto } from './dto/create-playlist.dto';
 import { UpdatePlaylistDto } from './dto/update-playlist.dto';
@@ -28,6 +29,27 @@ import { GetPlaylistItemsDto } from './dto/get-playlist-items.dto';
 @ApiBearerAuth()
 export class PlaylistsController {
   constructor(private readonly playlistsService: PlaylistsService) {}
+
+  // === CRATE SOCIAL FEATURES (PUBLIC) ===
+  // NOTE: These routes must come BEFORE :id routes to avoid route conflicts
+
+  @Get('trending')
+  @Public()
+  @ApiOperation({ summary: 'Get trending crates (playlists)' })
+  @ApiResponse({ status: 200, description: 'Trending crates retrieved successfully' })
+  async getTrendingCrates(@Query('limit') limit: number = 20) {
+    return this.playlistsService.getTrending(limit);
+  }
+
+  @Get('featured')
+  @Public()
+  @ApiOperation({ summary: 'Get featured crates (playlists)' })
+  @ApiResponse({ status: 200, description: 'Featured crates retrieved successfully' })
+  async getFeaturedCrates(@Query('limit') limit: number = 20) {
+    return this.playlistsService.getFeatured(limit);
+  }
+
+  // === PLAYLIST CRUD ===
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -151,19 +173,4 @@ export class PlaylistsController {
     return this.playlistsService.getPlaylistItems(id, query, userId);
   }
 
-  // === CRATE SOCIAL FEATURES ===
-
-  @Get('trending')
-  @ApiOperation({ summary: 'Get trending crates (playlists)' })
-  @ApiResponse({ status: 200, description: 'Trending crates retrieved successfully' })
-  async getTrendingCrates(@Query('limit') limit: number = 20) {
-    return this.playlistsService.getTrending(limit);
-  }
-
-  @Get('featured')
-  @ApiOperation({ summary: 'Get featured crates (playlists)' })
-  @ApiResponse({ status: 200, description: 'Featured crates retrieved successfully' })
-  async getFeaturedCrates(@Query('limit') limit: number = 20) {
-    return this.playlistsService.getFeatured(limit);
-  }
 }

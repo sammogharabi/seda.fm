@@ -7,7 +7,7 @@ import { FollowSuggestions } from './FollowSuggestions';
 import { SessionsView } from './SessionsView';
 import { ShoppingBag, MapPin, Calendar, Users, Music, Palette, Radio, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { discoverApi, DiscoverArtist } from '../lib/api/discover';
+import { discoverApi, DiscoverArtist, TrendingRoom } from '../lib/api/discover';
 
 export function DiscoverView({
   user,
@@ -24,6 +24,8 @@ export function DiscoverView({
   const [activeTab, setActiveTab] = useState('people');
   const [apiArtists, setApiArtists] = useState<DiscoverArtist[]>([]);
   const [loadingArtists, setLoadingArtists] = useState(false);
+  const [trendingRooms, setTrendingRooms] = useState<TrendingRoom[]>([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
   // Fetch artists from API when artists tab is selected
   useEffect(() => {
@@ -43,6 +45,26 @@ export function DiscoverView({
     };
 
     fetchArtists();
+  }, [activeTab]);
+
+  // Fetch rooms from API when rooms tab is selected
+  useEffect(() => {
+    const fetchRooms = async () => {
+      if (activeTab !== 'rooms') return;
+
+      try {
+        setLoadingRooms(true);
+        const rooms = await discoverApi.getRooms(20);
+        setTrendingRooms(Array.isArray(rooms) ? rooms : []);
+      } catch (error) {
+        console.error('[DiscoverView] Failed to load rooms:', error);
+        setTrendingRooms([]);
+      } finally {
+        setLoadingRooms(false);
+      }
+    };
+
+    fetchRooms();
   }, [activeTab]);
 
   // Use only API artists - no mock data
@@ -355,15 +377,69 @@ export function DiscoverView({
         {/* Rooms Section */}
         {activeTab === 'rooms' && (
           <div>
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Radio className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                <h3 className="text-xl font-semibold mb-2">Trending Rooms Coming Soon</h3>
-                <p className="text-muted-foreground">
-                  Explore popular rooms and join the conversation.
-                </p>
-              </CardContent>
-            </Card>
+            {loadingRooms ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-accent-coral" />
+              </div>
+            ) : trendingRooms.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Radio className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <h3 className="text-xl font-semibold mb-2">No Rooms Yet</h3>
+                  <p className="text-muted-foreground">
+                    Be the first to create a room and start the conversation!
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {trendingRooms.map((room) => (
+                  <Card
+                    key={room.id}
+                    className="cursor-pointer hover:border-accent-mint/50 hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+                    onClick={() => onRoomSelect && onRoomSelect(room.id)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        {room.genre && (
+                          <Badge className="bg-accent-mint/10 text-accent-mint border-accent-mint/20">
+                            {room.genre}
+                          </Badge>
+                        )}
+                        {room.recentActivity > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {room.recentActivity} posts this week
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-semibold text-xl mb-2">{room.name}</h3>
+                      {room.description && (
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {room.description}
+                        </p>
+                      )}
+                      <div className="space-y-1 mb-3">
+                        <p className="text-sm text-muted-foreground">
+                          {formatNumber(room.memberCount)} members
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatNumber(room.messageCount)} messages
+                        </p>
+                      </div>
+                      {room.creator && (
+                        <p className="text-xs text-muted-foreground">
+                          Created by @{room.creator.username}
+                          {room.creator.verified && ' ✓'}
+                        </p>
+                      )}
+                      <p className="text-xs text-accent-mint font-medium mt-3">
+                        Click to enter room →
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

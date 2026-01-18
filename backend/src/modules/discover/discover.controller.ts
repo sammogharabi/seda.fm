@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Request, Param, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { FeatureGuard } from '../../common/guards/feature.guard';
 import { Feature } from '../../common/decorators/feature.decorator';
@@ -20,6 +20,24 @@ export class DiscoverController {
   @ApiResponse({ status: 200, description: 'Artists retrieved successfully' })
   async getArtists(@Query('limit') limit: number = 20) {
     return this.discoverService.getArtists(limit);
+  }
+
+  @Get('people')
+  @ApiOperation({ summary: 'Get suggested people to follow' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max number of suggestions' })
+  @ApiResponse({ status: 200, description: 'People suggestions retrieved successfully' })
+  async getPeople(@Request() req: any, @Query('limit') limit: number = 20) {
+    const userId = req.user.id;
+    return this.discoverService.getPeopleSuggestions(userId, limit);
+  }
+
+  @Get('rooms')
+  @Public()
+  @ApiOperation({ summary: 'Get trending rooms' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max number of rooms' })
+  @ApiResponse({ status: 200, description: 'Trending rooms retrieved successfully' })
+  async getRooms(@Query('limit') limit: number = 20) {
+    return this.discoverService.getTrendingRooms(limit);
   }
 
   @Get('trending')

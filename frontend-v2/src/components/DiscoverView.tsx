@@ -254,9 +254,19 @@ export function DiscoverView({
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-accent-coral" />
               </div>
+            ) : allArtists.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Palette className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <h3 className="text-xl font-semibold mb-2">No Artists Yet</h3>
+                  <p className="text-muted-foreground">
+                    Be the first to join as an artist and share your music!
+                  </p>
+                </CardContent>
+              </Card>
             ) : (
             <div className="space-y-4">
-              {allArtists.map((artist, index) => (
+              {allArtists.map((artist) => (
                 <Card key={artist.id} className="hover:border-accent-blue/50 transition-colors">
                   <CardContent className="p-4 md:p-6">
                     <div className="flex flex-col md:flex-row items-start md:items-center gap-4">

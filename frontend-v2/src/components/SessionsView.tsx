@@ -42,7 +42,7 @@ import {
   Search,
   Filter
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { sessionsApi } from '../lib/api/sessions';
 
 // Platform badges
@@ -63,120 +63,6 @@ const PLATFORM_NAMES = {
   beatport: 'Beatport',
   upload: 'Upload'
 };
-
-// Mock data for live sessions
-const LIVE_SESSIONS = [
-  {
-    id: 1,
-    dj: {
-      username: 'dj_nova',
-      displayName: 'DJ Nova',
-      verified: true
-    },
-    title: 'Late Night Electronic Vibes',
-    description: 'Join me for a journey through the best electronic music. Expect deep house, ambient techno, and some unreleased tracks!',
-    genre: 'Electronic',
-    listeners: 247,
-    maxListeners: 500,
-    duration: '2h 15m',
-    currentTrack: {
-      title: 'Midnight City',
-      artist: 'M83',
-      artwork: 'https://images.unsplash.com/photo-1583927109257-f21c74dd0c3f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtdXNpYyUyMGFsYnVtJTIwY292ZXJ8ZW58MXx8fHwxNzU1NTIzNjc4fDA&ixlib=rb-4.1.0&q=80&w=300',
-      duration: '3:45',
-      platform: 'spotify'
-    },
-    isLive: true,
-    tags: ['Chill', 'Study', 'Late Night'],
-    queuePermissions: 'all',
-    trackCooldown: 2
-  },
-  {
-    id: 2,
-    dj: {
-      username: 'house_legends',
-      displayName: 'House Legends',
-      verified: true
-    },
-    title: 'Classic House Throwbacks',
-    description: 'Reliving the golden era of house music with classics from the 90s and early 2000s.',
-    genre: 'House',
-    listeners: 189,
-    maxListeners: 300,
-    duration: '1h 45m',
-    currentTrack: {
-      title: 'One More Time',
-      artist: 'Daft Punk',
-      artwork: 'https://images.unsplash.com/photo-1629426958038-a4cb6e3830a0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2aW55bCUyMHJlY29yZCUyMG11c2ljfGVufDF8fHx8MTc1NTQ4OTcyMnww&ixlib=rb-4.1.0&q=80&w=300',
-      duration: '4:12',
-      platform: 'apple'
-    },
-    isLive: true,
-    tags: ['90s', 'Dance', 'Classic'],
-    queuePermissions: 'host-only',
-    trackCooldown: 0
-  },
-  {
-    id: 3,
-    dj: {
-      username: 'vinyl_collector',
-      displayName: 'Vinyl Collector',
-      verified: false
-    },
-    title: 'Underground Hip Hop Session',
-    description: 'Digging through crates to bring you the best underground hip hop tracks.',
-    genre: 'Hip Hop',
-    listeners: 134,
-    maxListeners: 200,
-    duration: '3h 02m',
-    currentTrack: {
-      title: 'Shook Ones',
-      artist: 'Mobb Deep',
-      artwork: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtdXNpYyUyMGFsYnVtJTIwY292ZXJ8ZW58MXx8fHwxNzU1NTIzNjc4fDA&ixlib=rb-4.1.0&q=80&w=300',
-      duration: '3:28',
-      platform: 'upload'
-    },
-    isLive: true,
-    tags: ['Underground', 'Boom Bap', 'NYC'],
-    queuePermissions: 'all',
-    trackCooldown: 5
-  }
-];
-
-const RECENT_SESSIONS = [
-  {
-    id: 4,
-    dj: {
-      username: 'ambient_dreams',
-      displayName: 'Ambient Dreams',
-      verified: false
-    },
-    title: 'Morning Meditation Sounds',
-    genre: 'Ambient',
-    listeners: 0,
-    duration: '1h 30m',
-    endedAt: '2h ago',
-    peakListeners: 89,
-    isLive: false,
-    tags: ['Meditation', 'Calm', 'Morning']
-  },
-  {
-    id: 5,
-    dj: {
-      username: 'jazz_nights',
-      displayName: 'Jazz Nights',
-      verified: true
-    },
-    title: 'Smooth Jazz After Dark',
-    genre: 'Jazz',
-    listeners: 0,
-    duration: '2h 20m',
-    endedAt: '5h ago',
-    peakListeners: 156,
-    isLive: false,
-    tags: ['Jazz', 'Smooth', 'Evening']
-  }
-];
 
 // Mock participants for lobby
 const generateParticipants = (count: number) => {

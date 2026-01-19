@@ -1112,7 +1112,7 @@ export function ArtistDashboard({
                     <span className="text-xs uppercase tracking-wider text-muted-foreground">Total Views</span>
                   </div>
                   <div className="text-2xl font-semibold text-foreground">
-                    {MOCK_PROFILE_ANALYTICS.totalViews.toLocaleString()}
+                    {profileAnalytics.totalViews.toLocaleString()}
                   </div>
                 </div>
                 
@@ -1122,7 +1122,7 @@ export function ArtistDashboard({
                     <span className="text-xs uppercase tracking-wider text-muted-foreground">This Week</span>
                   </div>
                   <div className="text-2xl font-semibold text-foreground">
-                    {MOCK_PROFILE_ANALYTICS.viewsThisWeek}
+                    {profileAnalytics.viewsThisWeek}
                   </div>
                 </div>
                 
@@ -1132,7 +1132,7 @@ export function ArtistDashboard({
                     <span className="text-xs uppercase tracking-wider text-muted-foreground">Growth</span>
                   </div>
                   <div className="text-2xl font-semibold text-accent-mint">
-                    +{MOCK_PROFILE_ANALYTICS.viewGrowth}%
+                    +{profileAnalytics.viewGrowth}%
                   </div>
                 </div>
               </div>
@@ -1144,7 +1144,7 @@ export function ArtistDashboard({
                   <h4 className="font-medium">Where your profile views came from</h4>
                 </div>
                 <div className="space-y-3">
-                  {MOCK_PROFILE_ANALYTICS.trafficSources.map((source) => (
+                  {profileAnalytics.trafficSources.map((source) => (
                     <div key={source.source} className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
@@ -1175,7 +1175,7 @@ export function ArtistDashboard({
                   <h4 className="font-medium">Who's viewing your profile</h4>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  {MOCK_PROFILE_ANALYTICS.topViewers.map((viewer) => (
+                  {profileAnalytics.topViewers.map((viewer) => (
                     <div key={viewer.type} className="p-4 border border-foreground/10">
                       <div className="text-lg font-semibold text-foreground mb-1">
                         {viewer.count.toLocaleString()}

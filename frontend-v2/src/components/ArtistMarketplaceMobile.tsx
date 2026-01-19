@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from './ui/dialog';
@@ -6,12 +6,12 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { 
-  ShoppingBag, 
-  Ticket, 
-  Music, 
-  Plus, 
-  ExternalLink, 
+import {
+  ShoppingBag,
+  Ticket,
+  Music,
+  Plus,
+  ExternalLink,
   Download,
   DollarSign,
   Shield,
@@ -22,102 +22,36 @@ import {
   Play,
   MoreVertical,
   Eye,
-  Heart
+  Heart,
+  Loader2
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { MarketplaceRevenue } from './MarketplaceRevenue';
 import { TrackUploadModal } from './TrackUploadModal';
 import { TrackAnalytics } from './TrackAnalytics';
+import { marketplaceApi, Product } from '../lib/api/marketplace';
 
-// Mock data for demonstration
-const MOCK_MERCH = [
-  {
-    id: 1,
-    title: 'Underground Vibes T-Shirt',
-    price: '$25',
-    description: 'Premium cotton tee with original artwork',
-    url: 'https://artist.bandcamp.com/merch/tshirt',
-    platform: 'Bandcamp',
-    image: 'https://images.unsplash.com/photo-1605329540493-6741250d2bee?w=300&h=300&fit=crop'
-  },
-  {
-    id: 2,
-    title: 'Limited Edition Vinyl',
-    price: '$35',
-    description: 'First pressing of debut album - only 100 copies',
-    url: 'https://artist.bandcamp.com/album/debut',
-    platform: 'Bandcamp',
-    image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop'
-  }
-];
-
-const MOCK_CONCERTS = [
-  {
-    id: 1,
-    title: 'Underground Showcase',
-    price: '$15',
-    description: 'Intimate venue, limited capacity',
-    url: 'https://eventbrite.com/event/123',
-    platform: 'Eventbrite',
-    date: '2024-11-15',
-    venue: 'The Underground',
-    city: 'Brooklyn, NY'
-  }
-];
-
-const MOCK_TRACKS = [
-  {
-    id: 1,
-    title: 'Midnight Frequencies',
-    description: 'Dark ambient electronic with vinyl crackle',
-    pricingType: 'fixed',
-    fixedPrice: '3.00',
-    formats: ['mp3-320', 'flac', 'wav'],
-    duration: '4:32',
-    artwork: 'https://images.unsplash.com/photo-1703115015343-81b498a8c080?w=300&h=300&fit=crop',
-    copyrightConfirmed: true,
-    status: 'published',
-    genre: 'Electronic',
-    downloadCount: 23,
-    revenue: 89.75,
-    uploadDate: '2024-09-15'
-  },
-  {
-    id: 2,
-    title: 'Analog Dreams',
-    description: 'Retro synthwave journey through neon nights',
-    pricingType: 'pwyw',
-    minimumPrice: '1.00',
-    suggestedPrice: '3.00',
-    formats: ['mp3-320', 'flac'],
-    duration: '5:18',
-    artwork: 'https://images.unsplash.com/photo-1703115015343-81b498a8c080?w=300&h=300&fit=crop',
-    copyrightConfirmed: true,
-    status: 'published',
-    genre: 'Synthwave',
-    downloadCount: 45,
-    revenue: 156.50,
-    uploadDate: '2024-09-20'
-  },
-  {
-    id: 3,
-    title: 'Underground Flow',
-    description: 'Deep house journey with vinyl warmth',
-    pricingType: 'pwyw',
-    minimumPrice: '2.00',
-    suggestedPrice: '5.00',
-    formats: ['mp3-320', 'flac', 'wav'],
-    duration: '6:45',
-    artwork: 'https://images.unsplash.com/photo-1703115015343-81b498a8c080?w=300&h=300&fit=crop',
-    copyrightConfirmed: true,
-    status: 'published',
-    genre: 'House',
-    downloadCount: 67,
-    revenue: 234.25,
-    uploadDate: '2024-10-01'
-  }
-];
+// Helper to convert API Product to display format
+const convertProductToDisplayItem = (product: Product) => ({
+  id: product.id,
+  title: product.title,
+  description: product.description || '',
+  price: `$${product.price.toFixed(2)}`,
+  url: product.externalUrl || '',
+  platform: product.externalPlatform || 'seda.fm',
+  image: product.coverImage || '',
+  date: product.publishedAt || product.createdAt,
+  venue: '',
+  city: '',
+  formats: product.packContents?.formats || ['mp3-320'],
+  copyrightConfirmed: true,
+  status: product.status.toLowerCase(),
+  genre: '',
+  downloadCount: product.purchaseCount,
+  revenue: product.purchaseCount * product.price,
+  uploadDate: product.createdAt
+});
 
 interface ArtistMarketplaceProps {
   user: any;
@@ -142,10 +76,47 @@ export function ArtistMarketplace({ user, onUpdateUser }: ArtistMarketplaceProps
     copyrightConfirmed: false
   });
 
-  // Mock state for items (in real app, these would come from props or API)
-  const [merchItems, setMerchItems] = useState(MOCK_MERCH);
-  const [concertItems, setConcertItems] = useState(MOCK_CONCERTS);
-  const [trackItems, setTrackItems] = useState(MOCK_TRACKS);
+  // State for items from API
+  const [merchItems, setMerchItems] = useState<any[]>([]);
+  const [concertItems, setConcertItems] = useState<any[]>([]);
+  const [trackItems, setTrackItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const products = await marketplaceApi.getArtistProducts(user.id, true);
+
+        // Categorize products by type
+        const merch = products
+          .filter(p => p.type === 'MERCHANDISE_LINK')
+          .map(convertProductToDisplayItem);
+        const concerts = products
+          .filter(p => p.type === 'CONCERT_LINK')
+          .map(convertProductToDisplayItem);
+        const tracks = products
+          .filter(p => p.type === 'DIGITAL_TRACK' || p.type === 'DIGITAL_ALBUM')
+          .map(convertProductToDisplayItem);
+
+        setMerchItems(merch);
+        setConcertItems(concerts);
+        setTrackItems(tracks);
+      } catch (error) {
+        console.error('[ArtistMarketplace] Failed to fetch products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [user?.id]);
 
   const handleAddItem = useCallback(() => {
     if (activeSection === 'tracks') {

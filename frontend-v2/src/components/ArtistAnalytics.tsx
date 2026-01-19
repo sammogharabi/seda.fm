@@ -1,17 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar as CalendarComponent } from './ui/calendar';
-import { 
-  TrendingUp, 
+import {
+  TrendingUp,
   TrendingDown,
-  Users, 
-  Music, 
-  Radio, 
-  DollarSign, 
-  Play, 
+  Users,
+  Music,
+  Radio,
+  DollarSign,
+  Play,
   Heart,
   MessageSquare,
   Share2,
@@ -21,9 +21,12 @@ import {
   Clock,
   Download,
   Repeat,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { analyticsApi, AnalyticsSummary } from '../lib/api/analytics';
+import { marketplaceApi, Revenue, Product } from '../lib/api/marketplace';
 
 interface ArtistAnalyticsProps {
   user: any;
@@ -39,111 +42,101 @@ export function ArtistAnalytics({ user, onViewChange }: ArtistAnalyticsProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'tracks' | 'audience'>('overview');
 
-  // Generate analytics data based on selected timeframe
-  const analytics = useMemo(() => {
-    // Base multipliers for different timeframes
-    const multipliers = {
-      day: 0.15,
-      week: 1,
-      month: 4.2,
-      year: 52,
-      custom: dateRange.from && dateRange.to 
-        ? Math.max(1, Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24 * 7)))
-        : 1
+  // API data state
+  const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
+  const [revenue, setRevenue] = useState<Revenue | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [topCountries, setTopCountries] = useState<{ country: string; count: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch analytics data from API
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+        const days = timeframe === 'day' ? 1
+          : timeframe === 'week' ? 7
+          : timeframe === 'month' ? 30
+          : 365;
+
+        const [summary, countries, revenueData] = await Promise.all([
+          analyticsApi.getAnalyticsSummary(days),
+          analyticsApi.getTopCountries(5),
+          marketplaceApi.getRevenue()
+        ]);
+
+        setAnalyticsSummary(summary);
+        setTopCountries(countries);
+        setRevenue(revenueData);
+
+        // Fetch products if user ID is available
+        if (user?.id) {
+          const productsData = await marketplaceApi.getArtistProducts(user.id, true);
+          setProducts(productsData);
+        }
+      } catch (error) {
+        console.error('[ArtistAnalytics] Failed to fetch analytics:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const activeTimeframe = (dateRange.from && dateRange.to) ? 'custom' : timeframe;
-    const multiplier = multipliers[activeTimeframe as keyof typeof multipliers];
+    fetchAnalytics();
+  }, [timeframe, dateRange, user?.id]);
+
+  // Compute analytics from API data
+  const analytics = useMemo(() => {
+    const summary = analyticsSummary;
+    const totalFans = summary?.newFollowers || 0;
+
+    // Convert top countries to location format
+    const totalCountryCount = topCountries.reduce((sum, c) => sum + c.count, 0) || 1;
+    const locations = topCountries.map(c => ({
+      country: c.country,
+      percentage: Math.round((c.count / totalCountryCount) * 100),
+      fans: c.count
+    }));
+
+    // Top tracks from products
+    const topTracks = products
+      .filter(p => p.type === 'DIGITAL_TRACK' && p.status === 'PUBLISHED')
+      .sort((a, b) => b.viewCount - a.viewCount)
+      .slice(0, 4)
+      .map(p => ({
+        title: p.title,
+        plays: p.viewCount,
+        likes: p.purchaseCount,
+        comments: 0,
+        shares: 0,
+        growth: 0
+      }));
 
     return {
-    overview: {
-      totalPlays: Math.round(45620 * multiplier),
-      totalFans: Math.round(2847 * (multiplier * 0.3 + 0.7)), // Fans grow slower
-      totalTracks: 47, // Tracks don't change with timeframe
-      totalRevenue: parseFloat((1240.50 * multiplier).toFixed(2)),
-      weeklyGrowth: {
-        plays: 12.5,
-        fans: 8.3,
-        revenue: 15.2
-      }
-    },
-    topTracks: [
-      {
-        title: "Midnight Vibes",
-        plays: Math.round(8520 * multiplier),
-        likes: Math.round(342 * multiplier),
-        comments: Math.round(89 * multiplier),
-        shares: Math.round(45 * multiplier),
-        growth: 15.2
+      overview: {
+        totalPlays: summary?.trackPlays || 0,
+        totalFans: totalFans,
+        totalTracks: products.filter(p => p.type === 'DIGITAL_TRACK').length,
+        totalRevenue: revenue?.totalRevenue || 0,
+        weeklyGrowth: {
+          plays: summary?.dailyData?.length
+            ? Math.round((summary.trackPlays / summary.dailyData.length) * 10) / 10
+            : 0,
+          fans: summary?.dailyData?.length
+            ? Math.round((summary.newFollowers / summary.dailyData.length) * 10) / 10
+            : 0,
+          revenue: revenue?.monthlyRevenue
+            ? Math.round((revenue.monthlyRevenue / (revenue.totalRevenue || 1)) * 100)
+            : 0
+        }
       },
-      {
-        title: "City Lights",
-        plays: Math.round(6750 * multiplier),
-        likes: Math.round(298 * multiplier),
-        comments: Math.round(67 * multiplier),
-        shares: Math.round(32 * multiplier),
-        growth: 8.7
+      topTracks,
+      demographics: {
+        locations,
+        ageGroups: [] // Not available from current API
       },
-      {
-        title: "Ocean Dreams",
-        plays: Math.round(4890 * multiplier),
-        likes: Math.round(187 * multiplier),
-        comments: Math.round(34 * multiplier),
-        shares: Math.round(21 * multiplier),
-        growth: -2.1
-      },
-      {
-        title: "Neon Nights",
-        plays: Math.round(3420 * multiplier),
-        likes: Math.round(156 * multiplier),
-        comments: Math.round(28 * multiplier),
-        shares: Math.round(18 * multiplier),
-        growth: 22.4
-      }
-    ],
-    demographics: {
-      locations: [
-        { country: 'United States', percentage: 35, fans: Math.round(996 * (multiplier * 0.3 + 0.7)) },
-        { country: 'United Kingdom', percentage: 18, fans: Math.round(512 * (multiplier * 0.3 + 0.7)) },
-        { country: 'Canada', percentage: 12, fans: Math.round(341 * (multiplier * 0.3 + 0.7)) },
-        { country: 'Australia', percentage: 8, fans: Math.round(228 * (multiplier * 0.3 + 0.7)) },
-        { country: 'Germany', percentage: 7, fans: Math.round(199 * (multiplier * 0.3 + 0.7)) }
-      ],
-      ageGroups: [
-        { range: '18-24', percentage: 28 },
-        { range: '25-34', percentage: 42 },
-        { range: '35-44', percentage: 20 },
-        { range: '45+', percentage: 10 }
-      ]
-    },
-    recentSessions: [
-      {
-        date: '2024-10-06',
-        duration: '2h 15m',
-        peakListeners: Math.round(247 * (multiplier * 0.2 + 0.8)),
-        avgListeners: Math.round(156 * (multiplier * 0.2 + 0.8)),
-        newFans: Math.round(12 * (multiplier * 0.3 + 0.7)),
-        tips: parseFloat((45.50 * multiplier).toFixed(2))
-      },
-      {
-        date: '2024-10-04',
-        duration: '1h 45m',
-        peakListeners: Math.round(189 * (multiplier * 0.2 + 0.8)),
-        avgListeners: Math.round(124 * (multiplier * 0.2 + 0.8)),
-        newFans: Math.round(8 * (multiplier * 0.3 + 0.7)),
-        tips: parseFloat((32.00 * multiplier).toFixed(2))
-      },
-      {
-        date: '2024-10-02',
-        duration: '3h 00m',
-        peakListeners: Math.round(312 * (multiplier * 0.2 + 0.8)),
-        avgListeners: Math.round(198 * (multiplier * 0.2 + 0.8)),
-        newFans: Math.round(18 * (multiplier * 0.3 + 0.7)),
-        tips: parseFloat((67.25 * multiplier).toFixed(2))
-      }
-    ]
+      recentSessions: [] // Would need sessions API
     };
-  }, [timeframe, dateRange]);
+  }, [analyticsSummary, revenue, products, topCountries]);
 
   const getGrowthIcon = (growth: number) => {
     if (growth > 0) return <TrendingUp className="w-4 h-4 text-accent-mint" />;

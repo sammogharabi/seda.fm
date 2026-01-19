@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { FanMessageModal } from './FanMessageModal';
 import { FansAnalytics } from './FansAnalytics';
 import { motion } from 'motion/react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { profilesApi } from '../lib/api/profiles';
 import { 
   Music, 
@@ -169,87 +169,17 @@ export function ArtistProfile({
     fetchProfileData();
   }, [artist?.username, currentUser]);
 
-  // Mock data for posts history (fallback - will be replaced with real data)
-  const mockPosts = posts.length > 0 ? posts : [
-    {
-      id: 'post-1',
-      type: 'music_share',
-      content: 'Just finished this track after months of work! Really proud of how it turned out. Let me know what you think 🎵',
-      track: {
-        title: 'Digital Dreams',
-        artist: artist?.displayName || 'Artist',
-        artwork: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop',
-        duration: '4:23'
-      },
-      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-      likes: 124,
-      reposts: 18,
-      comments: 23
-    },
-    {
-      id: 'post-2',
-      type: 'text_post',
-      content: 'Thanks to everyone who came out to the show last night! The energy was incredible. Already planning the next one 🔥',
-      timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-      likes: 89,
-      reposts: 7,
-      comments: 31
-    },
-    {
-      id: 'post-3',
-      type: 'link_share',
-      content: 'New EP available now on all platforms! This has been a labor of love. Support independent music ✨',
-      links: [{
-        type: 'bandcamp',
-        url: 'https://artist.bandcamp.com/album/new-ep',
-        platform: 'Bandcamp',
-        title: 'New EP - Digital Dreams',
-        artist: artist?.displayName || 'Artist',
-        description: 'Collection of electronic tracks',
-        thumbnail: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&h=200&fit=crop',
-        price: '$5.00'
-      }],
-      timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
-      likes: 256,
-      reposts: 42,
-      comments: 67
-    }
-  ];
+  // Posts from API (no mock fallback)
+  const displayPosts = posts;
 
   // Use real data from API
   const mockCommentHistory = comments;
   const mockTracks = tracks;
   const mockTopFans = topFans;
 
-  // Get highlighted content from artist's profile customization, with fallback to defaults
-  const highlightedMerch = artist?.profileCustomization?.highlightedMerch || [
-    {
-      id: 1,
-      title: 'Underground Vibes T-Shirt',
-      price: '$25',
-      image: 'https://images.unsplash.com/photo-1605329540493-6741250d2bee?w=300&h=300&fit=crop',
-      url: 'https://artist.bandcamp.com/merch/tshirt'
-    },
-    {
-      id: 2,
-      title: 'Limited Edition Vinyl',
-      price: '$35',
-      image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop',
-      url: 'https://artist.bandcamp.com/album/debut'
-    }
-  ];
-
-  const highlightedConcerts = artist?.profileCustomization?.highlightedConcerts || [
-    {
-      id: 1,
-      title: 'Underground Showcase',
-      date: 'Nov 15, 2024',
-      venue: 'The Underground',
-      city: 'Brooklyn, NY',
-      price: '$15',
-      url: 'https://eventbrite.com/event/123'
-    }
-  ];
+  // Get highlighted content from artist's profile customization (no mock fallback)
+  const highlightedMerch = artist?.profileCustomization?.highlightedMerch || [];
+  const highlightedConcerts = artist?.profileCustomization?.highlightedConcerts || [];
 
   const profilePhotos = artist?.profileCustomization?.photos || [];
   const profileVideos = artist?.profileCustomization?.videos || [];
@@ -281,7 +211,8 @@ export function ArtistProfile({
     return sortedFans;
   }, [followers, fansSortBy]);
 
-  const mockStats = stats || {
+  // Stats from API with fallback to zeros
+  const displayStats = stats || {
     followers: 0,
     following: 0,
     posts: 0,
@@ -289,20 +220,16 @@ export function ArtistProfile({
     totalPlays: 0
   };
 
-  // Artist rooms - each artist has their own room
-  const artistRoom = {
-    id: `artist-room-${artist.id}`,
-    name: `${artist.displayName} Community`,
-    description: `Join ${artist.displayName}'s community room to chat with fans, get updates, and share music together.`,
-    memberCount: Math.floor(Math.random() * 500) + 50, // Random member count between 50-550
+  // Artist room - computed from API data (no mock activity)
+  const artistRoom = useMemo(() => ({
+    id: `artist-room-${artist?.id}`,
+    name: `${artist?.displayName || 'Artist'} Community`,
+    description: `Join ${artist?.displayName || 'this artist'}'s community room to chat with fans, get updates, and share music together.`,
+    memberCount: displayStats.followers || 0,
     isPublic: true,
-    artistId: artist.id,
-    recentActivity: [
-      { type: 'track_share', content: 'New track preview shared', timestamp: '2 hours ago' },
-      { type: 'message', content: 'Artist updated their bio', timestamp: '1 day ago' },
-      { type: 'fan_join', content: '12 new fans joined', timestamp: '2 days ago' }
-    ]
-  };
+    artistId: artist?.id,
+    recentActivity: [] // Would be populated from room messages API
+  }), [artist?.id, artist?.displayName, displayStats.followers]);
 
   // Check if user has already joined this artist's room
   const isRoomMember = joinedRooms.some(room => room.id === artistRoom.id);
@@ -567,18 +494,18 @@ export function ArtistProfile({
                 <div className="flex items-center gap-6 text-sm">
                   <div className="flex items-center gap-1">
                     <Users className="w-4 h-4" />
-                    <span className="font-medium">{mockStats.followers.toLocaleString()}</span>
+                    <span className="font-medium">{displayStats.followers.toLocaleString()}</span>
                     <span className="text-muted-foreground">followers</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Music className="w-4 h-4" />
-                    <span className="font-medium">{mockStats.totalTracks}</span>
+                    <span className="font-medium">{displayStats.totalTracks}</span>
                     <span className="text-muted-foreground">tracks</span>
                   </div>
-                  {mockStats.mutualFollowers > 0 && (
+                  {displayStats.mutualFollowers > 0 && (
                     <div className="flex items-center gap-1 text-accent-blue">
                       <Heart className="w-4 h-4" />
-                      <span className="font-medium">{mockStats.mutualFollowers}</span>
+                      <span className="font-medium">{displayStats.mutualFollowers}</span>
                       <span>mutual</span>
                     </div>
                   )}
@@ -810,7 +737,7 @@ export function ArtistProfile({
                   className={activeTab === 'posts' ? 'bg-accent-yellow hover:bg-accent-yellow/90 text-background font-mono uppercase tracking-wide font-black' : 'font-mono uppercase tracking-wide font-black'}
                 >
                   <Edit3 className="w-4 h-4 mr-2" />
-                  Posts ({mockPosts.length})
+                  Posts ({displayPosts.length})
                 </Button>
                 <Button
                   variant={activeTab === 'comments' ? 'default' : 'outline'}
@@ -1341,7 +1268,7 @@ export function ArtistProfile({
               <div className="p-6">
                 <h3 className="text-lg font-black text-foreground mb-6">Post History</h3>
                 <div className="space-y-4">
-                  {mockPosts.map((post, index) => (
+                  {displayPosts.map((post, index) => (
                     <motion.div
                       key={post.id}
                       initial={{ opacity: 0, y: 20 }}

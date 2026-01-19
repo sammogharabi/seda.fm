@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { 
-  Music, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Play, 
+import {
+  Music,
+  Plus,
+  Edit,
+  Trash2,
+  Play,
   Pause,
   Heart,
   MessageSquare,
@@ -20,9 +20,12 @@ import {
   Download,
   Calendar,
   Clock,
-  Headphones
+  Headphones,
+  Loader2
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { marketplaceApi, Product } from '../lib/api/marketplace';
+import { playlistsApi } from '../lib/api/playlists';
 
 interface ArtistContentManagerProps {
   user: any;
@@ -32,100 +35,63 @@ interface ArtistContentManagerProps {
   onPlayTrack?: (track: any) => void;
 }
 
-export function ArtistContentManager({ 
-  user, 
-  onViewChange, 
-  onCreateTrack, 
+export function ArtistContentManager({
+  user,
+  onViewChange,
+  onCreateTrack,
   onCreateCrate,
-  onPlayTrack 
+  onPlayTrack
 }: ArtistContentManagerProps) {
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+  const [tracks, setTracks] = useState<any[]>([]);
+  const [crates, setCrates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data for tracks and crates
-  const tracks = [
-    {
-      id: '1',
-      title: 'Midnight Vibes',
-      duration: '3:45',
-      uploadDate: '2024-10-01',
-      plays: 8520,
-      likes: 342,
-      comments: 89,
-      shares: 45,
-      status: 'published',
-      genre: 'Electronic',
-      mood: 'Chill'
-    },
-    {
-      id: '2',
-      title: 'City Lights',
-      duration: '4:12',
-      uploadDate: '2024-09-28',
-      plays: 6750,
-      likes: 298,
-      comments: 67,
-      shares: 32,
-      status: 'published',
-      genre: 'Ambient',
-      mood: 'Relaxing'
-    },
-    {
-      id: '3',
-      title: 'Work in Progress',
-      duration: '2:30',
-      uploadDate: '2024-10-05',
-      plays: 0,
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      status: 'draft',
-      genre: 'Hip Hop',
-      mood: 'Energetic'
-    },
-    {
-      id: '4',
-      title: 'Ocean Dreams',
-      duration: '5:23',
-      uploadDate: '2024-09-25',
-      plays: 4890,
-      likes: 187,
-      comments: 34,
-      shares: 21,
-      status: 'published',
-      genre: 'Ambient',
-      mood: 'Peaceful'
-    }
-  ];
+  // Fetch tracks and crates from API
+  useEffect(() => {
+    const fetchContent = async () => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
 
-  const crates = [
-    {
-      id: '1',
-      name: 'Late Night Sessions',
-      trackCount: 12,
-      createdDate: '2024-09-15',
-      plays: 2340,
-      isPublic: true,
-      description: 'Perfect for those late night vibes'
-    },
-    {
-      id: '2',
-      name: 'Morning Energy',
-      trackCount: 8,
-      createdDate: '2024-09-20',
-      plays: 1567,
-      isPublic: true,
-      description: 'Start your day with these uplifting tracks'
-    },
-    {
-      id: '3',
-      name: 'Works in Progress',
-      trackCount: 5,
-      createdDate: '2024-10-01',
-      plays: 0,
-      isPublic: false,
-      description: 'Unreleased demos and experiments'
-    }
-  ];
+      try {
+        setLoading(true);
+
+        // Fetch artist's products (tracks)
+        const products = await marketplaceApi.getArtistProducts(user.id, true);
+
+        // Convert products to track format
+        const trackItems = products
+          .filter(p => p.type === 'DIGITAL_TRACK' || p.type === 'DIGITAL_ALBUM')
+          .map(p => ({
+            id: p.id,
+            title: p.title,
+            duration: '', // Would need audio metadata
+            uploadDate: p.createdAt,
+            plays: p.viewCount,
+            likes: p.purchaseCount,
+            comments: 0,
+            shares: 0,
+            status: p.status.toLowerCase(),
+            genre: '',
+            mood: ''
+          }));
+
+        setTracks(trackItems);
+
+        // Crates would come from playlists API if available
+        // For now, empty array as there's no direct "get my playlists" endpoint exposed
+        setCrates([]);
+      } catch (error) {
+        console.error('[ArtistContentManager] Failed to fetch content:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, [user?.id]);
 
   const handlePlayPause = (trackId: string, track: any) => {
     if (currentlyPlaying === trackId) {

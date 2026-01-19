@@ -1,17 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Calendar as CalendarComponent } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { 
-  TrendingUp, 
+import {
+  TrendingUp,
   TrendingDown,
-  Users, 
-  Music, 
-  Radio, 
-  DollarSign, 
-  Play, 
+  Users,
+  Music,
+  Radio,
+  DollarSign,
+  Play,
   Heart,
   MessageSquare,
   Share2,
@@ -28,17 +28,21 @@ import {
   ChevronDown,
   Globe,
   X,
-  List
+  List,
+  Loader2
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { UserProfile } from './UserProfile';
 import { ArtistProfile } from './ArtistProfile';
-import { 
+import {
   Eye,
   MousePointerClick,
   ExternalLink
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { analyticsApi, AnalyticsSummary } from '../lib/api/analytics';
+import { marketplaceApi, Revenue, Product } from '../lib/api/marketplace';
+import { profilesApi } from '../lib/api/profiles';
 
 interface ArtistDashboardProps {
   user: any;
@@ -87,6 +91,14 @@ export function ArtistDashboard({
   });
   const [showAnalyticsDatePicker, setShowAnalyticsDatePicker] = useState(false);
   const [analyticsSubTab, setAnalyticsSubTab] = useState<'overview' | 'tracks' | 'audience'>('overview');
+
+  // API data state
+  const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
+  const [revenue, setRevenue] = useState<Revenue | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [topCountries, setTopCountries] = useState<{ country: string; count: number }[]>([]);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
+  const [loadingRevenue, setLoadingRevenue] = useState(true);
   
   const getProfileTimeRangeLabel = () => {
     switch (profileTimeRange) {
@@ -139,69 +151,133 @@ export function ArtistDashboard({
     setShowAnalyticsDatePicker(false);
   };
 
-  // No mock data - analytics will be fetched from API
-  const analytics = useMemo(() => {
-    return {
-      overview: {
-        totalPlays: 0,
-        totalFans: 0,
-        totalTracks: 0,
-        totalRevenue: 0,
-        weeklyGrowth: {
-          plays: 0,
-          fans: 0,
-          revenue: 0
-        }
-      },
-      topTracks: [],
-      demographics: {
-        locations: [],
-        ageGroups: []
-      },
-      recentSessions: []
+  // Fetch analytics data from API
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoadingAnalytics(true);
+        const days = analyticsTimeframe === 'day' ? 1
+          : analyticsTimeframe === 'week' ? 7
+          : analyticsTimeframe === 'month' ? 30
+          : 365;
+
+        const [summary, countries] = await Promise.all([
+          analyticsApi.getAnalyticsSummary(days),
+          analyticsApi.getTopCountries(5)
+        ]);
+
+        setAnalyticsSummary(summary);
+        setTopCountries(countries);
+      } catch (error) {
+        console.error('[ArtistDashboard] Failed to fetch analytics:', error);
+      } finally {
+        setLoadingAnalytics(false);
+      }
     };
+
+    fetchAnalytics();
   }, [analyticsTimeframe, analyticsDateRange]);
 
-  // No mock data - profile analytics will be fetched from API
-  const MOCK_PROFILE_ANALYTICS = useMemo(() => {
+  // Fetch revenue and products data
+  useEffect(() => {
+    const fetchRevenueData = async () => {
+      if (!user?.id) return;
+      try {
+        setLoadingRevenue(true);
+        const [revenueData, productsData] = await Promise.all([
+          marketplaceApi.getRevenue(),
+          marketplaceApi.getArtistProducts(user.id, true)
+        ]);
+
+        setRevenue(revenueData);
+        setProducts(productsData);
+      } catch (error) {
+        console.error('[ArtistDashboard] Failed to fetch revenue:', error);
+      } finally {
+        setLoadingRevenue(false);
+      }
+    };
+
+    fetchRevenueData();
+  }, [user?.id]);
+
+  // Compute analytics from API data
+  const analytics = useMemo(() => {
+    const summary = analyticsSummary;
     return {
-      totalViews: 0,
-      viewsThisWeek: 0,
-      viewGrowth: 0,
+      overview: {
+        totalPlays: summary?.trackPlays || 0,
+        totalFans: summary?.newFollowers || 0,
+        totalTracks: products.filter(p => p.type === 'DIGITAL_TRACK').length,
+        totalRevenue: revenue?.totalRevenue || 0,
+        weeklyGrowth: {
+          plays: summary ? Math.round((summary.trackPlays / Math.max(summary.dailyData.length, 1)) * 10) / 10 : 0,
+          fans: summary ? Math.round((summary.newFollowers / Math.max(summary.dailyData.length, 1)) * 10) / 10 : 0,
+          revenue: revenue?.monthlyRevenue ? Math.round((revenue.monthlyRevenue / (revenue.totalRevenue || 1)) * 100) : 0
+        }
+      },
+      topTracks: products
+        .filter(p => p.type === 'DIGITAL_TRACK' && p.status === 'PUBLISHED')
+        .sort((a, b) => b.purchaseCount - a.purchaseCount)
+        .slice(0, 5),
+      demographics: {
+        locations: topCountries,
+        ageGroups: [] // Not available from current API
+      },
+      recentSessions: [] // Would need sessions API
+    };
+  }, [analyticsSummary, revenue, products, topCountries]);
+
+  // Profile analytics from API data
+  const profileAnalytics = useMemo(() => {
+    const summary = analyticsSummary;
+    return {
+      totalViews: summary?.profileViews || 0,
+      viewsThisWeek: summary?.profileViews || 0,
+      viewGrowth: 0, // Would need historical comparison
       trafficSources: [],
       topViewers: []
     };
-  }, [profileTimeRange, profileDateRange]);
-  
-  // No mock data - will be fetched from API
-  const stats = {
-    totalFans: 0,
-    weeklyListens: 0,
-    totalTracks: 0,
-    revenue: 0,
+  }, [analyticsSummary]);
+
+  // Stats computed from API data
+  const stats = useMemo(() => ({
+    totalFans: analyticsSummary?.newFollowers || 0,
+    weeklyListens: analyticsSummary?.trackPlays || 0,
+    totalTracks: products.filter(p => p.type === 'DIGITAL_TRACK').length,
+    revenue: revenue?.totalRevenue || 0,
     liveListeners: 0,
     isLive: false
-  };
+  }), [analyticsSummary, products, revenue]);
 
-  // No mock data - will be fetched from API
-  const storeStats = {
-    totalStoreRevenue: 0,
-    thisMonthStore: 0,
-    storeGrowth: 0,
-    totalItems: 0,
-    breakdown: {
-      tracks: 0,
-      merch: 0,
-      concerts: 0
-    },
-    topSellingItems: [],
-    recentSales: []
-  };
+  // Store stats from API data
+  const storeStats = useMemo(() => {
+    const tracks = products.filter(p => p.type === 'DIGITAL_TRACK' || p.type === 'DIGITAL_ALBUM');
+    const merch = products.filter(p => p.type === 'MERCHANDISE_LINK');
+    const concerts = products.filter(p => p.type === 'CONCERT_LINK');
 
-  // No mock data - will be fetched from API
+    return {
+      totalStoreRevenue: revenue?.totalRevenue || 0,
+      thisMonthStore: revenue?.monthlyRevenue || 0,
+      storeGrowth: 0, // Would need historical comparison
+      totalItems: products.length,
+      breakdown: {
+        tracks: tracks.length,
+        merch: merch.length,
+        concerts: concerts.length
+      },
+      topSellingItems: products
+        .filter(p => p.status === 'PUBLISHED')
+        .sort((a, b) => b.purchaseCount - a.purchaseCount)
+        .slice(0, 5),
+      recentSales: [] // Would need purchases API
+    };
+  }, [products, revenue]);
+
+  // Recent activity - empty for now (would need activity feed API)
   const recentActivity: any[] = [];
 
-  // No mock data - will be fetched from API
+  // Upcoming events - empty for now (would need events API)
   const upcomingEvents: any[] = [];
 
   const getActivityIcon = (type: string) => {

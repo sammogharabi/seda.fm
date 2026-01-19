@@ -241,7 +241,7 @@ export function Sidebar({
         <Button
           variant="ghost"
           className="w-full justify-start h-10 text-sm rounded-lg border border-transparent hover:border-foreground/10"
-          onClick={() => window.open('https://seda.fm/about', '_blank')}
+          onClick={onShowAbout}
         >
           <Info className="w-4 h-4 mr-3" />
           About sedā.fm

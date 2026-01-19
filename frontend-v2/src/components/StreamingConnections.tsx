@@ -73,7 +73,7 @@ export function StreamingConnections({ apiBaseUrl = '/api' }: StreamingConnectio
 
     if (params.get('spotify_connected') === 'true') {
       toast.success('Spotify connected successfully!');
-      // Clean up URL
+      // Clean up URL - remove OAuth params but keep clean URL
       window.history.replaceState({}, '', window.location.pathname);
       fetchStatuses();
     }
@@ -81,6 +81,12 @@ export function StreamingConnections({ apiBaseUrl = '/api' }: StreamingConnectio
     if (params.get('spotify_error')) {
       const error = params.get('spotify_error');
       toast.error(`Spotify connection failed: ${error}`);
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    // Clean up view param from URL after component mounts (OAuth redirect cleanup)
+    if (params.get('view')) {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, [apiBaseUrl]);

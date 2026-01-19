@@ -104,18 +104,18 @@ export class StreamingController {
     const frontendUrl = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://seda.fm' : 'http://localhost:3000');
 
     if (error) {
-      return res.redirect(`${frontendUrl}/settings?spotify_error=${error}`);
+      return res.redirect(`${frontendUrl}/?view=settings&spotify_error=${error}`);
     }
 
     if (!code || !state) {
-      return res.redirect(`${frontendUrl}/settings?spotify_error=missing_params`);
+      return res.redirect(`${frontendUrl}/?view=settings&spotify_error=missing_params`);
     }
 
     // Verify state
     const stateData = this.oauthStates.get(state);
     if (!stateData || stateData.expiresAt < Date.now()) {
       this.oauthStates.delete(state);
-      return res.redirect(`${frontendUrl}/settings?spotify_error=invalid_state`);
+      return res.redirect(`${frontendUrl}/?view=settings&spotify_error=invalid_state`);
     }
 
     const userId = stateData.userId;
@@ -131,10 +131,10 @@ export class StreamingController {
       // Save connection
       await this.spotifyService.saveConnection(userId, tokenData, profile);
 
-      return res.redirect(`${frontendUrl}/settings?spotify_connected=true`);
+      return res.redirect(`${frontendUrl}/?view=settings&spotify_connected=true`);
     } catch (err) {
       console.error('Spotify callback error:', err);
-      return res.redirect(`${frontendUrl}/settings?spotify_error=auth_failed`);
+      return res.redirect(`${frontendUrl}/?view=settings&spotify_error=auth_failed`);
     }
   }
 

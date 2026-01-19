@@ -1,5 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Track, DJSession, Room, Post, Crate, UserProfile, ArtistProfile, FanProfile } from '../types';
+
+// Helper to get initial view from URL params
+const getInitialViewFromUrl = (): string => {
+  const params = new URLSearchParams(window.location.search);
+  const view = params.get('view');
+  if (view && ['settings', 'feed', 'discover', 'rooms', 'sessions', 'crates', 'profile'].includes(view)) {
+    return view;
+  }
+  return 'feed';
+};
 
 export interface AppStateHook {
   // UI State
@@ -63,8 +73,8 @@ export interface AppStateHook {
 }
 
 export const useAppState = (): AppStateHook => {
-  // UI State
-  const [currentView, setCurrentView] = useState('feed');
+  // UI State - check URL params for initial view (for OAuth callbacks)
+  const [currentView, setCurrentView] = useState(() => getInitialViewFromUrl());
   const [previousView, setPreviousView] = useState('feed');
   const [currentRoom, setCurrentRoom] = useState('#hiphop');
   const [roomViewMode, setRoomViewMode] = useState('member');

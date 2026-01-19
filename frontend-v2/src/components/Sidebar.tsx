@@ -21,7 +21,8 @@ import {
   MessageCircle,
   MessageSquare,
   Users,
-  Rss
+  Rss,
+  Settings
 } from 'lucide-react';
 
 
@@ -262,7 +263,15 @@ export function Sidebar({
           <MessageSquare className="w-4 h-4 mr-3" />
           Feedback
         </Button>
-        
+        <Button
+          variant="ghost"
+          className="w-full justify-start h-10 text-sm rounded-lg border border-transparent hover:border-foreground/10"
+          onClick={() => onViewChange('settings')}
+        >
+          <Settings className="w-4 h-4 mr-3" />
+          Settings
+        </Button>
+
         <Button
           variant="ghost"
           className="w-full justify-start h-10 text-sm text-muted-foreground hover:text-destructive rounded-lg border border-transparent hover:border-destructive/20"

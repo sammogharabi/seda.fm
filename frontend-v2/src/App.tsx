@@ -34,6 +34,7 @@ import { DesktopSearch } from './components/DesktopSearch';
 import { Leaderboards } from './components/Leaderboards';
 import { Crates } from './components/Crates';
 import { Feedback } from './components/Feedback';
+import { SettingsView } from './components/SettingsView';
 import { DJMode } from './components/DJMode';
 import { CreatePostModal } from './components/CreatePostModal';
 import { CreateRoomModal } from './components/CreateRoomModal';
@@ -714,6 +715,13 @@ export default function App() {
           );
         case 'feedback':
           return <Feedback user={auth.currentUser} />;
+        case 'settings':
+          return (
+            <SettingsView
+              user={auth.currentUser}
+              onViewChange={handleViewChangeWithDJMinimize}
+            />
+          );
         case 'artist-profile':
           return (
             <ArtistProfile

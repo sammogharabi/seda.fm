@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { 
+import {
   UserPlus,
   Users,
   Crown,
@@ -12,100 +12,72 @@ import {
   Radio,
   Clock,
   UserMinus,
-  MessageCircle
+  MessageCircle,
+  Loader2
 } from 'lucide-react';
-
-const FOLLOWING_LIST = [
-  {
-    id: 1,
-    username: 'dj_nova',
-    displayName: 'DJ Nova',
-    verified: true,
-    followers: 15600,
-    mutualFriends: 23,
-    lastActive: '2h ago',
-    isOnline: true,
-    currentActivity: 'DJ Session: Late Night Vibes'
-  },
-  {
-    id: 2,
-    username: 'beatmaster_99',
-    displayName: 'Beat Master',
-    verified: false,
-    followers: 3200,
-    mutualFriends: 8,
-    lastActive: '5m ago',
-    isOnline: true,
-    currentActivity: 'Listening to Ambient Dreams playlist'
-  },
-  {
-    id: 3,
-    username: 'vinyl_collector',
-    displayName: 'Vinyl Collector',
-    verified: false,
-    followers: 8900,
-    mutualFriends: 15,
-    lastActive: '1d ago',
-    isOnline: false,
-    currentActivity: null
-  },
-  {
-    id: 4,
-    username: 'synth_wave',
-    displayName: 'Synth Wave',
-    verified: false,
-    followers: 5400,
-    mutualFriends: 12,
-    lastActive: '6h ago',
-    isOnline: false,
-    currentActivity: null
-  }
-];
-
-const SUGGESTED_FOLLOWS = [
-  {
-    id: 5,
-    username: 'ambient_dreams',
-    displayName: 'Ambient Dreams',
-    verified: false,
-    followers: 12300,
-    mutualFriends: 18,
-    reason: 'Followed by DJ Nova and 17 others you follow',
-    topGenres: ['Ambient', 'Electronic']
-  },
-  {
-    id: 6,
-    username: 'house_legends',
-    displayName: 'House Legends',
-    verified: true,
-    followers: 45600,
-    mutualFriends: 25,
-    reason: 'Popular in your network',
-    topGenres: ['House', 'Techno']
-  },
-  {
-    id: 7,
-    username: 'indie_vibes',
-    displayName: 'Indie Vibes',
-    verified: false,
-    followers: 8700,
-    mutualFriends: 9,
-    reason: 'Similar music taste',
-    topGenres: ['Indie', 'Alternative']
-  }
-];
+import { profilesApi } from '../lib/api/profiles';
+import { discoverApi, PeopleSuggestion } from '../lib/api/discover';
+import { toast } from 'sonner';
 
 export function FollowingView({ user, followingList: externalFollowingList, onFollowUser, onUnfollowUser }) {
   const [activeTab, setActiveTab] = useState('following');
-  const [followingList, setFollowingList] = useState(externalFollowingList || FOLLOWING_LIST);
-  const [suggestedList, setSuggestedList] = useState(SUGGESTED_FOLLOWS);
+  const [followingList, setFollowingList] = useState<any[]>([]);
+  const [suggestedList, setSuggestedList] = useState<PeopleSuggestion[]>([]);
+  const [loadingFollowing, setLoadingFollowing] = useState(true);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
 
-  // Update local state when external following list changes
-  React.useEffect(() => {
-    if (externalFollowingList) {
-      setFollowingList([...externalFollowingList, ...FOLLOWING_LIST.filter(u => !externalFollowingList.find(eu => eu.id === u.id))]);
-    }
-  }, [externalFollowingList]);
+  // Fetch following list from API
+  useEffect(() => {
+    const fetchFollowing = async () => {
+      if (!user?.username) {
+        setLoadingFollowing(false);
+        return;
+      }
+      try {
+        setLoadingFollowing(true);
+        const data = await profilesApi.getFollowing(user.username, 50);
+        // Transform API data to match component's expected format
+        const transformed = (Array.isArray(data) ? data : []).map((f: any) => ({
+          id: f.userId || f.id,
+          username: f.username,
+          displayName: f.displayName || f.username,
+          verified: f.verified || false,
+          followers: f._count?.followers || f.followers || 0,
+          mutualFriends: f.mutualFollowers || 0,
+          lastActive: 'Recently',
+          isOnline: false,
+          currentActivity: null,
+          genres: f.genres || []
+        }));
+        setFollowingList(transformed);
+      } catch (error) {
+        console.error('[FollowingView] Failed to fetch following:', error);
+        setFollowingList([]);
+      } finally {
+        setLoadingFollowing(false);
+      }
+    };
+
+    fetchFollowing();
+  }, [user?.username]);
+
+  // Fetch suggestions from API
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      try {
+        setLoadingSuggestions(true);
+        const data = await discoverApi.getPeople(10);
+        setSuggestedList(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('[FollowingView] Failed to fetch suggestions:', error);
+        setSuggestedList([]);
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    };
+
+    fetchSuggestions();
+  }, []);
 
   const formatNumber = (num) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -113,21 +85,43 @@ export function FollowingView({ user, followingList: externalFollowingList, onFo
     return num.toString();
   };
 
-  const handleUnfollow = (userId) => {
-    if (onUnfollowUser) {
-      onUnfollowUser(userId);
+  const handleUnfollow = async (followedUser: any) => {
+    try {
+      await profilesApi.unfollow(followedUser.username);
+      if (onUnfollowUser) {
+        onUnfollowUser(followedUser.id);
+      }
+      setFollowingList(prev => prev.filter(u => u.id !== followedUser.id));
+      toast.success(`Unfollowed @${followedUser.username}`);
+    } catch (error) {
+      console.error('[FollowingView] Failed to unfollow:', error);
+      toast.error('Failed to unfollow user');
     }
-    setFollowingList(prev => prev.filter(user => user.id !== userId));
   };
 
-  const handleFollow = (userId) => {
-    const userToFollow = suggestedList.find(user => user.id === userId);
-    if (userToFollow) {
+  const handleFollow = async (userToFollow: PeopleSuggestion) => {
+    try {
+      await profilesApi.follow(userToFollow.username);
       if (onFollowUser) {
         onFollowUser(userToFollow);
       }
-      setSuggestedList(prev => prev.filter(user => user.id !== userId));
-      setFollowingList(prev => [...prev, { ...userToFollow, isOnline: false, lastActive: 'Just followed', currentActivity: null }]);
+      setSuggestedList(prev => prev.filter(u => u.id !== userToFollow.id));
+      setFollowingList(prev => [...prev, {
+        id: userToFollow.id,
+        username: userToFollow.username,
+        displayName: userToFollow.displayName || userToFollow.username,
+        verified: userToFollow.verified,
+        followers: userToFollow.followers,
+        mutualFriends: userToFollow.mutualFollowers,
+        lastActive: 'Just followed',
+        isOnline: false,
+        currentActivity: null,
+        genres: userToFollow.genres
+      }]);
+      toast.success(`Now following @${userToFollow.username}!`);
+    } catch (error) {
+      console.error('[FollowingView] Failed to follow:', error);
+      toast.error('Failed to follow user');
     }
   };
 
@@ -163,124 +157,168 @@ export function FollowingView({ user, followingList: externalFollowingList, onFo
           </TabsList>
 
           <TabsContent value="following" className="space-y-4">
-            {followingList.map((followedUser) => (
-              <Card key={followedUser.id} className="hover:border-accent-mint/50 transition-colors">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="relative">
-                      <div className="w-14 h-14 bg-accent-mint text-background flex items-center justify-center border border-foreground/20 font-semibold text-xl">
-                        {followedUser.displayName[0].toUpperCase()}
-                      </div>
-                      {followedUser.isOnline && (
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-accent-coral border-2 border-card rounded-full"></div>
-                      )}
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-lg">{followedUser.displayName}</h4>
-                        {followedUser.verified && <Crown className="w-5 h-5 text-accent-yellow" />}
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">@{followedUser.username}</p>
-                      
-                      {followedUser.currentActivity && (
-                        <div className="bg-accent-mint/10 border-l-4 border-accent-mint p-3 mb-3">
-                          <div className="flex items-center gap-2">
-                            <Radio className="w-4 h-4 text-accent-mint" />
-                            <span className="text-sm font-medium">{followedUser.currentActivity}</span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          {formatNumber(followedUser.followers)} followers
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <UserPlus className="w-3 h-3" />
-                          {followedUser.mutualFriends} mutual
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {followedUser.lastActive}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col gap-2">
-                      <Button size="sm" variant="outline">
-                        <MessageCircle className="w-4 h-4 mr-1" />
-                        Message
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => handleUnfollow(followedUser.id)}
-                      >
-                        <UserMinus className="w-4 h-4 mr-1" />
-                        Unfollow
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
+            {loadingFollowing ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-accent-mint" />
+              </div>
+            ) : followingList.length === 0 ? (
+              <Card className="p-8 text-center">
+                <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">Not Following Anyone Yet</h3>
+                <p className="text-muted-foreground text-sm">
+                  Discover artists and fans to follow in the Discover tab!
+                </p>
               </Card>
-            ))}
+            ) : (
+              followingList.map((followedUser) => (
+                <Card key={followedUser.id} className="hover:border-accent-mint/50 transition-colors">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="relative">
+                        <div className="w-14 h-14 bg-accent-mint text-background flex items-center justify-center border border-foreground/20 font-semibold text-xl">
+                          {(followedUser.displayName || followedUser.username || '?')[0].toUpperCase()}
+                        </div>
+                        {followedUser.isOnline && (
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-accent-coral border-2 border-card rounded-full"></div>
+                        )}
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-lg">{followedUser.displayName || followedUser.username}</h4>
+                          {followedUser.verified && <Crown className="w-5 h-5 text-accent-yellow" />}
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">@{followedUser.username}</p>
+
+                        {followedUser.currentActivity && (
+                          <div className="bg-accent-mint/10 border-l-4 border-accent-mint p-3 mb-3">
+                            <div className="flex items-center gap-2">
+                              <Radio className="w-4 h-4 text-accent-mint" />
+                              <span className="text-sm font-medium">{followedUser.currentActivity}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {formatNumber(followedUser.followers || 0)} followers
+                          </div>
+                          {followedUser.mutualFriends > 0 && (
+                            <div className="flex items-center gap-1">
+                              <UserPlus className="w-3 h-3" />
+                              {followedUser.mutualFriends} mutual
+                            </div>
+                          )}
+                          {followedUser.genres && followedUser.genres.length > 0 && (
+                            <div className="flex gap-1">
+                              {followedUser.genres.slice(0, 2).map((genre: string) => (
+                                <Badge key={genre} variant="outline" className="text-xs">
+                                  {genre}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <Button size="sm" variant="outline">
+                          <MessageCircle className="w-4 h-4 mr-1" />
+                          Message
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => handleUnfollow(followedUser)}
+                        >
+                          <UserMinus className="w-4 h-4 mr-1" />
+                          Unfollow
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </TabsContent>
 
           <TabsContent value="discover" className="space-y-4">
-            {suggestedList.map((suggestedUser) => (
-              <Card key={suggestedUser.id} className="hover:border-accent-coral/50 transition-colors">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 bg-accent-coral text-background flex items-center justify-center border border-foreground/20 font-semibold text-xl">
-                      {suggestedUser.displayName[0].toUpperCase()}
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-lg">{suggestedUser.displayName}</h4>
-                        {suggestedUser.verified && <Crown className="w-5 h-5 text-accent-yellow" />}
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">@{suggestedUser.username}</p>
-                      
-                      <div className="bg-accent-yellow/10 border-l-4 border-accent-yellow p-3 mb-3">
-                        <p className="text-sm font-medium">{suggestedUser.reason}</p>
-                      </div>
-                      
-                      <div className="flex items-center gap-4 mb-3 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          {formatNumber(suggestedUser.followers)} followers
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <UserPlus className="w-3 h-3" />
-                          {suggestedUser.mutualFriends} mutual
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        {suggestedUser.topGenres.map((genre) => (
-                          <Badge key={genre} className="bg-accent-blue/10 text-accent-blue border-accent-blue/20">
-                            {genre}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      size="sm" 
-                      className="bg-accent-coral text-background hover:bg-accent-coral/90"
-                      onClick={() => handleFollow(suggestedUser.id)}
-                    >
-                      <UserPlus className="w-4 h-4 mr-1" />
-                      Follow
-                    </Button>
-                  </div>
-                </CardContent>
+            {loadingSuggestions ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-accent-coral" />
+              </div>
+            ) : suggestedList.length === 0 ? (
+              <Card className="p-8 text-center">
+                <UserPlus className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">No Suggestions Yet</h3>
+                <p className="text-muted-foreground text-sm">
+                  Complete your profile and add music genres to get personalized suggestions!
+                </p>
               </Card>
-            ))}
+            ) : (
+              suggestedList.map((suggestedUser) => (
+                <Card key={suggestedUser.id} className="hover:border-accent-coral/50 transition-colors">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-14 h-14 bg-accent-coral text-background flex items-center justify-center border border-foreground/20 font-semibold text-xl">
+                        {(suggestedUser.displayName || suggestedUser.username || '?')[0].toUpperCase()}
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-lg">{suggestedUser.displayName || suggestedUser.username}</h4>
+                          {suggestedUser.verified && <Crown className="w-5 h-5 text-accent-yellow" />}
+                          {suggestedUser.isArtist && (
+                            <Badge variant="outline" className="text-xs">Artist</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">@{suggestedUser.username}</p>
+
+                        {suggestedUser.reason && (
+                          <div className="bg-accent-yellow/10 border-l-4 border-accent-yellow p-3 mb-3">
+                            <p className="text-sm font-medium">{suggestedUser.reason}</p>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-4 mb-3 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {formatNumber(suggestedUser.followers)} followers
+                          </div>
+                          {suggestedUser.mutualFollowers > 0 && (
+                            <div className="flex items-center gap-1">
+                              <UserPlus className="w-3 h-3" />
+                              {suggestedUser.mutualFollowers} mutual
+                            </div>
+                          )}
+                        </div>
+
+                        {suggestedUser.genres && suggestedUser.genres.length > 0 && (
+                          <div className="flex gap-2">
+                            {suggestedUser.genres.slice(0, 3).map((genre) => (
+                              <Badge key={genre} className="bg-accent-blue/10 text-accent-blue border-accent-blue/20">
+                                {genre}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <Button
+                        size="sm"
+                        className="bg-accent-coral text-background hover:bg-accent-coral/90"
+                        onClick={() => handleFollow(suggestedUser)}
+                      >
+                        <UserPlus className="w-4 h-4 mr-1" />
+                        Follow
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </TabsContent>
         </Tabs>
       </div>

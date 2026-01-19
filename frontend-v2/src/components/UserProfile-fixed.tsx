@@ -71,47 +71,24 @@ const formatTimestamp = (timestamp: Date) => {
   return `${Math.floor(diff / 2592000)}mo`;
 };
 
-const MOCK_STATS = [
-  { label: 'Tracks Played', value: 1247 },
-  { label: 'Sessions Hosted', value: 89 },
-  { label: 'Followers', value: 156 },
-  { label: 'Member Since', value: 2023 }
-];
-
-// Mock data for public fan profiles
-const MOCK_CRATES = [
-  { 
-    id: 'crate-1', 
-    name: 'Late Night Vibes', 
-    trackCount: 23, 
-    isPublic: true,
-    description: 'Chill beats for those 2am sessions',
-    artwork: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop'
-  },
-  { 
-    id: 'crate-2', 
-    name: 'Underground Gems', 
-    trackCount: 31, 
-    isPublic: true,
-    description: 'Hidden tracks from emerging artists',
-    artwork: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&h=300&fit=crop'
-  },
-  { 
-    id: 'crate-3', 
-    name: 'Workout Mix', 
-    trackCount: 18, 
-    isPublic: false,
-    description: 'High energy tracks for training',
-    artwork: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop'
+// Helper to build stats from API profile data
+const buildStatsFromProfile = (profile: any) => {
+  if (!profile) {
+    return [
+      { label: 'Tracks Played', value: 0 },
+      { label: 'Sessions Hosted', value: 0 },
+      { label: 'Followers', value: 0 },
+      { label: 'Member Since', value: new Date().getFullYear() }
+    ];
   }
-];
-
-const MOCK_JOINED_ROOMS = [
-  { id: 'room-1', name: '#hiphop', memberCount: 2847, isActive: true },
-  { id: 'room-2', name: '#electronic', memberCount: 1923, isActive: true },
-  { id: 'room-3', name: '#jazz', memberCount: 876, isActive: false },
-  { id: 'room-4', name: '#underground', memberCount: 1205, isActive: true }
-];
+  const memberYear = profile.createdAt ? new Date(profile.createdAt).getFullYear() : new Date().getFullYear();
+  return [
+    { label: 'Tracks Played', value: profile._count?.posts || 0 },
+    { label: 'Sessions Hosted', value: profile._count?.comments || 0 },
+    { label: 'Followers', value: profile._count?.followers || 0 },
+    { label: 'Member Since', value: memberYear }
+  ];
+};
 
 // Helper function to create mock posts for a user
 const createMockPosts = (user: any) => [
@@ -261,6 +238,9 @@ export function UserProfile({ user, onUpdateUser, viewingUser = null, isOwnProfi
   const [profileError, setProfileError] = useState<string | null>(null);
   const [userCrates, setUserCrates] = useState<any[]>([]);
   const [userRooms, setUserRooms] = useState<any[]>([]);
+
+  // Computed stats from API profile
+  const profileStats = useMemo(() => buildStatsFromProfile(apiProfile), [apiProfile]);
 
   // Fetch profile data from API
   useEffect(() => {
@@ -481,7 +461,7 @@ export function UserProfile({ user, onUpdateUser, viewingUser = null, isOwnProfi
     const data = {
       username: safeUser.username,
       points: userPoints,
-      stats: MOCK_STATS,
+      stats: profileStats,
       genres: topGenres,
       exportDate: new Date().toISOString()
     };
@@ -1138,15 +1118,15 @@ export function UserProfile({ user, onUpdateUser, viewingUser = null, isOwnProfi
                   <div className="text-sm text-muted-foreground">Points</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-semibold text-foreground">{MOCK_STATS[1].value}</div>
+                  <div className="text-2xl font-semibold text-foreground">{profileStats[1].value}</div>
                   <div className="text-sm text-muted-foreground">Sessions</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-semibold text-foreground">{MOCK_STATS[2].value}</div>
+                  <div className="text-2xl font-semibold text-foreground">{profileStats[2].value}</div>
                   <div className="text-sm text-muted-foreground">Followers</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-semibold text-foreground">{MOCK_STATS[0].value}</div>
+                  <div className="text-2xl font-semibold text-foreground">{profileStats[0].value}</div>
                   <div className="text-sm text-muted-foreground">Tracks</div>
                 </div>
               </div>
@@ -1623,7 +1603,7 @@ export function UserProfile({ user, onUpdateUser, viewingUser = null, isOwnProfi
             <div className="space-y-6 mt-6">
               <h3 className="text-lg font-medium">Platform Statistics</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {MOCK_STATS.map((stat) => (
+                {profileStats.map((stat) => (
                   <div key={stat.label} className="p-4 border border-foreground/10 bg-muted/50">
                     <div className="flex items-center justify-between">
                       <div>

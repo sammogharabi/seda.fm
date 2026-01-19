@@ -1,96 +1,26 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
-import { Skeleton } from './ui/skeleton';
-import { 
-  Heart, 
-  MessageCircle, 
-  Repeat, 
+import {
+  Heart,
+  MessageCircle,
+  Repeat,
   Share,
-  Play, 
-  Pause, 
+  Play,
+  Pause,
   Music,
   Clock,
   Crown,
-  Users,
-  Mic,
-  UserPlus,
-  UserMinus,
-  Bookmark,
-  TrendingUp,
   Volume2,
   RefreshCw,
-  Eye,
-  Zap
+  Bookmark,
+  Loader2
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 
-const MOCK_FEED_DATA = [
-  {
-    id: 1,
-    type: 'music_share',
-    user: { 
-      username: 'dj_nova', 
-      displayName: 'DJ Nova',
-      accentColor: 'coral',
-      verified: true 
-    },
-    content: 'This track has been on repeat all week! Perfect vibes for late night sessions 🌙',
-    track: {
-      title: 'Midnight City',
-      artist: 'M83',
-      artwork: 'https://images.unsplash.com/photo-1583927109257-f21c74dd0c3f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtdXNpYyUyMGFsYnVtJTIwY292ZXIlMjBlbGVjdHJvbmljfGVufDF8fHx8MTc1NTUyMzY3OHww&ixlib=rb-4.1.0&q=80&w=300',
-      duration: '4:03'
-    },
-    timestamp: new Date(Date.now() - 300000),
-    likes: 24,
-    reposts: 3,
-    comments: 8,
-    isLiked: false,
-    isReposted: false
-  },
-  {
-    id: 2,
-    type: 'text_post',
-    user: { 
-      username: 'beatmaster_99', 
-      displayName: 'Beat Master',
-      accentColor: 'blue'
-    },
-    content: 'Just finished my first DJ set at the underground venue downtown! The crowd was absolutely electric. Thank you to everyone who showed up and vibed with me 🙏✨\n\nNext set: Friday 9PM at #ElectronicLounge',
-    timestamp: new Date(Date.now() - 1800000),
-    likes: 56,
-    reposts: 12,
-    comments: 23,
-    isLiked: true,
-    isReposted: false
-  },
-  {
-    id: 3,
-    type: 'dj_session',
-    user: { 
-      username: 'vinyl_collector', 
-      displayName: 'Vinyl Collector',
-      accentColor: 'mint'
-    },
-    content: 'Going live in 10 minutes! Tonight\'s theme: Classic house gems from the 90s 🏠',
-    djSession: {
-      title: 'Classic House Night',
-      scheduledTime: new Date(Date.now() + 600000),
-      expectedDuration: '2 hours',
-      genre: 'House',
-      listeners: 0
-    },
-    timestamp: new Date(Date.now() - 3600000),
-    likes: 18,
-    reposts: 7,
-    comments: 15,
-    isLiked: false,
-    isReposted: true
-  }
-];
+// Note: This component uses the 'posts' prop from parent - no mock data
 
 // Helper function to get accent color classes
 const getAccentClasses = (color) => {
@@ -123,14 +53,17 @@ const getAccentClasses = (color) => {
   return colorMap[color] || colorMap.coral;
 };
 
-export function SocialFeed({ user, onNowPlaying, onStartDJ, posts = [], onFollowUser, onUnfollowUser, isFollowing }) {
-  const [feedData, setFeedData] = useState([...posts, ...MOCK_FEED_DATA]);
+export function SocialFeedZine({ user, onNowPlaying, onStartDJ, posts = [], onFollowUser, onUnfollowUser, isFollowing, onRefresh, isLoading = false }) {
+  const [feedData, setFeedData] = useState(posts);
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [viewCounts, setViewCounts] = useState(new Map());
   const [bookmarkedPosts, setBookmarkedPosts] = useState(new Set());
   const [expandedPosts, setExpandedPosts] = useState(new Set());
+
+  // Update feedData when posts prop changes
+  React.useEffect(() => {
+    setFeedData(posts);
+  }, [posts]);
 
   const formatTimestamp = (timestamp) => {
     const now = new Date();
@@ -180,11 +113,12 @@ export function SocialFeed({ user, onNowPlaying, onStartDJ, posts = [], onFollow
 
   const refreshFeed = useCallback(async () => {
     setIsRefreshing(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setFeedData([...posts, ...MOCK_FEED_DATA]);
+    if (onRefresh) {
+      await onRefresh();
+    }
     setIsRefreshing(false);
     toast.success('Feed refreshed!');
-  }, [posts]);
+  }, [onRefresh]);
 
   const renderPost = useCallback((post) => {
     const isPlaying = currentlyPlaying?.postId === post.id;
@@ -539,12 +473,31 @@ export function SocialFeed({ user, onNowPlaying, onStartDJ, posts = [], onFollow
       {/* Feed Content */}
       <ScrollArea className="h-[calc(100vh-80px)]">
         <div className="max-w-2xl mx-auto p-6">
-          <AnimatePresence>
-            {feedData.map(renderPost)}
-          </AnimatePresence>
-          
-          {/* Loading indicator */}
-          {isLoading && (
+          {isLoading && feedData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-accent-coral mb-4" />
+              <p className="font-mono text-sm text-muted-foreground uppercase">
+                Loading underground content...
+              </p>
+            </div>
+          ) : feedData.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 bg-accent-coral/10 border-2 border-accent-coral mx-auto mb-4 flex items-center justify-center">
+                <Music className="w-8 h-8 text-accent-coral" />
+              </div>
+              <h3 className="font-black text-xl uppercase mb-2">No Posts Yet</h3>
+              <p className="font-mono text-sm text-muted-foreground">
+                Follow some artists to see their posts in your feed!
+              </p>
+            </div>
+          ) : (
+            <AnimatePresence>
+              {feedData.map(renderPost)}
+            </AnimatePresence>
+          )}
+
+          {/* Loading more indicator */}
+          {isLoading && feedData.length > 0 && (
             <div className="flex justify-center py-8">
               <div className="flex items-center gap-2 font-mono text-sm text-muted-foreground">
                 <RefreshCw className="w-4 h-4 animate-spin" />

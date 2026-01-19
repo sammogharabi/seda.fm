@@ -26,7 +26,7 @@ import {
   Volume2,
   Star
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 // Mock data for genres and regions
 const GENRES = [

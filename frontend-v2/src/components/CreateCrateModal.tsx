@@ -20,7 +20,7 @@ import {
   Globe,
   Lock
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 // Mock track data
 const MOCK_TRACKS = [

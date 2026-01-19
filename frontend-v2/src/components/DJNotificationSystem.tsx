@@ -12,7 +12,7 @@ import {
   Music,
   Play
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 // Mock data for new DJ sessions from followed users
 const MOCK_NEW_SESSIONS = [

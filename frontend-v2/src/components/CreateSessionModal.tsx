@@ -7,7 +7,7 @@ import { Switch } from './ui/switch';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Music, Loader2, Plus, X, Globe, Lock, Star, Tag } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { sessionsApi } from '../lib/api/sessions';
 import type { DJSession } from '../lib/api/types';
 import { AddToQueueModal } from './AddToQueueModal';

@@ -20,7 +20,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useSearch } from '../hooks/useSearch';
 
 interface GlobalSearchProps {

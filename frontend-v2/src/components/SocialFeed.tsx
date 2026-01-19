@@ -26,7 +26,7 @@ import {
   Hash,
   PlusCircle
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { Comments } from './Comments';
 import { LinkPreview } from './LinkPreview';

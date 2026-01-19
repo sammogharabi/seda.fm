@@ -22,7 +22,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 // Mock search data - same as desktop
 const MOCK_SEARCH_DATA = {

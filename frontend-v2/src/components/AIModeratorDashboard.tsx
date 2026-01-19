@@ -28,7 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Separator } from './ui/separator';
 import { Progress } from './ui/progress';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface FlaggedTrack {
   id: string;

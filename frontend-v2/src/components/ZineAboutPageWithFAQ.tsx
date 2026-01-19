@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Music, Zap, Star, Ban, Clock, Badge, DollarSign, TrendingUp, Upload, Users, Radio, Heart, Shield, Lock, Eye, Globe, ArrowRight, CheckCircle, Mail, Mic, Speaker, Headphones, Volume2, Building2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 export function ZineAboutPageWithFAQ() {
   const [email, setEmail] = useState('');

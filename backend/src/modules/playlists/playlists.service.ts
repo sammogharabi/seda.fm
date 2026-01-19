@@ -53,6 +53,30 @@ export class PlaylistsService {
     });
   }
 
+  async getUserPlaylists(userId: string, includePrivate: boolean = true) {
+    return this.prisma.playlist.findMany({
+      where: {
+        ownerUserId: userId,
+        ...(includePrivate ? {} : { isPublic: true }),
+      },
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        owner: {
+          select: {
+            username: true,
+            displayName: true,
+          },
+        },
+        _count: {
+          select: {
+            items: true,
+            likes: true,
+          },
+        },
+      },
+    });
+  }
+
   async getPlaylist(playlistId: string, requestingUserId?: string) {
     const playlist = await this.prisma.playlist.findFirst({
       where: { id: playlistId },
@@ -131,6 +155,28 @@ export class PlaylistsService {
         },
       },
     });
+  }
+
+  async deletePlaylist(playlistId: string, userId: string) {
+    const playlist = await this.prisma.playlist.findFirst({
+      where: { id: playlistId },
+    });
+
+    if (!playlist) {
+      throw new NotFoundException('Playlist not found');
+    }
+
+    // Check if user owns the playlist
+    if (playlist.ownerUserId !== userId) {
+      throw new ForbiddenException('Not authorized to delete this playlist');
+    }
+
+    // Delete playlist (cascade will handle items, collaborators, likes)
+    await this.prisma.playlist.delete({
+      where: { id: playlistId },
+    });
+
+    return { message: 'Playlist deleted successfully' };
   }
 
   async addPlaylistItem(playlistId: string, userId: string, dto: AddPlaylistItemDto) {
@@ -241,6 +287,81 @@ export class PlaylistsService {
     });
 
     return createPaginatedResult(items, validatedQuery.limit);
+  }
+
+  async removePlaylistItem(playlistId: string, itemId: string, userId: string) {
+    const playlist = await this.prisma.playlist.findFirst({
+      where: { id: playlistId },
+    });
+
+    if (!playlist) {
+      throw new NotFoundException('Playlist not found');
+    }
+
+    // Check permissions
+    const canModify =
+      playlist.ownerUserId === userId ||
+      (playlist.isCollaborative && (await this.isCollaborator(playlistId, userId)));
+
+    if (!canModify) {
+      throw new ForbiddenException('Not authorized to modify this playlist');
+    }
+
+    // Check if item exists
+    const item = await this.prisma.playlistItem.findFirst({
+      where: { id: itemId, playlistId: playlistId },
+    });
+
+    if (!item) {
+      throw new NotFoundException('Item not found in playlist');
+    }
+
+    await this.prisma.playlistItem.delete({
+      where: { id: itemId },
+    });
+
+    return { message: 'Item removed from playlist' };
+  }
+
+  async reorderPlaylistItems(
+    playlistId: string,
+    userId: string,
+    items: { id: string; position: number }[],
+  ) {
+    const playlist = await this.prisma.playlist.findFirst({
+      where: { id: playlistId },
+    });
+
+    if (!playlist) {
+      throw new NotFoundException('Playlist not found');
+    }
+
+    // Check permissions
+    const canModify =
+      playlist.ownerUserId === userId ||
+      (playlist.isCollaborative && (await this.isCollaborator(playlistId, userId)));
+
+    if (!canModify) {
+      throw new ForbiddenException('Not authorized to modify this playlist');
+    }
+
+    // Update positions in a transaction
+    await this.prisma.$transaction(
+      items.map((item) =>
+        this.prisma.playlistItem.update({
+          where: { id: item.id },
+          data: { position: item.position },
+        }),
+      ),
+    );
+
+    // Update playlist timestamp
+    await this.prisma.playlist.update({
+      where: { id: playlistId },
+      data: { updatedAt: new Date() },
+    });
+
+    return { message: 'Items reordered successfully' };
   }
 
   private async isCollaborator(playlistId: string, userId: string): Promise<boolean> {

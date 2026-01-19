@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import { Play, Pause, Volume2, X, Maximize2, Users, Radio, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 export function MiniPlayer({
   track,

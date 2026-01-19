@@ -20,7 +20,7 @@ import {
   Wallet
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { marketplaceApi } from '../lib/api/marketplace';
 
 let stripePromise: Promise<Stripe | null> | null = null;

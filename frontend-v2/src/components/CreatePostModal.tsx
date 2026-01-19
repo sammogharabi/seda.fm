@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { PostTypeTabs } from './PostTypeTabs';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 // Mock music search data
 const MOCK_TRACKS = [

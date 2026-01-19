@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -6,9 +6,9 @@ import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ScrollArea } from './ui/scroll-area';
-import { 
-  Upload, 
-  Music, 
+import {
+  Upload,
+  Music,
   Search,
   ExternalLink,
   Disc3,
@@ -16,9 +16,11 @@ import {
   X,
   AlertCircle,
   Check,
-  Loader2
+  Loader2,
+  Link2
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+import { searchTracks, getStreamingConnections, getSpotifyConnectUrl, getTrack, formatDuration, getHighResArtwork } from '../lib/api/streaming';
 
 // Platform icons/colors
 const PLATFORMS = {
@@ -69,40 +71,10 @@ const PLATFORMS = {
   }
 };
 
-// Mock search results for demonstration
-const MOCK_SEARCH_RESULTS = {
-  spotify: [
-    {
-      id: '1',
-      title: 'Blinding Lights',
-      artist: 'The Weeknd',
-      album: 'After Hours',
-      duration: '3:20',
-      artwork: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop',
-      url: 'https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b'
-    },
-    {
-      id: '2',
-      title: 'Save Your Tears',
-      artist: 'The Weeknd',
-      album: 'After Hours',
-      duration: '3:35',
-      artwork: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&h=300&fit=crop',
-      url: 'https://open.spotify.com/track/5QO79kh1waicV47BqGRL3g'
-    }
-  ],
-  apple: [
-    {
-      id: '1',
-      title: 'Watermelon Sugar',
-      artist: 'Harry Styles',
-      album: 'Fine Line',
-      duration: '2:54',
-      artwork: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=300&h=300&fit=crop',
-      url: 'https://music.apple.com/us/album/watermelon-sugar/1485802965?i=1485803423'
-    }
-  ]
-};
+interface StreamingConnection {
+  connected: boolean;
+  displayName?: string;
+}
 
 interface AddToQueueModalProps {
   isOpen: boolean;
@@ -116,10 +88,41 @@ export function AddToQueueModal({ isOpen, onClose, onAddTrack, sessionTitle }: A
   const [searchQuery, setSearchQuery] = useState('');
   const [urlInput, setUrlInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
-  const [uploadedFile, setUploadedFile] = useState(null);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [connections, setConnections] = useState<{
+    spotify: StreamingConnection;
+    appleMusic: StreamingConnection;
+  }>({
+    spotify: { connected: false },
+    appleMusic: { connected: false }
+  });
+  const [loadingConnections, setLoadingConnections] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch streaming connection status on mount
+  useEffect(() => {
+    const fetchConnections = async () => {
+      try {
+        setLoadingConnections(true);
+        const data = await getStreamingConnections();
+        setConnections({
+          spotify: data.spotify || { connected: false },
+          appleMusic: data.appleMusic || { connected: false }
+        });
+      } catch (error) {
+        console.error('[AddToQueueModal] Failed to fetch connections:', error);
+      } finally {
+        setLoadingConnections(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchConnections();
+    }
+  }, [isOpen]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -182,19 +185,68 @@ export function AddToQueueModal({ isOpen, onClose, onAddTrack, sessionTitle }: A
       return;
     }
 
-    setIsSearching(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Return mock results
-    setSearchResults(MOCK_SEARCH_RESULTS[platform] || []);
-    setIsSearching(false);
+    // Debounce search
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+
+    searchDebounceRef.current = setTimeout(async () => {
+      setIsSearching(true);
+
+      try {
+        // Map platform to API provider name
+        const provider = platform === 'apple' ? 'apple-music' : platform;
+        const results = await searchTracks(query, { provider: provider as any, limit: 10 });
+
+        // Extract tracks from the response
+        let tracks: any[] = [];
+        if (provider === 'spotify' && results.spotify && 'tracks' in results.spotify) {
+          tracks = results.spotify.tracks.map(t => ({
+            id: t.id,
+            title: t.name,
+            artist: t.artist,
+            album: t.album,
+            duration: formatDuration(t.duration),
+            artwork: getHighResArtwork(t.artwork || '', 300),
+            externalUrl: t.externalUrl,
+            uri: t.uri,
+            provider: 'spotify'
+          }));
+        } else if (provider === 'apple-music' && results.appleMusic && 'tracks' in results.appleMusic) {
+          tracks = results.appleMusic.tracks.map(t => ({
+            id: t.id,
+            title: t.name,
+            artist: t.artist,
+            album: t.album,
+            duration: formatDuration(t.duration),
+            artwork: getHighResArtwork(t.artwork || '', 300),
+            externalUrl: t.externalUrl,
+            provider: 'apple-music'
+          }));
+        }
+
+        setSearchResults(tracks);
+      } catch (error: any) {
+        console.error('[AddToQueueModal] Search failed:', error);
+        if (error.message?.includes('not connected')) {
+          toast.error('Connect your account first', {
+            description: `Please connect your ${platform === 'apple' ? 'Apple Music' : 'Spotify'} account in Settings`
+          });
+        } else {
+          toast.error('Search failed', {
+            description: 'Please try again'
+          });
+        }
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
   };
 
   const handleUrlImport = async (platform: string, url: string) => {
     const platformData = PLATFORMS[platform];
-    
+
     if (!platformData.urlPattern.test(url)) {
       toast.error('Invalid URL', {
         description: `Please enter a valid ${platformData.name} track URL`
@@ -203,30 +255,69 @@ export function AddToQueueModal({ isOpen, onClose, onAddTrack, sessionTitle }: A
     }
 
     setIsProcessing(true);
-    
-    // Simulate fetching track data from URL
-    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const track = {
-      id: Date.now().toString(),
-      title: 'Imported Track',
-      artist: 'Artist Name',
-      album: 'Album Name',
-      duration: '3:45',
-      artwork: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop',
-      source: platform,
-      url: url
-    };
+    try {
+      // Extract track ID from URL
+      let trackId: string | null = null;
+      const provider = platform === 'apple' ? 'apple-music' : platform;
 
-    onAddTrack(track);
-    setIsProcessing(false);
-    setUrlInput('');
-    
-    toast.success('Track added to queue!', {
-      description: `Added from ${platformData.name}`
-    });
-    
-    onClose();
+      if (platform === 'spotify') {
+        // Extract from spotify.com/track/TRACKID or open.spotify.com/track/TRACKID
+        const match = url.match(/track\/([a-zA-Z0-9]+)/);
+        trackId = match ? match[1] : null;
+      } else if (platform === 'apple') {
+        // Extract from music.apple.com/.../album/.../TRACKID or ?i=TRACKID
+        const match = url.match(/[?&]i=(\d+)/) || url.match(/\/(\d+)(?:\?|$)/);
+        trackId = match ? match[1] : null;
+      }
+
+      if (!trackId) {
+        toast.error('Could not extract track ID', {
+          description: 'Please check the URL format'
+        });
+        setIsProcessing(false);
+        return;
+      }
+
+      // Fetch track details from API
+      const trackData = await getTrack(provider as 'spotify' | 'apple-music', trackId);
+
+      const track = {
+        id: trackData.id,
+        title: trackData.name,
+        artist: trackData.artist,
+        album: trackData.album,
+        duration: formatDuration(trackData.duration),
+        artwork: getHighResArtwork(trackData.artwork || '', 300),
+        source: platform,
+        platform: provider,
+        externalUrl: trackData.externalUrl,
+        uri: trackData.uri,
+        url: url
+      };
+
+      onAddTrack(track);
+      setUrlInput('');
+
+      toast.success('Track added!', {
+        description: `"${track.title}" by ${track.artist}`
+      });
+
+      onClose();
+    } catch (error: any) {
+      console.error('[AddToQueueModal] URL import failed:', error);
+      if (error.message?.includes('not connected')) {
+        toast.error('Connect your account first', {
+          description: `Please connect your ${platformData.name} account in Settings`
+        });
+      } else {
+        toast.error('Failed to import track', {
+          description: 'Could not fetch track details. Make sure your account is connected.'
+        });
+      }
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleAddFromSearch = (track: any, platform: string) => {
@@ -248,8 +339,47 @@ export function AddToQueueModal({ isOpen, onClose, onAddTrack, sessionTitle }: A
     const platformData = PLATFORMS[platform];
     const Icon = platformData.icon;
 
+    // Check connection status for Spotify and Apple Music
+    const isConnected = platform === 'spotify'
+      ? connections.spotify.connected
+      : platform === 'apple'
+      ? connections.appleMusic.connected
+      : false;
+    const showConnectionWarning = (platform === 'spotify' || platform === 'apple') && !isConnected && !loadingConnections;
+
     return (
       <TabsContent value={platform} className="space-y-4 mt-4">
+        {/* Connection Warning */}
+        {showConnectionWarning && (
+          <div className="bg-accent-yellow/10 border border-accent-yellow/30 p-4 rounded-lg">
+            <div className="flex items-start gap-3">
+              <Link2 className="w-5 h-5 text-accent-yellow mt-0.5" />
+              <div className="flex-1">
+                <h4 className="font-medium text-sm mb-1">Connect your {platformData.name} account</h4>
+                <p className="text-xs text-muted-foreground mb-3">
+                  To search and import tracks from {platformData.name}, you need to connect your account first.
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (platform === 'spotify') {
+                      window.location.href = getSpotifyConnectUrl();
+                    } else {
+                      toast.info('Connect in Settings', {
+                        description: 'Go to Settings > Streaming to connect your Apple Music account'
+                      });
+                    }
+                  }}
+                  className={`${platformData.color} text-background hover:opacity-90`}
+                >
+                  <Link2 className="w-4 h-4 mr-2" />
+                  Connect {platformData.name}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* URL Input */}
         <div className="space-y-2">
           <Label htmlFor={`${platform}-url`}>

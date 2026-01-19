@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { DJSessionConfig } from './DJSessionConfig';
 import { Comments } from './Comments';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { roomsApi, type Room, type RoomMessage } from '../lib/api';
 

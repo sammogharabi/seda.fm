@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { MobileNavigation } from './MobileNavigation';
 import { MobileHeader } from './MobileHeader';
 import { MobileDebugUtils } from './MobileDebugUtils';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 export function MobileNavigationTest() {
   const [currentView, setCurrentView] = useState('feed');

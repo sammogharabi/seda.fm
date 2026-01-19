@@ -38,6 +38,20 @@ export const playlistsApi = {
     return http.patch<Playlist>(`/playlists/${id}`, data);
   },
 
+  /**
+   * Delete a playlist
+   */
+  async delete(id: string): Promise<void> {
+    return http.delete(`/playlists/${id}`);
+  },
+
+  /**
+   * Get current user's playlists (crates)
+   */
+  async getMine(): Promise<Playlist[]> {
+    return http.get<Playlist[]>('/playlists/mine');
+  },
+
   // ===== Playlist Items =====
 
   /**
@@ -53,6 +67,20 @@ export const playlistsApi = {
   async getItems(playlistId: string, params?: GetPlaylistItemsDto): Promise<PaginatedResponse<PlaylistItem>> {
     const query = params ? buildQueryString(params) : '';
     return http.get<PaginatedResponse<PlaylistItem>>(`/playlists/${playlistId}/items${query}`);
+  },
+
+  /**
+   * Remove an item from a playlist
+   */
+  async removeItem(playlistId: string, itemId: string): Promise<void> {
+    return http.delete(`/playlists/${playlistId}/items/${itemId}`);
+  },
+
+  /**
+   * Reorder items in a playlist
+   */
+  async reorderItems(playlistId: string, items: { id: string; position: number }[]): Promise<void> {
+    return http.patch(`/playlists/${playlistId}/items/reorder`, { items });
   },
 
   // ===== Crate Social Features =====

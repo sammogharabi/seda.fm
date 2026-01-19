@@ -10,7 +10,7 @@ import { FanSupportActions } from './FanSupportActions';
 import { DJProgressOverlay } from './DJProgressOverlay';
 import { progressionService } from '../utils/progressionService';
 import { calculateLevel, formatXP, LEVEL_PROGRESSION } from '../utils/progression';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface ProgressionDashboardProps {
   user: any;

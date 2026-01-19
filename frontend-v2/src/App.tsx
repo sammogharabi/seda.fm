@@ -45,7 +45,7 @@ import { AuthModal } from './components/AuthModal';
 import { LoginPage } from './components/LoginPage';
 import { MiniPlayer } from './components/MiniPlayer';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { XPNotificationSystem } from './components/XPNotificationSystem';
 import { ProgressionDashboard } from './components/ProgressionDashboard';
 import { AIDetectionSystemDemo } from './components/AIDetectionSystemDemo';

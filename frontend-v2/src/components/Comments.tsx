@@ -11,7 +11,7 @@ import {
   Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 // Helper function to get accent color classes
 const getAccentClasses = (color) => {

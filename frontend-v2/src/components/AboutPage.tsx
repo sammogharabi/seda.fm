@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { motion } from 'motion/react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { HeroSection } from './about/HeroSection';
 import { WhatIsSection } from './about/WhatIsSection';
 import { BenefitsSection } from './about/BenefitsSection';

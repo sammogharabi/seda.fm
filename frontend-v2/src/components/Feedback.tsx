@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Card } from './ui/card';
 import { MessageSquare, Star } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 interface FeedbackProps {

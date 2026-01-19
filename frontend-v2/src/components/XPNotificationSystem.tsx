@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { TrendingUp, Award, Coins, Star, AlertCircle } from 'lucide-react';
 import { progressionService } from '../utils/progressionService';
 import type { NotificationEvent } from '../utils/progressionService';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface XPNotificationSystemProps {
   userId: string;

@@ -29,7 +29,7 @@ import {
   Zap
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { MarketplaceRevenue } from './MarketplaceRevenue';
 import { TrackUploadModal } from './TrackUploadModal';
 import { StoreAnalytics } from './StoreAnalytics';

@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import type { User } from './useAuth';
 
 export interface DataHandlersHook {

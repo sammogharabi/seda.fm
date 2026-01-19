@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Mail, ArrowRight } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { supabase, isSupabaseAvailable } from '../utils/supabase/client';
 
 interface StickyEmailSignupProps {

@@ -30,7 +30,7 @@ import {
   Radio
 } from 'lucide-react';
 import { Input } from './ui/input';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { roomsApi, type Room } from '../lib/api';
 
 // Mock data for discoverable rooms that user hasn't joined yet

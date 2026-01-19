@@ -8,7 +8,7 @@ import { Label } from './ui/label';
 import { Heart, ShoppingBag, Ticket, DollarSign, Music, Gift } from 'lucide-react';
 import { progressionService } from '../utils/progressionService';
 import { XP_REWARDS } from '../utils/progression';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface FanSupportActionsProps {
   userId: string;

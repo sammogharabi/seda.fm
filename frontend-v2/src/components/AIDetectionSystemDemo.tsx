@@ -18,7 +18,7 @@ import { AIDetectionResults } from './AIDetectionResults';
 import { AIModeratorDashboard } from './AIModeratorDashboard';
 import { TrustedUploaderBadge } from './TrustedUploaderBadge';
 import { ReportAIModal } from './ReportAIModal';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 export function AIDetectionSystemDemo() {
   const [activeTab, setActiveTab] = useState('upload');

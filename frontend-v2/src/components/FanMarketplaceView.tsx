@@ -16,7 +16,7 @@ import {
   Timer
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { TrackPurchaseModal } from './TrackPurchaseModal';
 import { dropsApi, Drop } from '../lib/api/drops';
 import { DropCard } from './DropCard';

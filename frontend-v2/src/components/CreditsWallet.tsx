@@ -6,7 +6,7 @@ import { Badge } from './ui/badge';
 import { Coins, Crown, Info, Zap } from 'lucide-react';
 import { formatCredits, CREDIT_ECONOMY } from '../utils/progression';
 import { progressionService } from '../utils/progressionService';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface CreditsWalletProps {
   userId: string;

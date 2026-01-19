@@ -42,20 +42,24 @@ export function StreamingConnections({ apiBaseUrl = '/api' }: StreamingConnectio
   // Fetch connection statuses
   const fetchStatuses = async () => {
     try {
+      console.log('[StreamingConnections] Fetching from:', `${apiBaseUrl}/streaming/connections`);
       const response = await fetch(`${apiBaseUrl}/streaming/connections`, {
         credentials: 'include',
       });
 
       if (!response.ok) {
+        console.error('[StreamingConnections] Response not OK:', response.status, response.statusText);
         throw new Error('Failed to fetch connection status');
       }
 
       const data = await response.json();
+      console.log('[StreamingConnections] Response data:', data);
+      console.log('[StreamingConnections] Configured:', data.configured);
       setSpotifyStatus(data.spotify);
       setAppleMusicStatus(data.appleMusic);
       setConfigured(data.configured);
     } catch (error) {
-      console.error('Error fetching streaming statuses:', error);
+      console.error('[StreamingConnections] Error fetching streaming statuses:', error);
     } finally {
       setLoading(false);
     }

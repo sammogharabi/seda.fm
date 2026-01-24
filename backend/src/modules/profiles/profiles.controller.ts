@@ -73,48 +73,7 @@ export class ProfilesController {
     };
   }
 
-  @Get(':username')
-  @ApiOperation({ summary: 'Get profile by username' })
-  @ApiResponse({
-    status: 200,
-    description: 'Profile retrieved successfully',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Profile not found',
-  })
-  async getProfile(@Param('username') username: string) {
-    const profile = await this.profilesService.getProfileByUsername(username);
-    if (!profile) {
-      throw new NotFoundException('Profile not found');
-    }
-    return profile;
-  }
-
-  @Patch(':username')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Update user profile' })
-  @ApiResponse({
-    status: 200,
-    description: 'Profile updated successfully',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Not authorized to update this profile',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Profile not found',
-  })
-  async updateProfile(
-    @Request() req: any,
-    @Param('username') username: string,
-    @Body() dto: UpdateProfileDto,
-  ) {
-    const userId = req.user.id;
-    return this.profilesService.updateProfile(userId, username, dto);
-  }
-
+  // NOTE: 'me/*' routes MUST come before ':username' routes to avoid route conflicts
   @Get('me/profile')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
@@ -181,6 +140,52 @@ export class ProfilesController {
   async updateCustomization(@Request() req: any, @Body() dto: UpdateCustomizationDto) {
     const userId = req.user.id;
     return this.profilesService.updateProfileCustomization(userId, dto);
+  }
+
+  // ==============================
+  // Parameterized routes (:username) - MUST come after all 'me/*' routes
+  // ==============================
+
+  @Get(':username')
+  @ApiOperation({ summary: 'Get profile by username' })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile retrieved successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Profile not found',
+  })
+  async getProfile(@Param('username') username: string) {
+    const profile = await this.profilesService.getProfileByUsername(username);
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+    return profile;
+  }
+
+  @Patch(':username')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile updated successfully',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Not authorized to update this profile',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Profile not found',
+  })
+  async updateProfile(
+    @Request() req: any,
+    @Param('username') username: string,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    const userId = req.user.id;
+    return this.profilesService.updateProfile(userId, username, dto);
   }
 
   // Follower/Following Endpoints

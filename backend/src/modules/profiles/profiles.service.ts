@@ -64,11 +64,12 @@ export class ProfilesService {
   }
 
   async getProfileByUserId(userId: string) {
-    const profile = await this.prisma.profile.findFirst({
+    let profile = await this.prisma.profile.findFirst({
       where: { userId: userId },
       include: {
         user: {
           select: {
+            email: true,
             emailVerified: true,
             userType: true,
           },
@@ -76,8 +77,48 @@ export class ProfilesService {
       },
     });
 
+    // Auto-create profile if user exists but doesn't have one
     if (!profile) {
-      return null;
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      // Generate username from email
+      const emailPrefix = user.email.split('@')[0];
+      let baseUsername = emailPrefix.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (baseUsername.length < 3) {
+        baseUsername = baseUsername + 'user';
+      }
+
+      // Find unique username
+      let username = baseUsername;
+      let counter = 1;
+      while (await this.prisma.profile.findUnique({ where: { username } })) {
+        username = `${baseUsername}${counter}`;
+        counter++;
+      }
+
+      // Create the profile
+      profile = await this.prisma.profile.create({
+        data: {
+          userId: user.id,
+          username,
+          displayName: emailPrefix,
+        },
+        include: {
+          user: {
+            select: {
+              email: true,
+              emailVerified: true,
+              userType: true,
+            },
+          },
+        },
+      });
     }
 
     // Flatten the response to include emailVerified at the top level

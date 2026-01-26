@@ -14,8 +14,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '../../common/guards/auth.guard';
-import { FeatureGuard } from '../../common/guards/feature.guard';
-import { Feature } from '../../common/decorators/feature.decorator';
 import { FeedService } from './feed.service';
 import { PostsService } from './posts.service';
 import { CommentsService } from './comments.service';
@@ -28,8 +26,7 @@ import { GetFeedDto } from './dto/get-feed.dto';
 
 @ApiTags('feed')
 @Controller('feed')
-@UseGuards(AuthGuard, FeatureGuard)
-@Feature('FEED')
+@UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class FeedController {
   constructor(

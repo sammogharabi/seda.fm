@@ -14,8 +14,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '../../common/guards/auth.guard';
-import { FeatureGuard } from '../../common/guards/feature.guard';
-import { Feature } from '../../common/decorators/feature.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { PlaylistsService } from './playlists.service';
 import { CreatePlaylistDto } from './dto/create-playlist.dto';
@@ -26,8 +24,7 @@ import { ReorderPlaylistItemsDto } from './dto/reorder-playlist-items.dto';
 
 @ApiTags('playlists')
 @Controller('playlists')
-@UseGuards(AuthGuard, FeatureGuard)
-@Feature('PLAYLISTS')
+@UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class PlaylistsController {
   constructor(private readonly playlistsService: PlaylistsService) {}

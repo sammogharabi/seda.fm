@@ -14,8 +14,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '../../common/guards/auth.guard';
-import { FeatureGuard } from '../../common/guards/feature.guard';
-import { Feature } from '../../common/decorators/feature.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { SessionsService } from './sessions.service';
 import { QueueService } from './queue.service';
@@ -26,8 +24,7 @@ import { VoteDto } from './dto/vote.dto';
 
 @ApiTags('sessions')
 @Controller('sessions')
-@UseGuards(AuthGuard, FeatureGuard)
-@Feature('SESSIONS')
+@UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class SessionsController {
   constructor(

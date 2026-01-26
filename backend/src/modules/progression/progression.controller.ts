@@ -10,14 +10,11 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '../../common/guards/auth.guard';
-import { FeatureGuard } from '../../common/guards/feature.guard';
-import { Feature } from '../../common/decorators/feature.decorator';
 import { ProgressionService } from './progression.service';
 
 @ApiTags('progression')
 @Controller('progression')
-@UseGuards(AuthGuard, FeatureGuard)
-@Feature('PROGRESSION')
+@UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class ProgressionController {
   constructor(private readonly progressionService: ProgressionService) {}

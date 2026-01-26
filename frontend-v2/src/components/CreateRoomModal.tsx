@@ -214,7 +214,7 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
             <Switch
               checked={isPrivate}
               onCheckedChange={setIsPrivate}
-              className="data-[state=checked]:bg-accent-yellow data-[state=unchecked]:bg-accent-mint"
+              className="data-[state=checked]:!bg-accent-yellow data-[state=unchecked]:!bg-accent-mint"
             />
           </div>
 

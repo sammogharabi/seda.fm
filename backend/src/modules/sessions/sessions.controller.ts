@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Body,
   Query,
@@ -144,5 +145,16 @@ export class SessionsController {
   async endSession(@Param('id') sessionId: string, @Request() req: any) {
     const userId = req.user.id;
     return this.sessionsService.end(sessionId, userId);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a session (host only)' })
+  @ApiResponse({ status: 204, description: 'Session deleted successfully' })
+  @ApiResponse({ status: 403, description: 'Only host can delete session' })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  async deleteSession(@Param('id') sessionId: string, @Request() req: any) {
+    const userId = req.user.id;
+    await this.sessionsService.delete(sessionId, userId);
   }
 }

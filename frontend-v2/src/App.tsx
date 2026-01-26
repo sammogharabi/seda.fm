@@ -1246,8 +1246,6 @@ export default function App() {
               toast.success(`Viewing "${crate.name}" crate`);
             }}
             currentUser={auth.currentUser}
-            mockArtists={mockArtists}
-            mockFans={mockFans}
           />
         ) : (
           <DesktopSearch
@@ -1264,8 +1262,6 @@ export default function App() {
               toast.success(`Viewing "${crate.name}" crate`);
             }}
             currentUser={auth.currentUser}
-            mockArtists={mockArtists}
-            mockFans={mockFans}
           />
         )}
 

@@ -4,141 +4,49 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
-import { 
-  Search, 
-  Music, 
-  User, 
-  Users, 
+import {
+  Search,
+  Music,
+  User,
+  Users,
   Hash,
   Play,
   Crown,
   Mic,
   ArrowRight,
-  Clock,
-  Heart,
-  TrendingUp,
-  Command,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
+import { useSearch } from '../hooks/useSearch';
 
-// Mock search data
-const MOCK_SEARCH_DATA = {
-  artists: [
-    {
-      id: 'search-artist-1',
-      username: 'neon_synth',
-      displayName: 'Neon Synth',
-      verified: true,
-      accentColor: 'blue',
-      followers: 8420,
-      genres: ['Synthwave', 'Electronic'],
-      bio: 'Synthwave producer creating nostalgic soundscapes for the digital age.'
-    },
-    {
-      id: 'search-artist-2',
-      username: 'vinyl_soul',
-      displayName: 'Vinyl Soul',
-      verified: false,
-      accentColor: 'mint',
-      followers: 3250,
-      genres: ['Soul', 'Jazz', 'Hip Hop'],
-      bio: 'Digging deep into vintage sounds with a modern twist.'
-    }
-    // Add more mock data as needed
-  ],
-  tracks: [
-    {
-      id: 'search-track-1',
-      title: 'Midnight Drive',
-      artist: 'Neon Synth',
-      genre: 'Synthwave',
-      duration: '4:32',
-      plays: 15670,
-      artwork: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop'
-    },
-    {
-      id: 'search-track-2',
-      title: 'Urban Groove',
-      artist: 'Vinyl Soul',
-      genre: 'Hip Hop',
-      duration: '3:45',
-      plays: 8920,
-      artwork: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&h=300&fit=crop'
-    }
-  ],
-  fans: [
-    {
-      id: 'search-fan-1',
-      username: 'beat_hunter',
-      displayName: 'Beat Hunter',
-      accentColor: 'coral',
-      following: 245,
-      followers: 892,
-      bio: 'Always on the hunt for the next underground hit.'
-    },
-    {
-      id: 'search-fan-2',
-      username: 'melody_maven',
-      displayName: 'Melody Maven',
-      accentColor: 'yellow',
-      following: 156,
-      followers: 434,
-      bio: 'Curator of beautiful melodies and hidden gems.'
-    }
-  ],
-  rooms: [
-    {
-      id: 'search-room-1',
-      name: 'Underground Hip Hop',
-      description: 'Raw beats and conscious lyrics from the underground scene',
-      memberCount: 1247,
-      isLive: true,
-      genre: 'Hip Hop'
-    },
-    {
-      id: 'search-room-2',
-      name: 'Synthwave Sessions',
-      description: 'Nostalgic electronic sounds for late night coding',
-      memberCount: 892,
-      isLive: false,
-      genre: 'Electronic'
-    }
-  ],
-  crates: [
-    {
-      id: 'search-crate-1',
-      name: 'Late Night Vibes',
-      description: 'Perfect tracks for those 3am coding sessions',
-      trackCount: 47,
-      creator: 'neon_synth',
-      plays: 2340
-    },
-    {
-      id: 'search-crate-2',
-      name: 'Hip Hop Essentials',
-      description: 'The tracks that defined a generation',
-      trackCount: 33,
-      creator: 'vinyl_soul',
-      plays: 5670
-    }
-  ]
-};
-
-const getInitialBadgeColor = (accentColor) => {
-  const colorMap = {
+const getInitialBadgeColor = (accentColor?: string) => {
+  const colorMap: Record<string, string> = {
     coral: 'bg-accent-coral text-background',
     blue: 'bg-accent-blue text-background',
     mint: 'bg-accent-mint text-background',
     yellow: 'bg-accent-yellow text-background'
   };
-  return colorMap[accentColor] || 'bg-muted text-muted-foreground';
+  return colorMap[accentColor || ''] || 'bg-muted text-muted-foreground';
 };
 
-export function DesktopSearch({ 
-  isOpen, 
-  onClose, 
+interface DesktopSearchProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onViewArtistProfile?: (artist: any) => void;
+  onViewFanProfile?: (user: any) => void;
+  onPlayTrack?: (track: any) => void;
+  onFollowUser?: (user: any) => void;
+  onUnfollowUser?: (userId: string) => void;
+  onJoinRoom?: (room: any) => void;
+  onViewCrate?: (crate: any) => void;
+  currentUser?: any;
+}
+
+export function DesktopSearch({
+  isOpen,
+  onClose,
   onViewArtistProfile,
   onViewFanProfile,
   onPlayTrack,
@@ -147,12 +55,13 @@ export function DesktopSearch({
   onJoinRoom,
   onViewCrate,
   currentUser,
-  mockArtists = [],
-  mockFans = []
-}) {
+}: DesktopSearchProps) {
   const [query, setQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
-  const inputRef = useRef(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'artists' | 'tracks' | 'users' | 'rooms' | 'crates'>('all');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Use the search hook with real API
+  const { results: searchResults, isLoading, error } = useSearch(query, activeTab);
 
   // Auto-focus when dialog opens
   useEffect(() => {
@@ -173,9 +82,9 @@ export function DesktopSearch({
 
   // Keyboard navigation
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (!isOpen) return;
-      
+
       if (event.key === 'Escape') {
         onClose();
       }
@@ -191,53 +100,39 @@ export function DesktopSearch({
     onClose();
   }, [onClose]);
 
-  // Filter results based on query
   const filteredResults = useMemo(() => {
-    if (!query.trim()) return null;
+    if (!searchResults || Object.keys(searchResults).length === 0) return null;
 
-    const searchQuery = query.toLowerCase().trim();
-    
-    const filterByQuery = (items, searchFields) => {
-      return items.filter(item => 
-        searchFields.some(field => {
-          const value = item[field];
-          if (Array.isArray(value)) {
-            return value.some(v => v.toLowerCase().includes(searchQuery));
-          }
-          return value?.toLowerCase().includes(searchQuery);
-        })
-      );
-    };
+    if (activeTab === 'all') return searchResults;
+    return { [activeTab]: searchResults[activeTab] };
+  }, [searchResults, activeTab]);
 
-    return {
-      artists: filterByQuery([...MOCK_SEARCH_DATA.artists, ...mockArtists], ['username', 'displayName', 'bio', 'genres']),
-      tracks: filterByQuery(MOCK_SEARCH_DATA.tracks, ['title', 'artist', 'genre']),
-      fans: filterByQuery([...MOCK_SEARCH_DATA.fans, ...mockFans], ['username', 'displayName', 'bio']),
-      rooms: filterByQuery(MOCK_SEARCH_DATA.rooms, ['name', 'description', 'genre']),
-      crates: filterByQuery(MOCK_SEARCH_DATA.crates, ['name', 'description', 'creator'])
-    };
-  }, [query, mockArtists, mockFans]);
+  const getTotalResults = useCallback(() => {
+    if (!searchResults) return 0;
+    return Object.values(searchResults).reduce((sum: number, arr: any) => sum + (arr?.length || 0), 0);
+  }, [searchResults]);
 
-  const tabs = [
-    { key: 'all', label: 'All', icon: Search },
-    { key: 'tracks', label: 'Tracks', icon: Music },
-    { key: 'artists', label: 'Artists', icon: Mic },
-    { key: 'fans', label: 'Fans', icon: Users },
-    { key: 'rooms', label: 'Rooms', icon: Hash },
-    { key: 'crates', label: 'Crates', icon: User }
-  ];
-
-  const getFilteredResultsByTab = () => {
-    if (!filteredResults) return null;
-    
-    if (activeTab === 'all') return filteredResults;
-    
-    return {
-      [activeTab]: filteredResults[activeTab] || []
-    };
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
   };
 
-  const tabResults = getFilteredResultsByTab();
+  const formatDuration = (seconds?: number) => {
+    if (!seconds) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const tabs = [
+    { key: 'all' as const, label: 'All', icon: Search },
+    { key: 'artists' as const, label: 'Artists', icon: Mic },
+    { key: 'tracks' as const, label: 'Tracks', icon: Music },
+    { key: 'users' as const, label: 'Fans', icon: Users },
+    { key: 'rooms' as const, label: 'Rooms', icon: Hash },
+    { key: 'crates' as const, label: 'Crates', icon: User }
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -305,7 +200,20 @@ export function DesktopSearch({
                   </div>
                 </div>
               </div>
-            ) : !tabResults || Object.values(tabResults).every(arr => arr.length === 0) ? (
+            ) : isLoading ? (
+              // Loading state
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">Searching...</p>
+              </div>
+            ) : error ? (
+              // Error state
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <Search className="w-12 h-12 text-red-500 mb-4" />
+                <h3 className="text-lg font-medium mb-2 text-red-500">Search failed</h3>
+                <p className="text-sm text-muted-foreground">{error}</p>
+              </div>
+            ) : getTotalResults() === 0 ? (
               // No results
               <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                 <Search className="w-12 h-12 text-muted-foreground mb-4" />
@@ -320,22 +228,25 @@ export function DesktopSearch({
                 <div className="px-6 py-3 border-b border-border flex-shrink-0">
                   <div className="flex gap-2 overflow-x-auto scrollbar-hide">
                     {tabs.map(({ key, label, icon: Icon }) => {
-                      const count = tabResults[key]?.length ?? 0;
+                      const count = key === 'all' ? getTotalResults() : (filteredResults?.[key]?.length ?? 0);
                       const isActive = activeTab === key;
-                      
+
+                      // Only show tabs with results (except 'all')
+                      if (key !== 'all' && count === 0) return null;
+
                       return (
                         <button
                           key={key}
                           onClick={() => setActiveTab(key)}
                           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                            isActive 
-                              ? 'bg-accent-coral text-background' 
+                            isActive
+                              ? 'bg-accent-coral text-background'
                               : 'hover:bg-muted/50 text-muted-foreground'
                           }`}
                         >
                           <Icon className="w-4 h-4" />
                           {label}
-                          {key !== 'all' && count > 0 && (
+                          {count > 0 && (
                             <Badge variant="secondary" className="ml-1 text-xs">
                               {count}
                             </Badge>
@@ -351,7 +262,7 @@ export function DesktopSearch({
                   <div className="px-6 py-4 space-y-6 min-h-0">
                     <AnimatePresence mode="wait">
                       {/* Artists */}
-                      {tabResults?.artists?.length > 0 && (
+                      {filteredResults?.artists?.length > 0 && (
                         <motion.div
                           key="artists-section"
                           initial={{ opacity: 0, y: 20 }}
@@ -365,9 +276,9 @@ export function DesktopSearch({
                             </h3>
                           )}
                           <div className="space-y-2">
-                            {tabResults.artists.slice(0, activeTab === 'all' ? 3 : 20).map((artist, index) => (
+                            {filteredResults.artists.slice(0, activeTab === 'all' ? 5 : 20).map((artist: any, index: number) => (
                               <div
-                                key={`artist-${artist.id}-${index}`}
+                                key={`artist-${artist.id || artist.artistProfileId}-${index}`}
                                 className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer group"
                                 onClick={() => {
                                   onViewArtistProfile?.(artist);
@@ -375,16 +286,16 @@ export function DesktopSearch({
                                 }}
                               >
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getInitialBadgeColor(artist.accentColor)} font-black text-sm`}>
-                                  {artist.displayName?.[0] || artist.username?.[0] || '?'}
+                                  {artist.displayName?.[0] || artist.username?.[0] || artist.artistName?.[0] || '?'}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-medium truncate">{artist.displayName || artist.username}</span>
+                                    <span className="font-medium truncate">{artist.displayName || artist.artistName || artist.username}</span>
                                     {artist.verified && <Crown className="w-4 h-4 text-accent-blue shrink-0" />}
                                   </div>
                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <span>{artist.followers?.toLocaleString() || '0'} followers</span>
-                                    {artist.genres && (
+                                    <span>{formatNumber(artist.followers || 0)} followers</span>
+                                    {artist.genres?.length > 0 && (
                                       <>
                                         <span>•</span>
                                         <span className="truncate">{artist.genres.slice(0, 2).join(', ')}</span>
@@ -400,7 +311,7 @@ export function DesktopSearch({
                       )}
 
                       {/* Tracks */}
-                      {tabResults?.tracks?.length > 0 && (
+                      {filteredResults?.tracks?.length > 0 && (
                         <motion.div
                           key="tracks-section"
                           initial={{ opacity: 0, y: 20 }}
@@ -414,7 +325,7 @@ export function DesktopSearch({
                             </h3>
                           )}
                           <div className="space-y-2">
-                            {tabResults.tracks.slice(0, activeTab === 'all' ? 3 : 20).map((track, index) => (
+                            {filteredResults.tracks.slice(0, activeTab === 'all' ? 5 : 20).map((track: any, index: number) => (
                               <div
                                 key={`track-${track.id}-${index}`}
                                 className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer group"
@@ -424,17 +335,22 @@ export function DesktopSearch({
                                   toast.success(`Playing "${track.title}"`);
                                 }}
                               >
-                                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                                  <Music className="w-5 h-5 text-muted-foreground" />
+                                <div
+                                  className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center bg-cover bg-center"
+                                  style={track.artwork ? { backgroundImage: `url(${track.artwork})` } : undefined}
+                                >
+                                  {!track.artwork && <Music className="w-5 h-5 text-muted-foreground" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="font-medium truncate">{track.title}</div>
                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span className="truncate">{track.artist}</span>
-                                    <span>•</span>
-                                    <span>{track.duration}</span>
-                                    <span>•</span>
-                                    <span>{track.plays?.toLocaleString() || '0'} plays</span>
+                                    {track.duration && (
+                                      <>
+                                        <span>•</span>
+                                        <span>{formatDuration(track.duration)}</span>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                                 <Play className="w-4 h-4 text-muted-foreground group-hover:text-accent-coral transition-colors shrink-0" />
@@ -444,21 +360,170 @@ export function DesktopSearch({
                         </motion.div>
                       )}
 
-                      {/* Show more results button for 'all' tab */}
-                      {activeTab === 'all' && Object.values(tabResults).some(arr => arr.length > 3) && (
+                      {/* Users/Fans */}
+                      {filteredResults?.users?.length > 0 && (
                         <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-center pt-4"
+                          key="users-section"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
                         >
-                          <Button
-                            variant="outline"
-                            onClick={() => setActiveTab('tracks')}
-                            className="text-sm"
-                          >
-                            View all results
-                            <ArrowRight className="w-4 h-4 ml-2" />
-                          </Button>
+                          {activeTab === 'all' && (
+                            <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                              <Users className="w-4 h-4" />
+                              Fans
+                            </h3>
+                          )}
+                          <div className="space-y-2">
+                            {filteredResults.users.slice(0, activeTab === 'all' ? 5 : 20).map((user: any, index: number) => (
+                              <div
+                                key={`user-${user.id || user.userId}-${index}`}
+                                className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer group"
+                                onClick={() => {
+                                  onViewFanProfile?.(user);
+                                  handleClose();
+                                }}
+                              >
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getInitialBadgeColor(user.accentColor)} font-black text-sm`}>
+                                  {(user.displayName || user.username)?.[0] || '?'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium truncate">{user.displayName || user.username}</div>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span className="truncate">@{user.username}</span>
+                                    {user.followers !== undefined && user.followers > 0 && (
+                                      <>
+                                        <span>•</span>
+                                        <span>{formatNumber(user.followers)} followers</span>
+                                      </>
+                                    )}
+                                  </div>
+                                  {user.bio && (
+                                    <p className="text-xs text-muted-foreground truncate mt-1">{user.bio}</p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <Button
+                                    size="sm"
+                                    variant={user.isFollowing ? "outline" : "default"}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (user.isFollowing) {
+                                        onUnfollowUser?.(user.id || user.userId);
+                                        toast.success(`Unfollowed @${user.username}`);
+                                      } else {
+                                        onFollowUser?.(user);
+                                        toast.success(`Now following @${user.username}!`);
+                                      }
+                                    }}
+                                    className={user.isFollowing ? "" : "bg-accent-coral text-background hover:bg-accent-coral/90"}
+                                  >
+                                    {user.isFollowing ? 'Unfollow' : 'Follow'}
+                                  </Button>
+                                  <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Rooms */}
+                      {filteredResults?.rooms?.length > 0 && (
+                        <motion.div
+                          key="rooms-section"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                        >
+                          {activeTab === 'all' && (
+                            <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                              <Hash className="w-4 h-4" />
+                              Rooms
+                            </h3>
+                          )}
+                          <div className="space-y-2">
+                            {filteredResults.rooms.slice(0, activeTab === 'all' ? 5 : 20).map((room: any, index: number) => (
+                              <div
+                                key={`room-${room.id}-${index}`}
+                                className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer group"
+                                onClick={() => {
+                                  onJoinRoom?.(room);
+                                  handleClose();
+                                }}
+                              >
+                                <div className="w-10 h-10 bg-accent-blue/20 rounded-lg flex items-center justify-center">
+                                  <Hash className="w-5 h-5 text-accent-blue" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium truncate">{room.name}</div>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span>{formatNumber(room._count?.memberships || room.memberCount || 0)} members</span>
+                                  </div>
+                                  {room.description && (
+                                    <p className="text-xs text-muted-foreground truncate mt-1">{room.description}</p>
+                                  )}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant={room.isJoined ? "outline" : "default"}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onJoinRoom?.(room);
+                                    handleClose();
+                                  }}
+                                  className={room.isJoined ? "" : "bg-accent-blue text-background hover:bg-accent-blue/90"}
+                                >
+                                  {room.isJoined ? 'Joined' : 'Join'}
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Crates */}
+                      {filteredResults?.crates?.length > 0 && (
+                        <motion.div
+                          key="crates-section"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                        >
+                          {activeTab === 'all' && (
+                            <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                              <User className="w-4 h-4" />
+                              Crates
+                            </h3>
+                          )}
+                          <div className="space-y-2">
+                            {filteredResults.crates.slice(0, activeTab === 'all' ? 5 : 20).map((crate: any, index: number) => (
+                              <div
+                                key={`crate-${crate.id}-${index}`}
+                                className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer group"
+                                onClick={() => {
+                                  onViewCrate?.(crate);
+                                  handleClose();
+                                }}
+                              >
+                                <div className="w-10 h-10 bg-accent-mint/20 rounded-lg flex items-center justify-center">
+                                  <User className="w-5 h-5 text-accent-mint" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium truncate">{crate.title || crate.name}</div>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span className="truncate">by @{crate.owner?.username || crate.creator}</span>
+                                    <span>•</span>
+                                    <span>{crate._count?.items || crate.trackCount || 0} tracks</span>
+                                  </div>
+                                  {crate.description && (
+                                    <p className="text-xs text-muted-foreground truncate mt-1">{crate.description}</p>
+                                  )}
+                                </div>
+                                <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                              </div>
+                            ))}
+                          </div>
                         </motion.div>
                       )}
                     </AnimatePresence>

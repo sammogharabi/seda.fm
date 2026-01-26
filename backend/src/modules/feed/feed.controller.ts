@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
   Body,
@@ -21,6 +22,7 @@ import { CommentsService } from './comments.service';
 import { LikesService } from './likes.service';
 import { FollowsService } from './follows.service';
 import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { GetFeedDto } from './dto/get-feed.dto';
 
@@ -74,6 +76,21 @@ export class FeedController {
   async getPost(@Param('id') id: string, @Request() req: any) {
     const userId = req.user.id;
     return this.postsService.getById(id, userId);
+  }
+
+  @Patch('posts/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update own post' })
+  @ApiResponse({ status: 200, description: 'Post updated successfully' })
+  @ApiResponse({ status: 403, description: 'Not authorized' })
+  @ApiResponse({ status: 404, description: 'Post not found' })
+  async updatePost(
+    @Param('id') id: string,
+    @Request() req: any,
+    @Body() dto: UpdatePostDto,
+  ) {
+    const userId = req.user.id;
+    return this.postsService.update(id, userId, dto);
   }
 
   @Delete('posts/:id')

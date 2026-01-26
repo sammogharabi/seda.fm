@@ -195,4 +195,15 @@ export class SessionsService {
       },
     });
   }
+
+  async delete(sessionId: string, userId: string) {
+    const session = await this.prisma.dJSession.findUnique({ where: { id: sessionId } });
+    if (!session) throw new NotFoundException('Session not found');
+    if (session.hostId !== userId) throw new ForbiddenException('Only host can delete session');
+
+    // Delete the session - queue items and votes cascade delete automatically
+    await this.prisma.dJSession.delete({
+      where: { id: sessionId },
+    });
+  }
 }

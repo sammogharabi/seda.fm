@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
 import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 // Standard include for product data in posts
 const productInclude = {
@@ -80,6 +81,28 @@ export class PostsService {
     });
 
     return { ...post, isLiked: !!liked };
+  }
+
+  async update(id: string, userId: string, dto: UpdatePostDto) {
+    const post = await this.prisma.post.findUnique({ where: { id } });
+    if (!post) throw new NotFoundException('Post not found');
+    if (post.deletedAt) throw new NotFoundException('Post not found');
+    if (post.userId !== userId) throw new ForbiddenException('Not authorized to edit this post');
+
+    return this.prisma.post.update({
+      where: { id },
+      data: {
+        content: dto.content,
+        trackRef: dto.trackRef as object | undefined,
+        mediaUrls: dto.mediaUrls,
+        updatedAt: new Date(),
+      },
+      include: {
+        user: userInclude,
+        product: productInclude,
+        _count: { select: { likes: true, comments: true, reposts: true } },
+      },
+    });
   }
 
   async delete(id: string, userId: string) {

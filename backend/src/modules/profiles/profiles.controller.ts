@@ -14,8 +14,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '../../common/guards/auth.guard';
-import { FeatureGuard } from '../../common/guards/feature.guard';
-import { Feature } from '../../common/decorators/feature.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -25,8 +23,7 @@ import { ProfilesService } from './profiles.service';
 
 @ApiTags('profiles')
 @Controller('profiles')
-@UseGuards(AuthGuard, FeatureGuard)
-@Feature('PROFILES')
+@UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class ProfilesController {
   constructor(private readonly profilesService: ProfilesService) {}

@@ -1,15 +1,12 @@
 import { Controller, Get, Query, Request, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '../../common/guards/auth.guard';
-import { FeatureGuard } from '../../common/guards/feature.guard';
-import { Feature } from '../../common/decorators/feature.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { DiscoverService } from './discover.service';
 
 @ApiTags('discover')
 @Controller('discover')
-@UseGuards(AuthGuard, FeatureGuard)
-@Feature('DISCOVER')
+@UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class DiscoverController {
   constructor(private readonly discoverService: DiscoverService) {}

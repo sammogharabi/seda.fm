@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { Card, CardContent } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -13,42 +12,14 @@ import {
   Globe,
   Lock,
   X,
-  Plus,
-  Search,
-  Clock,
-  Star
+  Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Mock data for genres and regions
+// Available genre options
 const GENRES = [
   'Hip Hop', 'Electronic', 'Jazz', 'Rock', 'Pop', 'Indie', 'House', 'Techno',
   'Ambient', 'R&B', 'Alternative', 'Classical', 'Folk', 'Reggae', 'Latin'
-];
-
-// Mock track data for pinned track selection
-const MOCK_TRACKS = [
-  {
-    id: 1,
-    title: 'Blinding Lights',
-    artist: 'The Weeknd',
-    artwork: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtdXNpYyUyMGFsYnVtfGVufDF8fHx8MTc1NTUyMzY3OHww&ixlib=rb-4.1.0&q=80&w=300',
-    duration: '3:20'
-  },
-  {
-    id: 2,
-    title: 'Strobe',
-    artist: 'Deadmau5',
-    artwork: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHw1fHxlbGVjdHJvbmljJTIwbXVzaWN8ZW58MXx8fHwxNzU1NTIzNjc4fDA&ixlib=rb-4.1.0&q=80&w=300',
-    duration: '10:37'
-  },
-  {
-    id: 3,
-    title: 'Miles Runs the Voodoo Down',
-    artist: 'Miles Davis',
-    artwork: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwzfHxtdXNpYyUyMGFsYnVtfGVufDF8fHx8MTc1NTUyMzY3OHww&ixlib=rb-4.1.0&q=80&w=300',
-    duration: '14:03'
-  }
 ];
 
 interface CreateRoomModalProps {
@@ -71,8 +42,6 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
   const [newTag, setNewTag] = useState('');
   const [allowInvites, setAllowInvites] = useState(true);
   const [requireApproval, setRequireApproval] = useState(false);
-  const [pinnedTrack, setPinnedTrack] = useState(null);
-  const [trackSearch, setTrackSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddTag = () => {
@@ -120,7 +89,6 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
           requireApproval: isPrivate ? requireApproval : false,
           isPublic: !isPrivate
         },
-        pinnedTrack: pinnedTrack || null,
         roles: {
           [user.id]: 'owner'
         }
@@ -136,8 +104,6 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
       setNewTag('');
       setAllowInvites(true);
       setRequireApproval(false);
-      setPinnedTrack(null);
-      setTrackSearch('');
       setIsPrivate(false);
       
       onClose();
@@ -149,11 +115,6 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
       setIsSubmitting(false);
     }
   };
-
-  const filteredTracks = MOCK_TRACKS.filter(track =>
-    track.title.toLowerCase().includes(trackSearch.toLowerCase()) ||
-    track.artist.toLowerCase().includes(trackSearch.toLowerCase())
-  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -339,93 +300,6 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
               </div>
             </div>
           )}
-
-          {/* Pinned Track Selection */}
-          <div className="space-y-4">
-            <div>
-              <Label className="text-base font-medium">Pin a Track (Optional)</Label>
-              <p className="text-sm text-muted-foreground">Set the vibe with a track that represents your room</p>
-            </div>
-
-            {!pinnedTrack && (
-              <div>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search for a track to pin..."
-                    value={trackSearch}
-                    onChange={(e) => setTrackSearch(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-
-                {trackSearch && (
-                  <div className="space-y-2 max-h-48 overflow-y-auto mt-2">
-                    {filteredTracks.map((track) => (
-                      <Card 
-                        key={track.id} 
-                        className="cursor-pointer hover:bg-secondary/50 transition-colors" 
-                        onClick={() => setPinnedTrack(track)}
-                      >
-                        <CardContent className="p-3">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={track.artwork}
-                              alt={track.title}
-                              className="w-10 h-10 object-cover border border-foreground/20 rounded"
-                            />
-                            <div className="flex-1">
-                              <h4 className="text-sm font-medium">{track.title}</h4>
-                              <p className="text-xs text-muted-foreground">{track.artist}</p>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Clock className="w-3 h-3" />
-                              {track.duration}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    {filteredTracks.length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-4">No tracks found</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {pinnedTrack && (
-              <Card className="border-accent-mint">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <img
-                        src={pinnedTrack.artwork}
-                        alt={pinnedTrack.title}
-                        className="w-12 h-12 object-cover border border-foreground/20 rounded"
-                      />
-                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center rounded">
-                        <Star className="w-4 h-4 text-accent-yellow fill-current" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium">Pinned Track</h4>
-                      <p className="text-sm text-muted-foreground">{pinnedTrack.title}</p>
-                      <p className="text-xs text-muted-foreground">{pinnedTrack.artist}</p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setPinnedTrack(null)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t border-foreground/10">

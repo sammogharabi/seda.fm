@@ -66,6 +66,8 @@ model User {
   messages             Message[]
   reactions            Reaction[]
   roomMemberships      RoomMembership[]
+  sentRoomInvites      RoomInvite[]       @relation("RoomInviter")
+  receivedRoomInvites  RoomInvite[]       @relation("RoomInvitee")
   mutedUntil           DateTime?          @map("muted_until")
 
   // Wave A relations
@@ -210,6 +212,7 @@ model Room {
   creator        User     @relation("RoomCreator", fields: [createdBy], references: [id], onDelete: Cascade)
   messages       Message[]
   memberships    RoomMembership[]
+  invites        RoomInvite[]
   djSessions     DJSession[]
 
   @@index([isPrivate])
@@ -232,6 +235,33 @@ model RoomMembership {
   @@index([roomId])
   @@index([userId])
   @@map("room_memberships")
+}
+
+model RoomInvite {
+  id        String           @id @default(uuid())
+  roomId    String           @map("room_id")
+  inviterId String           @map("inviter_id")
+  inviteeId String           @map("invitee_id")
+  status    InviteStatus     @default(PENDING)
+  createdAt DateTime         @default(now()) @map("created_at")
+  expiresAt DateTime?        @map("expires_at")
+
+  room    Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  inviter User @relation("RoomInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee User @relation("RoomInvitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, inviteeId])
+  @@index([roomId])
+  @@index([inviteeId])
+  @@index([status])
+  @@map("room_invites")
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
 }
 
 model Message {

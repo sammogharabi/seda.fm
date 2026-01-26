@@ -8,7 +8,7 @@ import { PrismaService } from '../../config/prisma.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { SendMessageDto, SendProductMessageDto } from './dto/send-message.dto';
-import { RoomMemberRole, MessageType } from '@prisma/client';
+import { RoomMemberRole, MessageType, InviteStatus } from '@prisma/client';
 
 // Standard include for product data in messages
 const productInclude = {
@@ -676,5 +676,238 @@ export class RoomsService {
     });
 
     return { message: 'Message deleted successfully' };
+  }
+
+  // ==================== INVITE METHODS ====================
+
+  async inviteUser(roomId: string, inviterId: string, inviteeId: string) {
+    const room = await this.prisma.room.findUnique({
+      where: { id: roomId },
+      include: { memberships: true },
+    });
+
+    if (!room) {
+      throw new NotFoundException('Room not found');
+    }
+
+    // Only allow invites for private rooms
+    if (!room.isPrivate) {
+      throw new BadRequestException('Public rooms do not require invites. Users can join directly.');
+    }
+
+    // Check if inviter is a member (and preferably admin)
+    const inviterMembership = room.memberships.find((m) => m.userId === inviterId);
+    if (!inviterMembership) {
+      throw new ForbiddenException('You must be a member to invite others');
+    }
+
+    // Check if invitee is already a member
+    const isAlreadyMember = room.memberships.some((m) => m.userId === inviteeId);
+    if (isAlreadyMember) {
+      throw new BadRequestException('User is already a member of this room');
+    }
+
+    // Check if invite already exists
+    const existingInvite = await this.prisma.roomInvite.findUnique({
+      where: {
+        roomId_inviteeId: { roomId, inviteeId },
+      },
+    });
+
+    if (existingInvite && existingInvite.status === InviteStatus.PENDING) {
+      throw new BadRequestException('User has already been invited to this room');
+    }
+
+    // Create or update invite
+    const invite = await this.prisma.roomInvite.upsert({
+      where: {
+        roomId_inviteeId: { roomId, inviteeId },
+      },
+      update: {
+        inviterId,
+        status: InviteStatus.PENDING,
+        createdAt: new Date(),
+      },
+      create: {
+        roomId,
+        inviterId,
+        inviteeId,
+        status: InviteStatus.PENDING,
+      },
+      include: {
+        room: {
+          select: { id: true, name: true, description: true },
+        },
+        inviter: {
+          select: {
+            id: true,
+            profile: {
+              select: { username: true, displayName: true, avatarUrl: true },
+            },
+          },
+        },
+        invitee: {
+          select: {
+            id: true,
+            profile: {
+              select: { username: true, displayName: true, avatarUrl: true },
+            },
+          },
+        },
+      },
+    });
+
+    return invite;
+  }
+
+  async getMyInvites(userId: string) {
+    const invites = await this.prisma.roomInvite.findMany({
+      where: {
+        inviteeId: userId,
+        status: InviteStatus.PENDING,
+      },
+      include: {
+        room: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            coverImageUrl: true,
+            _count: { select: { memberships: true } },
+          },
+        },
+        inviter: {
+          select: {
+            id: true,
+            profile: {
+              select: { username: true, displayName: true, avatarUrl: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return invites;
+  }
+
+  async respondToInvite(inviteId: string, userId: string, accept: boolean) {
+    const invite = await this.prisma.roomInvite.findUnique({
+      where: { id: inviteId },
+      include: { room: true },
+    });
+
+    if (!invite) {
+      throw new NotFoundException('Invite not found');
+    }
+
+    if (invite.inviteeId !== userId) {
+      throw new ForbiddenException('This invite is not for you');
+    }
+
+    if (invite.status !== InviteStatus.PENDING) {
+      throw new BadRequestException('This invite has already been responded to');
+    }
+
+    if (accept) {
+      // Accept invite - add user to room and update invite status
+      await this.prisma.$transaction([
+        this.prisma.roomMembership.create({
+          data: {
+            roomId: invite.roomId,
+            userId: userId,
+            role: RoomMemberRole.MEMBER,
+          },
+        }),
+        this.prisma.roomInvite.update({
+          where: { id: inviteId },
+          data: { status: InviteStatus.ACCEPTED },
+        }),
+      ]);
+
+      return { message: 'Invite accepted. You are now a member of the room.', roomId: invite.roomId };
+    } else {
+      // Decline invite
+      await this.prisma.roomInvite.update({
+        where: { id: inviteId },
+        data: { status: InviteStatus.DECLINED },
+      });
+
+      return { message: 'Invite declined.' };
+    }
+  }
+
+  async cancelInvite(inviteId: string, userId: string) {
+    const invite = await this.prisma.roomInvite.findUnique({
+      where: { id: inviteId },
+      include: {
+        room: { include: { memberships: true } },
+      },
+    });
+
+    if (!invite) {
+      throw new NotFoundException('Invite not found');
+    }
+
+    // Only inviter or room admin can cancel
+    const isInviter = invite.inviterId === userId;
+    const isAdmin = invite.room.memberships.some(
+      (m) => m.userId === userId && m.role === RoomMemberRole.ADMIN,
+    );
+
+    if (!isInviter && !isAdmin) {
+      throw new ForbiddenException('You cannot cancel this invite');
+    }
+
+    await this.prisma.roomInvite.delete({
+      where: { id: inviteId },
+    });
+
+    return { message: 'Invite cancelled' };
+  }
+
+  async getRoomInvites(roomId: string, userId: string) {
+    const room = await this.prisma.room.findUnique({
+      where: { id: roomId },
+      include: { memberships: true },
+    });
+
+    if (!room) {
+      throw new NotFoundException('Room not found');
+    }
+
+    // Only members can see invites
+    const isMember = room.memberships.some((m) => m.userId === userId);
+    if (!isMember) {
+      throw new ForbiddenException('You must be a member to view invites');
+    }
+
+    const invites = await this.prisma.roomInvite.findMany({
+      where: {
+        roomId,
+        status: InviteStatus.PENDING,
+      },
+      include: {
+        inviter: {
+          select: {
+            id: true,
+            profile: {
+              select: { username: true, displayName: true, avatarUrl: true },
+            },
+          },
+        },
+        invitee: {
+          select: {
+            id: true,
+            profile: {
+              select: { username: true, displayName: true, avatarUrl: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return invites;
   }
 }

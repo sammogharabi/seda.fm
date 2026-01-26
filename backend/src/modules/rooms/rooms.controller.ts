@@ -32,6 +32,8 @@ interface AuthRequest extends Request {
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
+  // ==================== NON-PARAMETERIZED ROUTES FIRST ====================
+
   @Post()
   async createRoom(
     @Req() req: AuthRequest,
@@ -44,6 +46,35 @@ export class RoomsController {
   async getAllRooms(@Req() req: AuthRequest) {
     return this.roomsService.getAllRooms(req.user.id);
   }
+
+  // ==================== INVITE ROUTES (before :id routes) ====================
+
+  // Get all my pending invites
+  @Get('invites/mine')
+  async getMyInvites(@Req() req: AuthRequest) {
+    return this.roomsService.getMyInvites(req.user.id);
+  }
+
+  // Accept or decline an invite
+  @Post('invites/:inviteId/respond')
+  async respondToInvite(
+    @Param('inviteId') inviteId: string,
+    @Req() req: AuthRequest,
+    @Body() body: { accept: boolean },
+  ) {
+    return this.roomsService.respondToInvite(inviteId, req.user.id, body.accept);
+  }
+
+  // Cancel an invite
+  @Delete('invites/:inviteId')
+  async cancelInvite(
+    @Param('inviteId') inviteId: string,
+    @Req() req: AuthRequest,
+  ) {
+    return this.roomsService.cancelInvite(inviteId, req.user.id);
+  }
+
+  // ==================== ROOM :id ROUTES ====================
 
   @Get(':id')
   async getRoomById(@Param('id') id: string, @Req() req: AuthRequest) {
@@ -72,6 +103,22 @@ export class RoomsController {
   @Post(':id/leave')
   async leaveRoom(@Param('id') id: string, @Req() req: AuthRequest) {
     return this.roomsService.leaveRoom(id, req.user.id);
+  }
+
+  // Invite a user to a room
+  @Post(':id/invites')
+  async inviteUser(
+    @Param('id') roomId: string,
+    @Req() req: AuthRequest,
+    @Body() body: { userId: string },
+  ) {
+    return this.roomsService.inviteUser(roomId, req.user.id, body.userId);
+  }
+
+  // Get pending invites for a room
+  @Get(':id/invites')
+  async getRoomInvites(@Param('id') roomId: string, @Req() req: AuthRequest) {
+    return this.roomsService.getRoomInvites(roomId, req.user.id);
   }
 
   @Post(':id/messages')

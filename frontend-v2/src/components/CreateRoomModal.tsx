@@ -8,22 +8,15 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
 import { Badge } from './ui/badge';
-import { RoomTypeTabs } from './RoomTypeTabs';
-import { 
-  Hash,
-  User,
+import {
   Crown,
-  Music,
   Globe,
   Lock,
   X,
   Plus,
   Search,
-  Play,
   Clock,
   MapPin,
-  Users,
-  Volume2,
   Star
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -75,11 +68,10 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
   if (!user) {
     return null;
   }
-  const [roomType, setRoomType] = useState('public');
+  const [isPrivate, setIsPrivate] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('');
-  const [artistName, setArtistName] = useState('');
   const [customTags, setCustomTags] = useState([]);
   const [newTag, setNewTag] = useState('');
   const [region, setRegion] = useState('Global');
@@ -113,16 +105,6 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
       return;
     }
 
-    if (roomType === 'genre' && !selectedGenre) {
-      toast.error('Please select a genre for your room');
-      return;
-    }
-
-    if (roomType === 'artist' && !artistName.trim()) {
-      toast.error('Please enter an artist name');
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -130,7 +112,8 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
         id: `#${roomName.toLowerCase().replace(/\s+/g, '-')}`,
         name: roomName,
         description: description.trim(),
-        type: roomType,
+        isPrivate,
+        genre: selectedGenre || null,
         owner: user,
         members: [user],
         memberCount: 1,
@@ -138,13 +121,11 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
         unreadCount: 0,
         createdAt: new Date(),
         settings: {
-          genre: roomType === 'genre' ? selectedGenre : null,
-          artist: roomType === 'artist' ? artistName : null,
           tags: customTags,
           region,
           allowInvites,
-          requireApproval: roomType === 'private' ? true : requireApproval,
-          isPublic: roomType === 'public'
+          requireApproval: isPrivate ? true : requireApproval,
+          isPublic: !isPrivate
         },
         pinnedTrack: pinnedTrack || null,
         roles: {
@@ -158,7 +139,6 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
       setRoomName('');
       setDescription('');
       setSelectedGenre('');
-      setArtistName('');
       setCustomTags([]);
       setNewTag('');
       setRegion('Global');
@@ -166,7 +146,7 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
       setRequireApproval(false);
       setPinnedTrack(null);
       setTrackSearch('');
-      setRoomType('public');
+      setIsPrivate(false);
       
       onClose();
       toast.success('Room created successfully! Welcome to your new space.');
@@ -182,26 +162,6 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
     track.title.toLowerCase().includes(trackSearch.toLowerCase()) ||
     track.artist.toLowerCase().includes(trackSearch.toLowerCase())
   );
-
-  const getRoomTypeIcon = (type) => {
-    switch (type) {
-      case 'public': return Globe;
-      case 'genre': return Hash;
-      case 'artist': return User;
-      case 'private': return Lock;
-      default: return Hash;
-    }
-  };
-
-  const getRoomTypeColor = (type) => {
-    switch (type) {
-      case 'public': return 'accent-mint';
-      case 'genre': return 'accent-blue';
-      case 'artist': return 'accent-coral';
-      case 'private': return 'accent-yellow';
-      default: return 'accent-mint';
-    }
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -230,11 +190,33 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
             </div>
           </div>
 
-          {/* Room Type Selection */}
-          <RoomTypeTabs
-            roomType={roomType}
-            onRoomTypeChange={setRoomType}
-          />
+          {/* Public/Private Toggle */}
+          <div className="flex items-center justify-between p-4 bg-secondary/30 border border-foreground/10 rounded-lg">
+            <div className="flex items-center gap-3">
+              {isPrivate ? (
+                <div className="w-10 h-10 bg-accent-yellow/20 text-accent-yellow flex items-center justify-center rounded-lg">
+                  <Lock className="w-5 h-5" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 bg-accent-mint/20 text-accent-mint flex items-center justify-center rounded-lg">
+                  <Globe className="w-5 h-5" />
+                </div>
+              )}
+              <div>
+                <p className="font-medium">{isPrivate ? 'Private Room' : 'Public Room'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {isPrivate
+                    ? 'Only invited members can join this room'
+                    : 'Anyone can discover and join this room'}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={isPrivate}
+              onCheckedChange={setIsPrivate}
+              className="data-[state=checked]:bg-accent-yellow"
+            />
+          </div>
 
           {/* Room Details */}
           <div className="space-y-4">
@@ -253,42 +235,25 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
               </p>
             </div>
 
-            {/* Genre Selection for Genre Rooms */}
-            {roomType === 'genre' && (
-              <div>
-                <Label htmlFor="genre-select">Primary Genre *</Label>
-                <Select value={selectedGenre} onValueChange={setSelectedGenre}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select a genre" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GENRES.map((genre) => (
-                      <SelectItem key={genre} value={genre}>
-                        {genre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Artist Name for Artist Rooms */}
-            {roomType === 'artist' && (
-              <div>
-                <Label htmlFor="artist-name">Artist Name *</Label>
-                <Input
-                  id="artist-name"
-                  placeholder="e.g., Flume, Deadmau5, Billie Eilish"
-                  value={artistName}
-                  onChange={(e) => setArtistName(e.target.value)}
-                  maxLength={100}
-                  className="mt-1"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Unofficial rooms can be claimed by verified artists later
-                </p>
-              </div>
-            )}
+            {/* Genre Selection */}
+            <div>
+              <Label htmlFor="genre-select">Genre (Optional)</Label>
+              <Select value={selectedGenre} onValueChange={setSelectedGenre}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select a genre" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GENRES.map((genre) => (
+                    <SelectItem key={genre} value={genre}>
+                      {genre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Help people discover your room by genre
+              </p>
+            </div>
 
             <div>
               <Label htmlFor="description">Description *</Label>
@@ -387,7 +352,7 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
                 </div>
               </div>
 
-              {roomType !== 'private' && (
+              {!isPrivate && (
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="require-approval" className="font-normal">Require Join Approval</Label>

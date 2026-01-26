@@ -116,8 +116,8 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
         createdAt: new Date(),
         settings: {
           tags: customTags,
-          allowInvites: isPrivate ? false : allowInvites,
-          requireApproval: isPrivate ? true : requireApproval,
+          allowInvites: isPrivate ? allowInvites : true,
+          requireApproval: isPrivate ? requireApproval : false,
           isPublic: !isPrivate
         },
         pinnedTrack: pinnedTrack || null,
@@ -305,8 +305,8 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
             </div>
           </div>
 
-          {/* Room Settings - Only show for public rooms */}
-          {!isPrivate && (
+          {/* Room Settings - Only show for private rooms */}
+          {isPrivate && (
             <div className="space-y-4">
               <Label className="text-base font-medium">Room Settings</Label>
 

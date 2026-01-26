@@ -7,6 +7,7 @@ import { http, buildQueryString } from './http';
 import type {
   Room,
   RoomMembership,
+  RoomInvite,
   RoomMessage,
   CreateRoomDto,
   UpdateRoomDto,
@@ -83,5 +84,48 @@ export const roomsApi = {
       limit: options?.limit,
     });
     return http.get<GetMessagesResponse>(`/rooms/${id}/messages${query}`);
+  },
+
+  // ==================== INVITE METHODS ====================
+
+  /**
+   * Invite a user to a private room
+   */
+  async inviteUser(roomId: string, userId: string): Promise<RoomInvite> {
+    return http.post<RoomInvite>(`/rooms/${roomId}/invites`, { userId });
+  },
+
+  /**
+   * Get all my pending invites
+   */
+  async getMyInvites(): Promise<RoomInvite[]> {
+    return http.get<RoomInvite[]>('/rooms/invites/mine');
+  },
+
+  /**
+   * Get pending invites for a room (members only)
+   */
+  async getRoomInvites(roomId: string): Promise<RoomInvite[]> {
+    return http.get<RoomInvite[]>(`/rooms/${roomId}/invites`);
+  },
+
+  /**
+   * Accept or decline an invite
+   */
+  async respondToInvite(
+    inviteId: string,
+    accept: boolean
+  ): Promise<{ message: string; roomId?: string }> {
+    return http.post<{ message: string; roomId?: string }>(
+      `/rooms/invites/${inviteId}/respond`,
+      { accept }
+    );
+  },
+
+  /**
+   * Cancel an invite (inviter or admin only)
+   */
+  async cancelInvite(inviteId: string): Promise<{ message: string }> {
+    return http.delete<{ message: string }>(`/rooms/invites/${inviteId}`);
   },
 };

@@ -405,6 +405,41 @@ export interface RoomMembership {
   };
 }
 
+export interface RoomInvite {
+  id: string;
+  roomId: string;
+  inviterId: string;
+  inviteeId: string;
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED';
+  createdAt: string;
+  expiresAt?: string;
+  room: {
+    id: string;
+    name: string;
+    description?: string;
+    coverImageUrl?: string;
+    _count?: {
+      memberships: number;
+    };
+  };
+  inviter: {
+    id: string;
+    profile?: {
+      username: string;
+      displayName?: string;
+      avatarUrl?: string;
+    };
+  };
+  invitee?: {
+    id: string;
+    profile?: {
+      username: string;
+      displayName?: string;
+      avatarUrl?: string;
+    };
+  };
+}
+
 export interface RoomMessage {
   id: string;
   roomId: string;

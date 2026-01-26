@@ -32,6 +32,8 @@ import {
 import { Input } from './ui/input';
 import { toast } from 'sonner';
 import { roomsApi, type Room } from '../lib/api';
+import { RoomInvites } from './RoomInvites';
+import { InviteUserDialog } from './InviteUserDialog';
 
 // Mock data for discoverable rooms that user hasn't joined yet
 const DISCOVERABLE_ROOMS = [
@@ -376,6 +378,7 @@ export function RoomsView({
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [inviteDialogRoom, setInviteDialogRoom] = useState<Room | null>(null);
 
   // Fetch rooms from API on mount
   useEffect(() => {
@@ -476,9 +479,19 @@ export function RoomsView({
       if (onJoinRoom) {
         onJoinRoom(room);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error joining room:', error);
-      toast.error(`Failed to join ${room.name}. Please try again.`);
+
+      // Handle private room error specifically
+      const errorMessage = error?.response?.data?.message || error?.message || '';
+      if (errorMessage.includes('private') || errorMessage.includes('invite')) {
+        toast.error(`${room.name} is a private room. You need an invite to join.`, {
+          description: 'Ask the room owner to send you an invite.',
+          duration: 5000
+        });
+      } else {
+        toast.error(`Failed to join ${room.name}. Please try again.`);
+      }
     } finally {
       // Remove from joining state
       setJoiningRooms(prev => {
@@ -487,6 +500,11 @@ export function RoomsView({
         return newSet;
       });
     }
+  };
+
+  const handleOpenInviteDialog = (room: Room, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setInviteDialogRoom(room);
   };
 
   const handlePlayPinnedTrack = (track: any, e: React.MouseEvent) => {
@@ -576,24 +594,40 @@ export function RoomsView({
 
           <div className="flex items-center gap-1">
             {isUserMemberOfRoom(room) ? (
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
-                <Settings className="w-3 h-3 mr-1" />
-                {isUserOwnerOfRoom(room) ? 'Manage' : 'Settings'}
-              </Button>
+              <>
+                {isUserOwnerOfRoom(room) && room.isPrivate && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-xs border-accent-yellow text-accent-yellow hover:bg-accent-yellow/10"
+                    onClick={(e) => handleOpenInviteDialog(room, e)}
+                  >
+                    <UserPlus className="w-3 h-3 mr-1" />
+                    Invite
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                  <Settings className="w-3 h-3 mr-1" />
+                  {isUserOwnerOfRoom(room) ? 'Manage' : 'Settings'}
+                </Button>
+              </>
             ) : (
               <Button
                 variant="default"
                 size="sm"
                 className="h-6 px-3 text-xs bg-accent-mint text-background hover:bg-accent-mint/90"
                 onClick={(e) => handleJoinRoom(room, e)}
-                disabled={joiningRooms.has(room.id)}
+                disabled={joiningRooms.has(room.id) || room.isPrivate}
+                title={room.isPrivate ? 'This room requires an invite' : undefined}
               >
                 {joiningRooms.has(room.id) ? (
                   <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                ) : room.isPrivate ? (
+                  <Crown className="w-3 h-3 mr-1" />
                 ) : (
                   <UserPlus className="w-3 h-3 mr-1" />
                 )}
-                {joiningRooms.has(room.id) ? 'Joining...' : 'Join'}
+                {joiningRooms.has(room.id) ? 'Joining...' : room.isPrivate ? 'Invite Only' : 'Join'}
               </Button>
             )}
           </div>
@@ -636,9 +670,22 @@ export function RoomsView({
 
         <div className="flex items-center gap-2">
           {isUserOwnerOfRoom(room) ? (
-            <Badge className="bg-accent-coral/20 text-accent-coral text-xs">
-              Owner
-            </Badge>
+            <>
+              {room.isPrivate && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-xs border-accent-yellow text-accent-yellow hover:bg-accent-yellow/10"
+                  onClick={(e) => handleOpenInviteDialog(room, e)}
+                >
+                  <UserPlus className="w-3 h-3 mr-1" />
+                  Invite
+                </Button>
+              )}
+              <Badge className="bg-accent-coral/20 text-accent-coral text-xs">
+                Owner
+              </Badge>
+            </>
           ) : isUserMemberOfRoom(room) ? (
             <Badge variant="secondary" className="text-xs">
               Member
@@ -649,14 +696,17 @@ export function RoomsView({
               size="sm"
               className="h-6 px-3 text-xs bg-accent-mint text-background hover:bg-accent-mint/90"
               onClick={(e) => handleJoinRoom(room, e)}
-              disabled={joiningRooms.has(room.id)}
+              disabled={joiningRooms.has(room.id) || room.isPrivate}
+              title={room.isPrivate ? 'This room requires an invite' : undefined}
             >
               {joiningRooms.has(room.id) ? (
                 <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              ) : room.isPrivate ? (
+                <Crown className="w-3 h-3 mr-1" />
               ) : (
                 <UserPlus className="w-3 h-3 mr-1" />
               )}
-              {joiningRooms.has(room.id) ? 'Joining...' : 'Join'}
+              {joiningRooms.has(room.id) ? 'Joining...' : room.isPrivate ? 'Invite Only' : 'Join'}
             </Button>
           )}
         </div>
@@ -922,8 +972,36 @@ export function RoomsView({
               )}
             </>
           )}
+
+          {/* Pending Room Invites Section */}
+          {filterType === 'all' && (
+            <div className="mt-8">
+              <RoomInvites
+                onAccept={(roomId) => {
+                  // Refresh rooms to show the newly joined room
+                  roomsApi.getAll().then(fetchedRooms => {
+                    setRooms(Array.isArray(fetchedRooms) ? fetchedRooms : []);
+                  });
+                  // Optionally navigate to the room
+                  onRoomSelect(roomId);
+                }}
+              />
+            </div>
+          )}
         </div>
       </ScrollArea>
+
+      {/* Invite User Dialog */}
+      {inviteDialogRoom && (
+        <InviteUserDialog
+          isOpen={!!inviteDialogRoom}
+          onClose={() => setInviteDialogRoom(null)}
+          room={inviteDialogRoom}
+          onInviteSent={() => {
+            // Could refresh room data if needed
+          }}
+        />
+      )}
     </div>
   );
 }

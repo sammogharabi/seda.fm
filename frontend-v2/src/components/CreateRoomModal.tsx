@@ -16,19 +16,14 @@ import {
   Plus,
   Search,
   Clock,
-  MapPin,
   Star
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Mock data for genres and regions
 const GENRES = [
-  'Hip Hop', 'Electronic', 'Jazz', 'Rock', 'Pop', 'Indie', 'House', 'Techno', 
+  'Hip Hop', 'Electronic', 'Jazz', 'Rock', 'Pop', 'Indie', 'House', 'Techno',
   'Ambient', 'R&B', 'Alternative', 'Classical', 'Folk', 'Reggae', 'Latin'
-];
-
-const REGIONS = [
-  'Global', 'North America', 'Europe', 'Asia', 'South America', 'Africa', 'Oceania'
 ];
 
 // Mock track data for pinned track selection
@@ -74,7 +69,6 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
   const [selectedGenre, setSelectedGenre] = useState('');
   const [customTags, setCustomTags] = useState([]);
   const [newTag, setNewTag] = useState('');
-  const [region, setRegion] = useState('Global');
   const [allowInvites, setAllowInvites] = useState(true);
   const [requireApproval, setRequireApproval] = useState(false);
   const [pinnedTrack, setPinnedTrack] = useState(null);
@@ -122,8 +116,7 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
         createdAt: new Date(),
         settings: {
           tags: customTags,
-          region,
-          allowInvites,
+          allowInvites: isPrivate ? false : allowInvites,
           requireApproval: isPrivate ? true : requireApproval,
           isPublic: !isPrivate
         },
@@ -141,7 +134,6 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
       setSelectedGenre('');
       setCustomTags([]);
       setNewTag('');
-      setRegion('Global');
       setAllowInvites(true);
       setRequireApproval(false);
       setPinnedTrack(null);
@@ -311,48 +303,28 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
                 Add up to 5 tags to help people discover your room
               </p>
             </div>
-
-            {/* Region Selection */}
-            <div>
-              <Label htmlFor="region-select">Region</Label>
-              <Select value={region} onValueChange={setRegion}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {REGIONS.map((regionOption) => (
-                    <SelectItem key={regionOption} value={regionOption}>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        {regionOption}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
-          {/* Room Settings */}
-          <div className="space-y-4">
-            <Label className="text-base font-medium">Room Settings</Label>
-            
-            <div className="space-y-3">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="allow-invites" className="font-normal">Allow Member Invites</Label>
-                  <p className="text-sm text-muted-foreground">Let members invite their friends</p>
-                </div>
-                <div className="flex-shrink-0 self-start pt-1">
-                  <Switch
-                    id="allow-invites"
-                    checked={allowInvites}
-                    onCheckedChange={setAllowInvites}
-                  />
-                </div>
-              </div>
+          {/* Room Settings - Only show for public rooms */}
+          {!isPrivate && (
+            <div className="space-y-4">
+              <Label className="text-base font-medium">Room Settings</Label>
 
-              {!isPrivate && (
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="allow-invites" className="font-normal">Allow Member Invites</Label>
+                    <p className="text-sm text-muted-foreground">Let members invite their friends</p>
+                  </div>
+                  <div className="flex-shrink-0 self-start pt-1">
+                    <Switch
+                      id="allow-invites"
+                      checked={allowInvites}
+                      onCheckedChange={setAllowInvites}
+                    />
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="require-approval" className="font-normal">Require Join Approval</Label>
@@ -364,9 +336,9 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
                     onCheckedChange={setRequireApproval}
                   />
                 </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Pinned Track Selection */}
           <div className="space-y-4">

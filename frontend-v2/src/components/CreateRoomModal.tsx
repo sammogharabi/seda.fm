@@ -15,6 +15,7 @@ import {
   Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { roomsApi } from '../lib/api';
 
 // Available genre options
 const GENRES = [
@@ -71,30 +72,15 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom, user }: CreateR
     setIsSubmitting(true);
 
     try {
-      const newRoom = {
-        id: `#${roomName.toLowerCase().replace(/\s+/g, '-')}`,
-        name: roomName,
+      // Call the backend API to create the room
+      const createdRoom = await roomsApi.create({
+        name: roomName.trim(),
         description: description.trim(),
         isPrivate,
-        genre: selectedGenre || null,
-        owner: user,
-        members: [user],
-        memberCount: 1,
-        isActive: true,
-        unreadCount: 0,
-        createdAt: new Date(),
-        settings: {
-          tags: customTags,
-          allowInvites: isPrivate ? allowInvites : true,
-          requireApproval: isPrivate ? requireApproval : false,
-          isPublic: !isPrivate
-        },
-        roles: {
-          [user.id]: 'owner'
-        }
-      };
+        genre: selectedGenre || undefined,
+      });
 
-      onCreateRoom(newRoom);
+      onCreateRoom(createdRoom);
       
       // Reset form
       setRoomName('');

@@ -29,6 +29,8 @@ import { Comments } from './Comments';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { roomsApi, type Room, type RoomMessage } from '../lib/api';
+import { extractLinksFromText } from '../utils/linkParser';
+import { LinkPreview } from './LinkPreview';
 
 // Helper function to get accent color classes
 const getAccentClasses = (color) => {
@@ -464,6 +466,28 @@ export function RoomView({ roomId, user, onNowPlaying, viewMode = 'member', onJo
                     )}
                   </p>
                 </div>
+
+                {/* Link Previews (YouTube, Spotify, etc.) */}
+                {(() => {
+                  const { links: detectedLinks } = extractLinksFromText(content);
+                  if (detectedLinks.length > 0) {
+                    return (
+                      <div className="mt-4 space-y-3">
+                        {detectedLinks.map((link, index) => (
+                          <div key={`${post.id}-link-${index}`}>
+                            <LinkPreview
+                              link={link}
+                              onPlay={link.isPlayable ? () => {
+                                window.open(link.url, '_blank');
+                              } : undefined}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             )}
 

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import axios from 'axios';
 
 export interface LinkMetadata {
   type: 'youtube' | 'spotify' | 'soundcloud' | 'bandcamp' | 'apple_music' | 'generic';
@@ -62,20 +63,13 @@ export class UnfurlService {
     try {
       // Use YouTube's oEmbed API (no API key required)
       const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
-      const response = await fetch(oembedUrl);
-
-      if (!response.ok) {
-        this.logger.warn(`YouTube oEmbed failed for ${videoId}: ${response.status}`);
-        return this.createBasicYouTubeMetadata(videoId, url);
-      }
-
-      const data = await response.json();
+      const response = await axios.get(oembedUrl);
 
       return {
         type: 'youtube',
         url,
-        title: data.title,
-        artist: data.author_name,
+        title: response.data.title,
+        artist: response.data.author_name,
         thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
         platform: 'YouTube',
         embedId: videoId,
@@ -108,26 +102,13 @@ export class UnfurlService {
     // Spotify requires OAuth for metadata, so we'll use oEmbed
     try {
       const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
-      const response = await fetch(oembedUrl);
-
-      if (!response.ok) {
-        return {
-          type: 'spotify',
-          url,
-          title: `Spotify ${contentType}`,
-          platform: 'Spotify',
-          embedId: spotifyId,
-          isPlayable: false,
-        };
-      }
-
-      const data = await response.json();
+      const response = await axios.get(oembedUrl);
 
       return {
         type: 'spotify',
         url,
-        title: data.title,
-        thumbnail: data.thumbnail_url,
+        title: response.data.title,
+        thumbnail: response.data.thumbnail_url,
         platform: 'Spotify',
         embedId: spotifyId,
         isPlayable: false, // Spotify requires their app/web player
@@ -149,26 +130,14 @@ export class UnfurlService {
     try {
       // SoundCloud oEmbed
       const oembedUrl = `https://soundcloud.com/oembed?url=${encodeURIComponent(url)}&format=json`;
-      const response = await fetch(oembedUrl);
-
-      if (!response.ok) {
-        return {
-          type: 'soundcloud',
-          url,
-          title: 'SoundCloud Track',
-          platform: 'SoundCloud',
-          isPlayable: true,
-        };
-      }
-
-      const data = await response.json();
+      const response = await axios.get(oembedUrl);
 
       return {
         type: 'soundcloud',
         url,
-        title: data.title,
-        artist: data.author_name,
-        thumbnail: data.thumbnail_url,
+        title: response.data.title,
+        artist: response.data.author_name,
+        thumbnail: response.data.thumbnail_url,
         platform: 'SoundCloud',
         isPlayable: true,
       };

@@ -482,9 +482,18 @@ export function RoomsView({
     } catch (error: any) {
       console.error('Error joining room:', error);
 
-      // Handle private room error specifically
       const errorMessage = error?.response?.data?.message || error?.message || '';
-      if (errorMessage.includes('private') || errorMessage.includes('invite')) {
+
+      // Handle "already a member" - treat as success and refresh data
+      if (errorMessage.toLowerCase().includes('already a member')) {
+        const fetchedRooms = await roomsApi.getAll();
+        setRooms(Array.isArray(fetchedRooms) ? fetchedRooms : []);
+        toast.success(`You're already a member of ${room.name}`);
+        if (onJoinRoom) {
+          onJoinRoom(room);
+        }
+      } else if (errorMessage.includes('private') || errorMessage.includes('invite')) {
+        // Handle private room error specifically
         toast.error(`${room.name} is a private room. You need an invite to join.`, {
           description: 'Ask the room owner to send you an invite.',
           duration: 5000

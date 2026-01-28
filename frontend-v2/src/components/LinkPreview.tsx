@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { 
-  Play, 
-  Pause, 
-  ExternalLink, 
-  Clock, 
+import {
+  Play,
+  Pause,
+  ExternalLink,
+  Clock,
   DollarSign,
   Volume2,
-  Download
+  Download,
+  Loader2
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { LinkMetadata, getPlatformColor, getPlatformIcon } from '../utils/linkParser';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { unfurlApi } from '../lib/api/unfurl';
 
 interface LinkPreviewProps {
   link: LinkMetadata;
@@ -22,8 +24,36 @@ interface LinkPreviewProps {
   className?: string;
 }
 
-export function LinkPreview({ link, onPlay, isPlaying = false, className = '' }: LinkPreviewProps) {
+export function LinkPreview({ link: initialLink, onPlay, isPlaying = false, className = '' }: LinkPreviewProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [link, setLink] = useState<LinkMetadata>(initialLink);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch real metadata for links that need it
+  useEffect(() => {
+    const shouldFetchMetadata =
+      !initialLink.title ||
+      initialLink.title === 'YouTube Video' ||
+      initialLink.title === 'Spotify track' ||
+      initialLink.title === 'SoundCloud Track' ||
+      initialLink.title === 'Bandcamp Track';
+
+    if (shouldFetchMetadata && initialLink.url) {
+      setIsLoading(true);
+      unfurlApi.unfurl(initialLink.url)
+        .then((metadata) => {
+          if (metadata) {
+            setLink({ ...initialLink, ...metadata });
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to fetch link metadata:', error);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [initialLink.url]);
   
   const handlePlayClick = () => {
     if (onPlay) {
@@ -40,14 +70,18 @@ export function LinkPreview({ link, onPlay, isPlaying = false, className = '' }:
     <Card className={`overflow-hidden border border-foreground/10 hover:border-foreground/20 transition-all ${className}`}>
       <CardContent className="p-0">
         <div className="aspect-video relative bg-muted">
-          {link.thumbnail && (
+          {isLoading ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : link.thumbnail ? (
             <ImageWithFallback
               src={link.thumbnail}
               alt={link.title || 'Video thumbnail'}
               className="w-full h-full object-cover"
               onLoad={() => setImageLoaded(true)}
             />
-          )}
+          ) : null}
           
           {/* Play button overlay */}
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">

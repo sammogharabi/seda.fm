@@ -16,6 +16,7 @@ export { progressionApi } from './progression';
 export { sessionsApi } from './sessions';
 export { roomsApi } from './rooms';
 export { messagesApi } from './messages';
+export { unfurlApi } from './unfurl';
 
 // Import all APIs for convenience
 import { feedApi } from './feed';
@@ -28,6 +29,7 @@ import { progressionApi } from './progression';
 import { sessionsApi } from './sessions';
 import { roomsApi } from './rooms';
 import { messagesApi } from './messages';
+import { unfurlApi } from './unfurl';
 
 /**
  * Combined API client object
@@ -44,4 +46,5 @@ export const api = {
   sessions: sessionsApi,
   rooms: roomsApi,
   messages: messagesApi,
+  unfurl: unfurlApi,
 };

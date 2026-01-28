@@ -31,6 +31,7 @@ import { DirectMessagesModule } from './modules/direct-messages/direct-messages.
 import { NotificationModule } from './modules/notification/notification.module';
 import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
 import { StreamingModule } from './modules/streaming/streaming.module';
+import { UnfurlModule } from './modules/unfurl/unfurl.module';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { StreamingModule } from './modules/streaming/streaming.module';
     NotificationModule,
     AdminAuthModule,
     StreamingModule,
+    UnfurlModule,
   ],
   controllers: [],
   providers: [

@@ -20,7 +20,10 @@ import {
   Link2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { searchTracks, getStreamingConnections, getSpotifyConnectUrl, getTrack, formatDuration, getHighResArtwork } from '../lib/api/streaming';
+import { searchTracks, getStreamingConnections, getSpotifyConnectUrl, getTidalConnectUrl, getTrack, formatDuration, getHighResArtwork, getAppleMusicDeveloperToken, connectAppleMusic } from '../lib/api/streaming';
+
+// MusicKit is loaded globally from Apple's CDN
+declare const MusicKit: any;
 
 // Platform icons/colors
 const PLATFORMS = {
@@ -94,11 +97,14 @@ export function AddToQueueModal({ isOpen, onClose, onAddTrack, sessionTitle }: A
   const [connections, setConnections] = useState<{
     spotify: StreamingConnection;
     appleMusic: StreamingConnection;
+    tidal: StreamingConnection;
   }>({
     spotify: { connected: false },
-    appleMusic: { connected: false }
+    appleMusic: { connected: false },
+    tidal: { connected: false }
   });
   const [loadingConnections, setLoadingConnections] = useState(true);
+  const [connectingAppleMusic, setConnectingAppleMusic] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -110,7 +116,8 @@ export function AddToQueueModal({ isOpen, onClose, onAddTrack, sessionTitle }: A
         const data = await getStreamingConnections();
         setConnections({
           spotify: data.spotify || { connected: false },
-          appleMusic: data.appleMusic || { connected: false }
+          appleMusic: data.appleMusic || { connected: false },
+          tidal: data.tidal || { connected: false }
         });
       } catch (error) {
         console.error('[AddToQueueModal] Failed to fetch connections:', error);
@@ -339,13 +346,18 @@ export function AddToQueueModal({ isOpen, onClose, onAddTrack, sessionTitle }: A
     const platformData = PLATFORMS[platform];
     const Icon = platformData.icon;
 
-    // Check connection status for Spotify and Apple Music
-    const isConnected = platform === 'spotify'
-      ? connections.spotify.connected
-      : platform === 'apple'
-      ? connections.appleMusic.connected
-      : false;
-    const showConnectionWarning = (platform === 'spotify' || platform === 'apple') && !isConnected && !loadingConnections;
+    // Check connection status for platforms that require OAuth
+    const getConnectionStatus = () => {
+      if (platform === 'spotify') return connections.spotify.connected;
+      if (platform === 'apple') return connections.appleMusic.connected;
+      if (platform === 'tidal') return connections.tidal.connected;
+      // Bandcamp and Beatport don't require OAuth
+      return true;
+    };
+    const isConnected = getConnectionStatus();
+    // Only show connection warning for platforms that require OAuth
+    const requiresOAuth = platform === 'spotify' || platform === 'apple' || platform === 'tidal';
+    const showConnectionWarning = requiresOAuth && !isConnected && !loadingConnections;
 
     return (
       <TabsContent value={platform} className="space-y-4 mt-4">
@@ -361,16 +373,25 @@ export function AddToQueueModal({ isOpen, onClose, onAddTrack, sessionTitle }: A
                 </p>
                 <Button
                   size="sm"
-                  onClick={() => {
+                  disabled={connectingAppleMusic}
+                  onClick={async () => {
+                    // Get OAuth URL based on platform
+                    let oauthUrl: string | null = null;
                     if (platform === 'spotify') {
-                      // Open Spotify OAuth in a popup window
+                      oauthUrl = getSpotifyConnectUrl();
+                    } else if (platform === 'tidal') {
+                      oauthUrl = getTidalConnectUrl();
+                    }
+
+                    if (oauthUrl) {
+                      // Open OAuth in a popup window
                       const width = 500;
                       const height = 700;
                       const left = window.screenX + (window.outerWidth - width) / 2;
                       const top = window.screenY + (window.outerHeight - height) / 2;
                       const popup = window.open(
-                        getSpotifyConnectUrl(),
-                        'SpotifyConnect',
+                        oauthUrl,
+                        `${platformData.name}Connect`,
                         `width=${width},height=${height},left=${left},top=${top},popup=yes`
                       );
 
@@ -384,10 +405,14 @@ export function AddToQueueModal({ isOpen, onClose, onAddTrack, sessionTitle }: A
                               const data = await getStreamingConnections();
                               setConnections({
                                 spotify: data.spotify || { connected: false },
-                                appleMusic: data.appleMusic || { connected: false }
+                                appleMusic: data.appleMusic || { connected: false },
+                                tidal: data.tidal || { connected: false }
                               });
-                              if (data.spotify?.connected) {
-                                toast.success('Spotify connected!', {
+                              let isNowConnected = false;
+                              if (platform === 'spotify') isNowConnected = data.spotify?.connected ?? false;
+                              else if (platform === 'tidal') isNowConnected = data.tidal?.connected ?? false;
+                              if (isNowConnected) {
+                                toast.success(`${platformData.name} connected!`, {
                                   description: 'You can now search and import tracks'
                                 });
                               }
@@ -397,16 +422,84 @@ export function AddToQueueModal({ isOpen, onClose, onAddTrack, sessionTitle }: A
                           }
                         }, 500);
                       }
+                    } else if (platform === 'apple') {
+                      // Apple Music uses MusicKit JS authorization
+                      setConnectingAppleMusic(true);
+                      try {
+                        // Get developer token from backend
+                        const { developerToken } = await getAppleMusicDeveloperToken();
+
+                        // Check if MusicKit is loaded
+                        if (typeof MusicKit === 'undefined') {
+                          toast.error('Apple Music SDK not loaded', {
+                            description: 'Please refresh the page and try again'
+                          });
+                          return;
+                        }
+
+                        // Configure MusicKit
+                        await MusicKit.configure({
+                          developerToken,
+                          app: {
+                            name: 'sedā.fm',
+                            build: '1.0.0',
+                          },
+                        });
+
+                        // Authorize user
+                        const music = MusicKit.getInstance();
+                        const musicUserToken = await music.authorize();
+
+                        // Save connection to backend
+                        await connectAppleMusic(
+                          musicUserToken,
+                          music.me?.attributes?.name,
+                          music.storefrontCountryCode
+                        );
+
+                        // Refresh connections
+                        const data = await getStreamingConnections();
+                        setConnections({
+                          spotify: data.spotify || { connected: false },
+                          appleMusic: data.appleMusic || { connected: false },
+                          tidal: data.tidal || { connected: false }
+                        });
+
+                        toast.success('Apple Music connected!', {
+                          description: 'You can now search and import tracks'
+                        });
+                      } catch (error: any) {
+                        if (error?.name === 'USER_CANCELLED') {
+                          toast.info('Authorization cancelled');
+                        } else {
+                          console.error('Apple Music connection error:', error);
+                          toast.error('Failed to connect Apple Music', {
+                            description: 'Please try again'
+                          });
+                        }
+                      } finally {
+                        setConnectingAppleMusic(false);
+                      }
                     } else {
-                      toast.info('Connect in Settings', {
-                        description: 'Go to Settings > Streaming to connect your Apple Music account'
+                      // Bandcamp and Beatport don't require OAuth - just paste URLs
+                      toast.info('No account needed', {
+                        description: `Just paste a ${platformData.name} track URL to import it`
                       });
                     }
                   }}
                   className={`${platformData.color} text-background hover:opacity-90`}
                 >
-                  <Link2 className="w-4 h-4 mr-2" />
-                  Connect {platformData.name}
+                  {connectingAppleMusic && platform === 'apple' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="w-4 h-4 mr-2" />
+                      Connect {platformData.name}
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

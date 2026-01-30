@@ -16,9 +16,11 @@ interface ConnectionStatus {
 interface StreamingConnectionsResponse {
   spotify: ConnectionStatus;
   appleMusic: ConnectionStatus;
+  tidal?: ConnectionStatus;
   configured: {
     spotify: boolean;
     appleMusic: boolean;
+    tidal?: boolean;
   };
 }
 
@@ -216,6 +218,13 @@ export async function getTrack(
  */
 export function getSpotifyConnectUrl(): string {
   return `${API_BASE}/streaming/spotify/connect`;
+}
+
+/**
+ * Get Tidal OAuth URL
+ */
+export function getTidalConnectUrl(): string {
+  return `${API_BASE}/streaming/tidal/connect`;
 }
 
 /**

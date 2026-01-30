@@ -368,11 +368,35 @@ export function AddToQueueModal({ isOpen, onClose, onAddTrack, sessionTitle }: A
                       const height = 700;
                       const left = window.screenX + (window.outerWidth - width) / 2;
                       const top = window.screenY + (window.outerHeight - height) / 2;
-                      window.open(
+                      const popup = window.open(
                         getSpotifyConnectUrl(),
                         'SpotifyConnect',
                         `width=${width},height=${height},left=${left},top=${top},popup=yes`
                       );
+
+                      // Poll to detect when popup closes and refresh connections
+                      if (popup) {
+                        const checkPopup = setInterval(async () => {
+                          if (popup.closed) {
+                            clearInterval(checkPopup);
+                            // Refresh connection status after popup closes
+                            try {
+                              const data = await getStreamingConnections();
+                              setConnections({
+                                spotify: data.spotify || { connected: false },
+                                appleMusic: data.appleMusic || { connected: false }
+                              });
+                              if (data.spotify?.connected) {
+                                toast.success('Spotify connected!', {
+                                  description: 'You can now search and import tracks'
+                                });
+                              }
+                            } catch (error) {
+                              console.error('Failed to refresh connections:', error);
+                            }
+                          }
+                        }, 500);
+                      }
                     } else {
                       toast.info('Connect in Settings', {
                         description: 'Go to Settings > Streaming to connect your Apple Music account'

@@ -363,7 +363,16 @@ export function AddToQueueModal({ isOpen, onClose, onAddTrack, sessionTitle }: A
                   size="sm"
                   onClick={() => {
                     if (platform === 'spotify') {
-                      window.location.href = getSpotifyConnectUrl();
+                      // Open Spotify OAuth in a popup window
+                      const width = 500;
+                      const height = 700;
+                      const left = window.screenX + (window.outerWidth - width) / 2;
+                      const top = window.screenY + (window.outerHeight - height) / 2;
+                      window.open(
+                        getSpotifyConnectUrl(),
+                        'SpotifyConnect',
+                        `width=${width},height=${height},left=${left},top=${top},popup=yes`
+                      );
                     } else {
                       toast.info('Connect in Settings', {
                         description: 'Go to Settings > Streaming to connect your Apple Music account'

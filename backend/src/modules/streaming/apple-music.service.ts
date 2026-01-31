@@ -63,12 +63,24 @@ export class AppleMusicService {
   /**
    * Get debug info about configuration (for troubleshooting)
    */
-  getConfigDebug(): { hasTeamId: boolean; hasKeyId: boolean; hasPrivateKey: boolean; privateKeyLength: number } {
+  getConfigDebug() {
+    // Get raw values directly from ConfigService for debugging
+    const rawTeamId = this.configService.get<string>('APPLE_MUSIC_TEAM_ID');
+    const rawKeyId = this.configService.get<string>('APPLE_MUSIC_KEY_ID');
+    const rawPrivateKey = this.configService.get<string>('APPLE_MUSIC_PRIVATE_KEY');
+
     return {
       hasTeamId: !!this.teamId,
       hasKeyId: !!this.keyId,
       hasPrivateKey: !!this.privateKey,
       privateKeyLength: this.privateKey?.length || 0,
+      // Debug: show if raw values exist and their first few chars
+      rawTeamIdExists: !!rawTeamId,
+      rawKeyIdExists: !!rawKeyId,
+      rawPrivateKeyExists: !!rawPrivateKey,
+      rawTeamIdPreview: rawTeamId ? rawTeamId.substring(0, 4) + '...' : null,
+      rawKeyIdPreview: rawKeyId ? rawKeyId.substring(0, 4) + '...' : null,
+      rawPrivateKeyPreview: rawPrivateKey ? rawPrivateKey.substring(0, 20) + '...' : null,
     };
   }
 

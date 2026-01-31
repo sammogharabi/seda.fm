@@ -61,6 +61,18 @@ export class AppleMusicService {
   }
 
   /**
+   * Get debug info about configuration (for troubleshooting)
+   */
+  getConfigDebug(): { hasTeamId: boolean; hasKeyId: boolean; hasPrivateKey: boolean; privateKeyLength: number } {
+    return {
+      hasTeamId: !!this.teamId,
+      hasKeyId: !!this.keyId,
+      hasPrivateKey: !!this.privateKey,
+      privateKeyLength: this.privateKey?.length || 0,
+    };
+  }
+
+  /**
    * Generate a developer token for Apple Music API
    * Token is valid for up to 6 months, we'll use 180 days
    */

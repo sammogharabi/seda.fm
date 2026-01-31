@@ -42,6 +42,27 @@ export class StreamingController {
     }, 60000);
   }
 
+  // ==================== Debug ====================
+
+  /**
+   * Debug endpoint to check streaming service configuration (no auth required)
+   */
+  @Get('debug/config')
+  async getDebugConfig() {
+    return {
+      spotify: {
+        configured: this.spotifyService.isConfigured(),
+      },
+      appleMusic: {
+        configured: this.appleMusicService.isConfigured(),
+        ...this.appleMusicService.getConfigDebug(),
+      },
+      tidal: {
+        configured: this.tidalService.isConfigured(),
+      },
+    };
+  }
+
   // ==================== Connection Status ====================
 
   /**

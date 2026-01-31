@@ -71,11 +71,27 @@ export class StreamingController {
   @Get('connections')
   @UseGuards(AuthGuard)
   async getConnections(@Req() req: AuthenticatedRequest) {
-    const [spotify, appleMusic, tidal] = await Promise.all([
-      this.spotifyService.getConnectionStatus(req.user.userId),
-      this.appleMusicService.getConnectionStatus(req.user.userId),
-      this.tidalService.getConnectionStatus(req.user.userId),
-    ]);
+    let spotify = { connected: false };
+    let appleMusic = { connected: false };
+    let tidal = { connected: false };
+
+    try {
+      spotify = await this.spotifyService.getConnectionStatus(req.user.userId);
+    } catch (e) {
+      console.error('Spotify connection status error:', e);
+    }
+
+    try {
+      appleMusic = await this.appleMusicService.getConnectionStatus(req.user.userId);
+    } catch (e) {
+      console.error('Apple Music connection status error:', e);
+    }
+
+    try {
+      tidal = await this.tidalService.getConnectionStatus(req.user.userId);
+    } catch (e) {
+      console.error('Tidal connection status error:', e);
+    }
 
     return {
       spotify,
@@ -206,12 +222,16 @@ export class StreamingController {
       throw new BadRequestException('Music user token is required');
     }
 
-    await this.appleMusicService.saveConnection(req.user.userId, body.musicUserToken, {
-      displayName: body.displayName,
-      country: body.country,
-    });
-
-    return { success: true };
+    try {
+      await this.appleMusicService.saveConnection(req.user.userId, body.musicUserToken, {
+        displayName: body.displayName,
+        country: body.country,
+      });
+      return { success: true };
+    } catch (error) {
+      console.error('Apple Music connect error:', error);
+      throw error;
+    }
   }
 
   /**

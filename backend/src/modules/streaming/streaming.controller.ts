@@ -250,9 +250,15 @@ export class StreamingController {
         country: body.country,
       });
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Apple Music connect error:', error);
-      throw error;
+      // Return detailed error for debugging (remove in production)
+      throw new BadRequestException({
+        message: 'Failed to save Apple Music connection',
+        error: error.message,
+        code: error.code,
+        meta: error.meta,
+      });
     }
   }
 

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { supabase } from '../lib/supabase';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
 const API_TIMEOUT = import.meta.env.VITE_API_TIMEOUT || 10000;
 
 // Create axios instance

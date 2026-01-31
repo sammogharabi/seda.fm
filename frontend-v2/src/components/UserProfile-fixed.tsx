@@ -1593,7 +1593,7 @@ export function UserProfile({ user, onUpdateUser, viewingUser = null, isOwnProfi
 
                 {/* Streaming Connections Section */}
                 <div className="border border-foreground/10 rounded-lg p-6">
-                  <StreamingConnections apiBaseUrl={import.meta.env.VITE_API_URL || '/api'} />
+                  <StreamingConnections apiBaseUrl={import.meta.env.VITE_API_BASE_URL || '/api/v1'} />
                 </div>
               </div>
             </div>

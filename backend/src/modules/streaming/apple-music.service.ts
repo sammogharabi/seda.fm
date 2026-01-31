@@ -312,4 +312,12 @@ export class AppleMusicService {
 
     return { success: true };
   }
+
+  /**
+   * Debug method to check if the streaming_connections table exists
+   */
+  async debugCheckTable(): Promise<number> {
+    const count = await this.prisma.streamingConnection.count();
+    return count;
+  }
 }

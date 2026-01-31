@@ -63,6 +63,28 @@ export class StreamingController {
     };
   }
 
+  /**
+   * Debug endpoint to check database table status (no auth required)
+   */
+  @Get('debug/db')
+  async getDebugDb() {
+    try {
+      const count = await this.appleMusicService.debugCheckTable();
+      return {
+        tableExists: true,
+        connectionCount: count,
+        error: null,
+      };
+    } catch (error: any) {
+      return {
+        tableExists: false,
+        connectionCount: null,
+        error: error.message,
+        code: error.code,
+      };
+    }
+  }
+
   // ==================== Connection Status ====================
 
   /**

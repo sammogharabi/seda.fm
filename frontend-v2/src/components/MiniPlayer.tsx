@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
-import { Play, Pause, Volume2, X, Maximize2, Users, Radio, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Play, Pause, Volume2, X, Maximize2, Users, Radio, ThumbsUp, ThumbsDown, Music } from 'lucide-react';
 import { toast } from 'sonner';
+import { useMusicKit } from '../hooks/useMusicKit';
 
 export function MiniPlayer({
   track,
@@ -14,21 +15,56 @@ export function MiniPlayer({
   onExpand,
   djSession
 }) {
+  const musicKit = useMusicKit();
 
   const [isPlaying, setIsPlaying] = useState(externalIsPlaying);
-  const [progress, setProgress] = useState(45); // Mock progress
+  const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(70);
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
+  const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
 
+  // Determine if this track is from Apple Music
+  const isAppleMusicTrack = musicKit.isAppleMusicTrack(track);
+
+  // Sync with MusicKit state
+  useEffect(() => {
+    if (isAppleMusicTrack && musicKit.isInitialized) {
+      setProgress(musicKit.progress);
+      setIsPlaying(musicKit.isPlaying);
+    }
+  }, [musicKit.progress, musicKit.isPlaying, isAppleMusicTrack, musicKit.isInitialized]);
+
+  // Sync with external playing state
   useEffect(() => {
     setIsPlaying(externalIsPlaying);
   }, [externalIsPlaying]);
 
+  // Start playback when track changes and isPlaying is true
   useEffect(() => {
-    // Simulate track progress when playing
-    let interval;
-    if (isPlaying) {
+    const startPlayback = async () => {
+      if (track && externalIsPlaying && isAppleMusicTrack && !hasStartedPlayback) {
+        console.log('[MiniPlayer] Starting Apple Music playback for:', track.title || track.name);
+        setHasStartedPlayback(true);
+        const success = await musicKit.play(track);
+        if (!success && musicKit.error) {
+          console.log('[MiniPlayer] Playback error:', musicKit.error);
+        }
+      }
+    };
+
+    startPlayback();
+  }, [track?.id, externalIsPlaying, isAppleMusicTrack, hasStartedPlayback, musicKit, track]);
+
+  // Reset hasStartedPlayback when track changes
+  useEffect(() => {
+    setHasStartedPlayback(false);
+  }, [track?.id]);
+
+  // Fallback: simulate progress for non-Apple Music tracks
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlaying && !isAppleMusicTrack) {
       interval = setInterval(() => {
         setProgress(prev => {
           const newProgress = prev + 0.5;
@@ -37,15 +73,43 @@ export function MiniPlayer({
       }, 300);
     }
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, isAppleMusicTrack]);
 
-  const handlePlayPause = () => {
+  const handlePlayPause = useCallback(async () => {
     const newPlayState = !isPlaying;
+
+    if (isAppleMusicTrack) {
+      if (newPlayState) {
+        if (musicKit.isPlaying) {
+          // Already playing
+        } else if (hasStartedPlayback) {
+          // Resume playback
+          await musicKit.resume();
+        } else {
+          // Start fresh playback
+          setHasStartedPlayback(true);
+          await musicKit.play(track);
+        }
+      } else {
+        musicKit.pause();
+      }
+    }
+
     setIsPlaying(newPlayState);
     if (onPlayPause) {
       onPlayPause(newPlayState);
     }
-  };
+  }, [isPlaying, isAppleMusicTrack, musicKit, hasStartedPlayback, track, onPlayPause]);
+
+  // Handle close with MusicKit cleanup
+  const handleClose = useCallback(() => {
+    if (isAppleMusicTrack) {
+      musicKit.stop();
+    }
+    if (onClose) {
+      onClose();
+    }
+  }, [isAppleMusicTrack, musicKit, onClose]);
 
   const handleLike = () => {
     if (isLiked) {
@@ -127,7 +191,7 @@ export function MiniPlayer({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="h-8 w-8 p-0 hover:bg-destructive/20 hover:text-destructive"
                 >
                   <X className="w-4 h-4" />
@@ -218,7 +282,7 @@ export function MiniPlayer({
             <Button
               size="sm"
               variant="ghost"
-              onClick={onClose}
+              onClick={handleClose}
               className="h-8 w-8 p-0 hover:bg-destructive/20 hover:text-destructive"
             >
               <X className="w-4 h-4" />
@@ -233,24 +297,45 @@ export function MiniPlayer({
             <span className="font-mono text-xs font-black text-accent-coral uppercase tracking-wide">
               {isDJSession ? 'LIVE SESSION' : 'NOW PLAYING'}
             </span>
-          </div>
-          
-          {isPlaying && (
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1">
-                {[...Array(3)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-1 h-3 bg-accent-mint rounded-full animate-pulse"
-                    style={{ animationDelay: `${i * 0.2}s` }}
-                  />
-                ))}
-              </div>
-              <span className="font-mono text-xs text-muted-foreground uppercase">
-                {isDJSession ? 'LIVE' : 'STREAMING'}
+            {isAppleMusicTrack && (
+              <span className="px-1.5 py-0.5 bg-[#FA243C]/10 text-[#FA243C] text-[10px] font-bold rounded">
+                APPLE MUSIC
               </span>
-            </div>
-          )}
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Play/Pause Button */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handlePlayPause}
+              className="h-8 w-8 p-0 hover:bg-accent-coral/20 hover:text-accent-coral"
+            >
+              {isPlaying ? (
+                <Pause className="w-4 h-4" />
+              ) : (
+                <Play className="w-4 h-4" />
+              )}
+            </Button>
+
+            {isPlaying && (
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  {[...Array(3)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-1 h-3 bg-accent-mint rounded-full animate-pulse"
+                      style={{ animationDelay: `${i * 0.2}s` }}
+                    />
+                  ))}
+                </div>
+                <span className="font-mono text-xs text-muted-foreground uppercase">
+                  {isDJSession ? 'LIVE' : 'STREAMING'}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

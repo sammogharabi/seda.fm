@@ -2,7 +2,20 @@
  * Streaming API client for Spotify and Apple Music integration
  */
 
+import { supabase } from '../supabase';
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1';
+
+/**
+ * Get auth headers for API requests
+ */
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    return { Authorization: `Bearer ${session.access_token}` };
+  }
+  return {};
+}
 
 interface ConnectionStatus {
   connected: boolean;
@@ -52,8 +65,9 @@ interface SearchResults {
  * Get all streaming connection statuses
  */
 export async function getStreamingConnections(): Promise<StreamingConnectionsResponse> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/streaming/connections`, {
-    credentials: 'include',
+    headers: authHeaders,
   });
 
   if (!response.ok) {
@@ -67,8 +81,9 @@ export async function getStreamingConnections(): Promise<StreamingConnectionsRes
  * Get Spotify connection status
  */
 export async function getSpotifyStatus(): Promise<ConnectionStatus> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/streaming/spotify/status`, {
-    credentials: 'include',
+    headers: authHeaders,
   });
 
   if (!response.ok) {
@@ -82,9 +97,10 @@ export async function getSpotifyStatus(): Promise<ConnectionStatus> {
  * Disconnect Spotify
  */
 export async function disconnectSpotify(): Promise<{ success: boolean }> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/streaming/spotify/disconnect`, {
     method: 'DELETE',
-    credentials: 'include',
+    headers: authHeaders,
   });
 
   if (!response.ok) {
@@ -115,10 +131,10 @@ export async function connectAppleMusic(
   displayName?: string,
   country?: string,
 ): Promise<{ success: boolean }> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/streaming/apple-music/connect`, {
     method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
     body: JSON.stringify({ musicUserToken, displayName, country }),
   });
 
@@ -133,8 +149,9 @@ export async function connectAppleMusic(
  * Get Apple Music connection status
  */
 export async function getAppleMusicStatus(): Promise<ConnectionStatus> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/streaming/apple-music/status`, {
-    credentials: 'include',
+    headers: authHeaders,
   });
 
   if (!response.ok) {
@@ -148,9 +165,10 @@ export async function getAppleMusicStatus(): Promise<ConnectionStatus> {
  * Disconnect Apple Music
  */
 export async function disconnectAppleMusic(): Promise<{ success: boolean }> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/streaming/apple-music/disconnect`, {
     method: 'DELETE',
-    credentials: 'include',
+    headers: authHeaders,
   });
 
   if (!response.ok) {
@@ -183,8 +201,9 @@ export async function searchTracks(
     params.set('offset', options.offset.toString());
   }
 
+  const authHeaders = await getAuthHeaders();
   const response = await fetch(`${API_BASE}/streaming/search?${params.toString()}`, {
-    credentials: 'include',
+    headers: authHeaders,
   });
 
   if (!response.ok) {
@@ -201,9 +220,10 @@ export async function getTrack(
   provider: 'spotify' | 'apple-music',
   trackId: string,
 ): Promise<TrackResult> {
+  const authHeaders = await getAuthHeaders();
   const response = await fetch(
     `${API_BASE}/streaming/track/${provider}/${trackId}`,
-    { credentials: 'include' },
+    { headers: authHeaders },
   );
 
   if (!response.ok) {

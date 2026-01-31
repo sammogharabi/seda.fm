@@ -233,7 +233,7 @@ export function Crates({
 
   const handleAddTrack = (track: any) => {
     const crateTrack = {
-      id: Date.now(),
+      id: track.id || Date.now().toString(), // Preserve original track ID for streaming playback
       title: track.title,
       artist: track.artist,
       album: track.album,
@@ -242,6 +242,8 @@ export function Crates({
       addedBy: { username: user.username },
       addedAt: new Date().toISOString().split('T')[0],
       source: track.source,
+      provider: track.provider, // Preserve provider for MusicKit playback
+      platform: track.platform,
       url: track.url
     };
 

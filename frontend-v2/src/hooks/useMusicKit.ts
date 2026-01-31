@@ -139,11 +139,21 @@ export function useMusicKit() {
   const isAppleMusicTrack = useCallback((track: Track | null): boolean => {
     if (!track) return false;
     const source = track.source || track.provider || track.platform || '';
-    return source === 'apple-music' || source === 'apple';
+    const isApple = source === 'apple-music' || source === 'apple';
+    console.log('[useMusicKit] isAppleMusicTrack check:', { trackId: track.id, source, isApple });
+    return isApple;
   }, []);
 
   // Play a track
   const play = useCallback(async (track: Track) => {
+    console.log('[useMusicKit] play() called with track:', {
+      id: track.id,
+      title: track.title || track.name,
+      source: track.source,
+      provider: track.provider,
+      platform: track.platform
+    });
+
     if (!isAppleMusicTrack(track)) {
       console.log('[useMusicKit] Not an Apple Music track, skipping playback');
       setState(prev => ({ ...prev, error: 'Not an Apple Music track' }));
@@ -152,11 +162,16 @@ export function useMusicKit() {
 
     // Initialize if not already done
     if (!musicKitRef.current) {
+      console.log('[useMusicKit] MusicKit not initialized, initializing now...');
       const initialized = await initialize();
-      if (!initialized) return false;
+      if (!initialized) {
+        console.error('[useMusicKit] Failed to initialize MusicKit');
+        return false;
+      }
     }
 
     const music = musicKitRef.current;
+    console.log('[useMusicKit] MusicKit instance ready, isAuthorized:', music.isAuthorized);
 
     // Check if authorized
     if (!music.isAuthorized) {
@@ -164,6 +179,7 @@ export function useMusicKit() {
       try {
         await music.authorize();
         setState(prev => ({ ...prev, isAuthorized: true }));
+        console.log('[useMusicKit] Authorization successful');
       } catch (error: any) {
         console.error('[useMusicKit] Authorization failed:', error);
         setState(prev => ({ ...prev, error: 'Authorization required' }));
@@ -172,11 +188,13 @@ export function useMusicKit() {
     }
 
     try {
+      console.log('[useMusicKit] Setting queue with song ID:', track.id);
       // Set the queue with the track
       await music.setQueue({
         song: track.id,
       });
 
+      console.log('[useMusicKit] Starting playback...');
       // Start playback
       await music.play();
 
@@ -186,7 +204,7 @@ export function useMusicKit() {
         error: null,
       }));
 
-      console.log('[useMusicKit] Playing track:', track.id);
+      console.log('[useMusicKit] Playback started successfully for track:', track.id);
       return true;
     } catch (error: any) {
       console.error('[useMusicKit] Play failed:', error);

@@ -10,6 +10,7 @@ import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { AddToQueueModal } from './AddToQueueModal';
+import { useMusicKit } from '../hooks/useMusicKit';
 import {
   Plus,
   Music,
@@ -121,9 +122,55 @@ export function Crates({
     isPlayerMinimized
   } = cratePlayer;
 
+  // MusicKit integration for Apple Music playback
+  const musicKit = useMusicKit();
+  const isAppleMusicTrack = currentTrack ? musicKit.isAppleMusicTrack(currentTrack) : false;
+  const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
+
   // Helper to update player state
   const setIsPlaying = (playing) => onSetCratePlayer(prev => ({ ...prev, isPlaying: playing }));
   const setIsPlayerMinimized = (minimized) => onSetCratePlayer(prev => ({ ...prev, isPlayerMinimized: minimized }));
+
+  // Handle play/pause with MusicKit integration
+  const handlePlayPause = useCallback(async () => {
+    if (isAppleMusicTrack) {
+      if (isPlaying) {
+        musicKit.pause();
+        setIsPlaying(false);
+      } else {
+        if (hasStartedPlayback) {
+          await musicKit.resume();
+        } else {
+          setHasStartedPlayback(true);
+          await musicKit.play(currentTrack);
+        }
+        setIsPlaying(true);
+      }
+    } else {
+      setIsPlaying(!isPlaying);
+    }
+  }, [isAppleMusicTrack, isPlaying, hasStartedPlayback, currentTrack, musicKit]);
+
+  // Start playback when track changes
+  useEffect(() => {
+    const startPlayback = async () => {
+      if (currentTrack && isPlaying && isAppleMusicTrack && !hasStartedPlayback) {
+        console.log('[Crates] Starting Apple Music playback for:', currentTrack.title);
+        setHasStartedPlayback(true);
+        await musicKit.play(currentTrack);
+      }
+    };
+    startPlayback();
+  }, [currentTrack?.id, isPlaying, isAppleMusicTrack, hasStartedPlayback, musicKit]);
+
+  // Reset hasStartedPlayback when track changes
+  useEffect(() => {
+    setHasStartedPlayback(false);
+  }, [currentTrack?.id]);
+
+  // Sync with MusicKit state for Apple Music tracks
+  const displayProgress = isAppleMusicTrack && musicKit.isInitialized ? musicKit.progress : 0;
+  const displayIsPlaying = isAppleMusicTrack && musicKit.isInitialized ? musicKit.isPlaying : isPlaying;
 
   // Helper function to handle user click
   const handleUserClick = useCallback((crateUser) => {
@@ -484,10 +531,13 @@ export function Crates({
                     {/* Progress Bar */}
                     <div className="mb-6">
                       <div className="w-full h-2 bg-secondary/50 rounded-full overflow-hidden mb-2">
-                        <div className="h-full bg-accent-coral w-1/3 transition-all duration-300"></div>
+                        <div
+                          className="h-full bg-accent-coral transition-all duration-300"
+                          style={{ width: `${displayProgress}%` }}
+                        ></div>
                       </div>
                       <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>0:00</span>
+                        <span>{isAppleMusicTrack ? musicKit.formatTime(musicKit.currentTime) : '0:00'}</span>
                         <span>{currentTrack.duration}</span>
                       </div>
                     </div>
@@ -504,9 +554,9 @@ export function Crates({
                       <Button
                         size="icon"
                         className="w-14 h-14 bg-accent-coral text-background hover:bg-accent-coral/90"
-                        onClick={() => setIsPlaying(!isPlaying)}
+                        onClick={handlePlayPause}
                       >
-                        {isPlaying ? (
+                        {displayIsPlaying ? (
                           <Pause className="w-6 h-6" />
                         ) : (
                           <Play className="w-6 h-6" />

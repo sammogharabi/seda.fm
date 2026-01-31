@@ -18,7 +18,7 @@ import { TidalService } from './tidal.service';
 import { randomBytes } from 'crypto';
 
 interface AuthenticatedRequest extends Request {
-  user: { userId: string };
+  user: { id: string };
 }
 
 @Controller('streaming')
@@ -98,19 +98,19 @@ export class StreamingController {
     let tidal = { connected: false };
 
     try {
-      spotify = await this.spotifyService.getConnectionStatus(req.user.userId);
+      spotify = await this.spotifyService.getConnectionStatus(req.user.id);
     } catch (e) {
       console.error('Spotify connection status error:', e);
     }
 
     try {
-      appleMusic = await this.appleMusicService.getConnectionStatus(req.user.userId);
+      appleMusic = await this.appleMusicService.getConnectionStatus(req.user.id);
     } catch (e) {
       console.error('Apple Music connection status error:', e);
     }
 
     try {
-      tidal = await this.tidalService.getConnectionStatus(req.user.userId);
+      tidal = await this.tidalService.getConnectionStatus(req.user.id);
     } catch (e) {
       console.error('Tidal connection status error:', e);
     }
@@ -142,7 +142,7 @@ export class StreamingController {
     // Generate state for CSRF protection
     const state = randomBytes(16).toString('hex');
     this.oauthStates.set(state, {
-      userId: req.user.userId,
+      userId: req.user.id,
       expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
     });
 
@@ -203,7 +203,7 @@ export class StreamingController {
   @Delete('spotify/disconnect')
   @UseGuards(AuthGuard)
   async disconnectSpotify(@Req() req: AuthenticatedRequest) {
-    return this.spotifyService.disconnect(req.user.userId);
+    return this.spotifyService.disconnect(req.user.id);
   }
 
   /**
@@ -212,7 +212,7 @@ export class StreamingController {
   @Get('spotify/status')
   @UseGuards(AuthGuard)
   async getSpotifyStatus(@Req() req: AuthenticatedRequest) {
-    return this.spotifyService.getConnectionStatus(req.user.userId);
+    return this.spotifyService.getConnectionStatus(req.user.id);
   }
 
   // ==================== Apple Music ====================
@@ -245,7 +245,7 @@ export class StreamingController {
     }
 
     try {
-      await this.appleMusicService.saveConnection(req.user.userId, body.musicUserToken, {
+      await this.appleMusicService.saveConnection(req.user.id, body.musicUserToken, {
         displayName: body.displayName,
         country: body.country,
       });
@@ -268,7 +268,7 @@ export class StreamingController {
   @Delete('apple-music/disconnect')
   @UseGuards(AuthGuard)
   async disconnectAppleMusic(@Req() req: AuthenticatedRequest) {
-    return this.appleMusicService.disconnect(req.user.userId);
+    return this.appleMusicService.disconnect(req.user.id);
   }
 
   /**
@@ -277,7 +277,7 @@ export class StreamingController {
   @Get('apple-music/status')
   @UseGuards(AuthGuard)
   async getAppleMusicStatus(@Req() req: AuthenticatedRequest) {
-    return this.appleMusicService.getConnectionStatus(req.user.userId);
+    return this.appleMusicService.getConnectionStatus(req.user.id);
   }
 
   // ==================== Tidal OAuth ====================
@@ -295,7 +295,7 @@ export class StreamingController {
     // Generate state for CSRF protection
     const state = randomBytes(16).toString('hex');
     this.oauthStates.set(state, {
-      userId: req.user.userId,
+      userId: req.user.id,
       expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
     });
 
@@ -356,7 +356,7 @@ export class StreamingController {
   @Delete('tidal/disconnect')
   @UseGuards(AuthGuard)
   async disconnectTidal(@Req() req: AuthenticatedRequest) {
-    return this.tidalService.disconnect(req.user.userId);
+    return this.tidalService.disconnect(req.user.id);
   }
 
   /**
@@ -365,7 +365,7 @@ export class StreamingController {
   @Get('tidal/status')
   @UseGuards(AuthGuard)
   async getTidalStatus(@Req() req: AuthenticatedRequest) {
-    return this.tidalService.getConnectionStatus(req.user.userId);
+    return this.tidalService.getConnectionStatus(req.user.id);
   }
 
   // ==================== Search ====================
@@ -394,7 +394,7 @@ export class StreamingController {
     if (provider === 'spotify' || provider === 'all' || !provider) {
       try {
         const spotifyResults = await this.spotifyService.searchTracks(
-          req.user.userId,
+          req.user.id,
           query,
           limitNum,
           offsetNum,
@@ -452,7 +452,7 @@ export class StreamingController {
     if (provider === 'tidal' || provider === 'all' || !provider) {
       try {
         const tidalResults = await this.tidalService.searchTracks(
-          req.user.userId,
+          req.user.id,
           query,
           limitNum,
           offsetNum,
@@ -490,7 +490,7 @@ export class StreamingController {
     @Query('trackId') trackId: string,
   ) {
     if (provider === 'spotify') {
-      const track = await this.spotifyService.getTrack(req.user.userId, trackId);
+      const track = await this.spotifyService.getTrack(req.user.id, trackId);
       return {
         id: track.id,
         provider: 'spotify',
@@ -523,7 +523,7 @@ export class StreamingController {
     }
 
     if (provider === 'tidal') {
-      const track = await this.tidalService.getTrack(req.user.userId, trackId);
+      const track = await this.tidalService.getTrack(req.user.id, trackId);
       return {
         id: track.id.toString(),
         provider: 'tidal',

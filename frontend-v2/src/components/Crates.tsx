@@ -596,8 +596,21 @@ export function Crates({
 
           {/* Tracks List */}
           <Card>
-            <CardHeader>
-              <CardTitle>Tracks</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Tracks ({selectedCrate.tracks.length})</CardTitle>
+              {/* Show Add Track button for: owner, collaborators, or anyone on public crates */}
+              {(selectedCrate.owner.username === user.username ||
+                selectedCrate.isCollaborative ||
+                selectedCrate.isPublic) && (
+                <Button
+                  size="sm"
+                  onClick={() => setShowAddTrackDialog(true)}
+                  className="bg-accent-mint text-background hover:bg-accent-mint/90"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Track
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {selectedCrate.tracks.length > 0 ? (
@@ -631,14 +644,16 @@ export function Crates({
                 <div className="text-center py-12">
                   <Music className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                   <p className="text-muted-foreground mb-4">No tracks in this crate yet</p>
-                  {selectedCrate.isCollaborative || selectedCrate.owner.username === user.username ? (
+                  {(selectedCrate.owner.username === user.username ||
+                    selectedCrate.isCollaborative ||
+                    selectedCrate.isPublic) && (
                     <Button
                       onClick={() => setShowAddTrackDialog(true)}
                       className="bg-accent-mint text-background hover:bg-accent-mint/90"
                     >
                       Add First Track
                     </Button>
-                  ) : null}
+                  )}
                 </div>
               )}
             </CardContent>
